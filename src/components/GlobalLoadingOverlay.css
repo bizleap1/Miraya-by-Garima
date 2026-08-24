@@ -1,0 +1,218 @@
+/* =========================================================================
+   MIRAYA BY GARIMA — PREMIUM LUXURY LOADING OVERLAY & PROGRESS BAR
+   ========================================================================= */
+
+.luxury-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 4, 6, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ffffff;
+  pointer-events: all;
+  user-select: none;
+}
+
+.luxury-loading-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 4rem;
+  background: linear-gradient(135deg, rgba(94, 10, 11, 0.95) 0%, rgba(45, 4, 5, 0.98) 100%);
+  border: 1px solid rgba(198, 164, 106, 0.4);
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(198, 164, 106, 0.15),
+    inset 0 0 20px rgba(198, 164, 106, 0.08);
+  max-width: 90vw;
+  width: 380px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Corner Ornaments */
+.luxury-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(198, 164, 106, 0.7);
+  border-style: solid;
+  pointer-events: none;
+}
+.luxury-corner.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+.luxury-corner.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+.luxury-corner.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+.luxury-corner.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+/* Logo & Pulse */
+.luxury-loading-logo-wrap {
+  position: relative;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.luxury-loading-logo {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(198, 164, 106, 0.5));
+}
+
+/* Spinner Ring */
+.luxury-spinner-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.luxury-spinner-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(198, 164, 106, 0.15);
+  border-top-color: #c6a46a;
+  border-right-color: rgba(198, 164, 106, 0.7);
+  animation: luxurySpin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.luxury-spinner-gem {
+  font-size: 14px;
+  color: #c6a46a;
+  text-shadow: 0 0 10px rgba(198, 164, 106, 0.8);
+  animation: luxuryPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes luxurySpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes luxuryPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Text Styling */
+.luxury-loading-brand {
+  font-family: 'Playfair Display', 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #c6a46a;
+  text-transform: uppercase;
+  margin: 0 0 6px 0;
+  font-weight: 600;
+}
+
+.luxury-loading-message {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Shimmer Line */
+.luxury-loading-shimmer-line {
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c6a46a, transparent);
+  margin-top: 1.2rem;
+  opacity: 0.7;
+}
+
+/* =========================================================================
+   TOP NAVIGATION PROGRESS BAR (Sleek Gold)
+   ========================================================================= */
+
+.luxury-top-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 100000;
+  pointer-events: none;
+  background: transparent;
+}
+
+.luxury-top-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c6a46a 0%, #f4e8c1 50%, #c6a46a 100%);
+  box-shadow: 0 0 10px rgba(198, 164, 106, 0.8), 0 0 5px rgba(244, 232, 193, 0.9);
+  transition: width 0.3s ease-out;
+}
+
+/* =========================================================================
+   SUSPENSE PAGE LOADER
+   ========================================================================= */
+
+.luxury-page-fallback {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #5e0a0b;
+  padding: 4rem 2rem;
+}
+
+.luxury-page-fallback-ring {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(94, 10, 11, 0.1);
+  border-top-color: #5e0a0b;
+  border-right-color: #c6a46a;
+  animation: luxurySpin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.luxury-page-fallback-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #5e0a0b;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .luxury-loading-card {
+    padding: 2rem 1.5rem;
+    width: 290px;
+  }
+
+  .luxury-loading-logo {
+    height: 34px;
+  }
+
+  .luxury-spinner-ring {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 1rem;
+  }
+
+  .luxury-loading-brand {
+    font-size: 11px;
+  }
+
+  .luxury-loading-message {
+    font-size: 11px;
+  }
+}
+

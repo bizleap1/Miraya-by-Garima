@@ -1,0 +1,129 @@
+/* ==========================================================================
+   MIRAYA BY GARIMA — SUPPLIERS MANAGEMENT STYLES
+   ========================================================================== */
+
+.admin-suppliers-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.suppliers-header-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.suppliers-toolbar {
+  display: flex;
+  background: #1a1211;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.suppliers-table-wrapper {
+  background: #1a1211;
+  border: 1px solid rgba(198, 164, 106, 0.25);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.suppliers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  color: #fff;
+  text-align: left;
+}
+
+.suppliers-table th {
+  background: #221716;
+  color: #c6a46a;
+  font-weight: 700;
+  padding: 12px 14px;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.25);
+  white-space: nowrap;
+}
+
+.suppliers-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.supplier-name {
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+.contact-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.contact-col span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gstin-badge {
+  background: #281c1a;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #c6a46a;
+}
+
+.purchases-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.purchases-meta strong {
+  color: #2ecc71;
+}
+
+.purchases-meta span {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.supplier-modal {
+  max-width: 600px;
+}
+
+.supplier-history-modal {
+  max-width: 700px;
+}
+
+.supplier-profile-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #241917;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+  font-size: 0.82rem;
+}
+
+.history-table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 6px;
+}

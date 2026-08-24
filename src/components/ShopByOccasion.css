@@ -1,0 +1,194 @@
+.shop-by-occasion-section {
+  padding: 6rem 5%;
+  background-color: var(--bg-cream, #FAF7F2);
+  text-align: center;
+}
+
+.occasion-header {
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.occasion-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.occasion-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--primary-burgundy);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.title-ornament {
+  opacity: 0.8;
+}
+
+.occasion-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.occasion-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  aspect-ratio: 1 / 1.1; /* slightly tall, close to square */
+}
+
+.occasion-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+}
+
+.occasion-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.occasion-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.occasion-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Dark overlay always visible at bottom to match screenshot */
+  background: linear-gradient(to top, rgba(15, 10, 10, 0.9) 0%, rgba(15, 10, 10, 0.5) 40%, rgba(0,0,0,0) 80%);
+  transition: background 0.5s ease;
+}
+
+.occasion-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icon-wrapper {
+  margin-bottom: 0.25rem;
+}
+
+.occasion-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.occasion-card-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--gold-accent);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.occasion-explore-btn {
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.6); /* gold accent with opacity */
+  color: #ffffff;
+  padding: 0.5rem 1.5rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 4px;
+}
+
+.occasion-explore-btn .arrow {
+  color: var(--gold-accent);
+  transition: transform 0.3s ease;
+  font-size: 1rem;
+}
+
+/* Hover Effects */
+.occasion-card:hover .occasion-image {
+  transform: scale(1.05);
+}
+
+.occasion-card:hover .occasion-explore-btn {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--gold-accent);
+}
+
+.occasion-card:hover .occasion-explore-btn .arrow {
+  transform: translateX(5px);
+}
+
+@media (max-width: 1024px) {
+  .occasion-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .shop-by-occasion-section {
+    padding: 3rem 1rem;
+  }
+  
+  .occasion-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .occasion-title-wrapper {
+    gap: 0.5rem;
+  }
+  
+  .title-ornament {
+    width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .occasion-card-title {
+    font-size: 1.2rem;
+  }
+
+  .occasion-content {
+    padding: 1rem 0.5rem;
+  }
+
+  .occasion-explore-btn {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.65rem;
+  }
+}
+

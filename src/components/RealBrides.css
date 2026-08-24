@@ -1,0 +1,464 @@
+.real-brides-section {
+  padding: 2.5rem 0 4rem 0;
+  background-color: #f8f6f0;
+  background-image: linear-gradient(rgba(248, 246, 240, 0.85), rgba(248, 246, 240, 0.85)), url('/newbg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
+
+.real-brides-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(to bottom, transparent, #FAF7F2);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle floral backgrounds */
+.floral-bg {
+  position: absolute;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  background-image: radial-gradient(circle, rgba(194, 164, 120, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floral-left {
+  left: -50px;
+}
+
+.floral-right {
+  right: -50px;
+}
+
+.real-brides-section .container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.real-brides-section .section-header {
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  padding: 1rem 0;
+}
+
+.subtitle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 1rem;
+}
+
+.subtitle-line {
+  height: 1px;
+  width: 40px;
+  background-color: #cda372;
+}
+
+.real-brides-section .subtitle {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #cda372;
+}
+
+.real-brides-section .title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.7rem, 4.5vw, 4rem);
+  font-weight: 400;
+  color: #3b171c;
+  /* Burgundy */
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.real-brides-section .title i {
+  font-family: var(--font-script);
+  font-weight: 400;
+  color: #cda372;
+  margin-right: 10px;
+  font-size: 1.2em;
+}
+
+.real-brides-section .description {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: #8c735c;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Cards layout */
+.brides-carousel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.bride-card {
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+  height: 350px;
+}
+
+.bride-card.light {
+  background: rgba(252, 250, 245, 0.9);
+  border: 1px solid rgba(205, 163, 114, 0.25);
+  flex: 0 1 350px;
+  transform: scale(0.9);
+  opacity: 0.75;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.bride-card.dark {
+  background: linear-gradient(145deg, #3b171c 0%, #5e0a0b 100%);
+  color: #fff;
+  flex: 0 1 460px;
+  transform: scale(1);
+  box-shadow: 0 30px 70px rgba(94, 10, 11, 0.3), 0 0 0 1px rgba(205, 163, 114, 0.2);
+  z-index: 2;
+}
+
+.bride-image-col {
+  flex: 0 0 45%;
+  position: relative;
+}
+
+.bride-card.light .bride-image-col {
+  flex: 0 0 50%;
+}
+
+.bride-card.dark .bride-image-col {
+  flex: 0 0 50%;
+}
+
+.bride-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.bride-text-col {
+  flex: 1;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.bride-card.light .bride-text-col {
+  padding: 30px;
+  align-items: center;
+  text-align: center;
+}
+
+.bride-name {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b171c;
+  margin-bottom: 10px;
+}
+
+.bride-card.dark .bride-name {
+  color: #cda372;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: auto;
+  text-align: right;
+}
+
+.stars {
+  color: #cda372;
+  font-size: 0.9rem;
+  letter-spacing: 3px;
+  margin-bottom: 15px;
+  animation: goldPulse 2s ease-in-out infinite;
+}
+
+.bride-review {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #5a4b41;
+  font-style: italic;
+  position: relative;
+  z-index: 2;
+}
+
+.bride-card.dark .bride-review {
+  color: #f8f6f0;
+  font-size: 1rem;
+}
+
+.quote-icon {
+  font-family: var(--font-script);
+  line-height: 1;
+  position: absolute;
+}
+
+.dark-quote {
+  font-size: 4rem;
+  color: #cda372;
+  top: 20px;
+  left: 20px;
+  opacity: 0.8;
+}
+
+.light-quote {
+  font-size: 5rem;
+  color: rgba(205, 163, 114, 0.2);
+  bottom: -20px;
+  right: 10px;
+}
+
+/* Carousel Controls */
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.control-btn {
+  background: transparent;
+  border: 1px solid rgba(205, 163, 114, 0.8);
+  color: #cda372;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 1.3rem;
+}
+
+.control-btn:hover {
+  background: #cda372;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(205, 163, 114, 0.4);
+  transform: scale(1.1);
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(205, 163, 114, 0.3);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dot.active {
+  background-color: #cda372;
+  width: 24px;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(205, 163, 114, 0.5);
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+.mobile-only-br {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .brides-carousel {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .bride-card.light {
+    display: none !important;
+  }
+
+  .bride-card.dark {
+    width: 100%;
+    max-width: 500px;
+    transform: scale(1) !important;
+    opacity: 1;
+    height: auto;
+    position: relative;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  .mobile-only-br {
+    display: block;
+  }
+
+  .floral-bg {
+    opacity: 0.10;
+  }
+
+  .real-brides-section .container {
+    padding: 0 1.5rem;
+  }
+
+  .real-brides-section .title {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .real-brides-section .description {
+    font-size: 0.95rem;
+    max-width: 100%;
+    margin-bottom: 0;
+  }
+
+  .section-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0;
+  }
+
+  .bride-card.dark {
+    flex-direction: column;
+    background: transparent;
+    box-shadow: none;
+    max-width: 100%;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .bride-card.dark .bride-image-col {
+    flex: none;
+    width: 100%;
+    height: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .bride-card.dark .bride-image {
+    object-position: top center;
+  }
+
+  .bride-card.dark .bride-text-col {
+    padding: 1.5rem 0 0 0;
+    align-items: center;
+    text-align: center;
+  }
+
+  .bride-card.dark .mobile-review-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .bride-card.dark .stars {
+    font-size: 1.2rem;
+    margin-bottom: 0;
+    letter-spacing: 5px;
+    color: #cda372;
+  }
+
+  .bride-card.dark .bride-review {
+    color: #3b171c;
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    margin: 0;
+    font-family: var(--font-body);
+    font-style: italic;
+  }
+
+  .bride-card.dark .bride-name {
+    color: #5a4b41;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 5px;
+  }
+
+  .carousel-controls {
+    margin-top: 2rem;
+  }
+
+  .control-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .real-brides-section {
+    padding: 3rem 0;
+  }
+
+  .real-brides-container {
+    padding: 0 1rem;
+  }
+
+  .brides-title {
+    font-size: 2.2rem;
+  }
+
+  .bride-card-mask {
+    height: 360px;
+  }
+}

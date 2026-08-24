@@ -1,0 +1,224 @@
+.lookbook-section {
+  padding: 6rem 0;
+  background-color: #f8f6f0;
+  background-image: linear-gradient(rgba(248, 246, 240, 0.85), rgba(248, 246, 240, 0.85)), url('/newbg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.lookbook-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 5%;
+}
+
+.lookbook-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.lookbook-subtitle {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  letter-spacing: 0.25em;
+  color: var(--gold-accent);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lookbook-subtitle .line {
+  height: 1px;
+  width: 40px;
+  background-color: rgba(205, 163, 114, 0.5);
+  margin: 0 15px;
+}
+
+.lookbook-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  color: var(--primary-burgundy);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Grid Layout */
+.lookbook-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  min-height: 800px;
+}
+
+.lookbook-featured {
+  display: flex;
+  height: 100%;
+}
+
+.lookbook-secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2rem;
+  height: 100%;
+}
+
+.lookbook-card-container {
+  height: 100%;
+}
+
+/* Card Styling */
+.lookbook-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.lookbook-image-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lookbook-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lookbook-card.small .lookbook-image-wrapper img {
+  object-position: center 20%;
+}
+
+.lookbook-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(15, 0, 2, 0.9) 0%,
+    rgba(30, 5, 5, 0.4) 40%,
+    transparent 100%
+  );
+  transition: opacity 0.5s ease;
+}
+
+.lookbook-card:hover .lookbook-image-wrapper img {
+  transform: scale(1.03);
+}
+
+.lookbook-card:hover .lookbook-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(15, 0, 2, 0.95) 0%,
+    rgba(30, 5, 5, 0.5) 50%,
+    transparent 100%
+  );
+}
+
+.lookbook-content {
+  position: relative;
+  z-index: 2;
+  padding: 2.5rem 2rem;
+  color: #fff;
+  transition: transform 0.5s ease;
+  text-align: left;
+}
+
+.lookbook-card:hover .lookbook-content {
+  transform: translateY(-5px);
+}
+
+.lookbook-content h3 {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  color: #fff;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+}
+
+.lookbook-card.large .lookbook-content h3 {
+  font-size: 2.5rem;
+  text-transform: uppercase;
+}
+
+.lookbook-content p {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: #e0d5c1;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  display: inline-block;
+  border-bottom: 1px solid rgba(224, 213, 193, 0.4);
+  padding-bottom: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.lookbook-card:hover .lookbook-content p {
+  border-color: #cda372;
+  color: #cda372;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .lookbook-grid {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  
+  .lookbook-featured {
+    height: 500px;
+  }
+  
+  .lookbook-secondary-grid {
+    height: auto;
+    grid-template-rows: 400px 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .lookbook-section {
+    padding: 3rem 1rem;
+  }
+  
+  .lookbook-container {
+    padding: 0;
+  }
+
+  .lookbook-grid {
+    gap: 1.5rem;
+  }
+  
+  .lookbook-featured {
+    height: 380px;
+  }
+  
+  .lookbook-secondary-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 1.5rem;
+  }
+  
+  .lookbook-card-container,
+  .lookbook-card.small {
+    height: 380px;
+  }
+  
+  .lookbook-card.large .lookbook-content h3 {
+    font-size: 1.8rem;
+  }
+}

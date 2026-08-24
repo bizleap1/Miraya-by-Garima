@@ -1,0 +1,289 @@
+/* ==========================================================================
+   MIRAYA BY GARIMA — PURCHASES & STOCK INWARD STYLES
+   ========================================================================== */
+
+.admin-purchases-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.purchases-header-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.purchases-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: #1a1211;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.purchases-table-wrapper {
+  background: #1a1211;
+  border: 1px solid rgba(198, 164, 106, 0.25);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.purchases-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  color: #fff;
+  text-align: left;
+}
+
+.purchases-table th {
+  background: #221716;
+  color: #c6a46a;
+  font-weight: 700;
+  padding: 12px 14px;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.25);
+  white-space: nowrap;
+}
+
+.purchases-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.po-number {
+  color: #c6a46a;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.status-draft {
+  background: rgba(149, 165, 166, 0.15);
+  color: #bdc3c7;
+  border: 1px solid rgba(149, 165, 166, 0.3);
+}
+
+.status-ordered {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.status-received {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status-cancelled {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.btn-table-action.receive {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.btn-table-action.receive:hover {
+  background: rgba(46, 204, 113, 0.25);
+}
+
+.btn-table-action.cancel {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+/* Modals */
+.purchase-create-modal {
+  max-width: 680px;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.draft-items-box {
+  background: #231817;
+  border: 1px solid rgba(198, 164, 106, 0.25);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 6px 0;
+}
+
+.items-box-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c6a46a;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.item-selector-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1.5fr 70px 90px 60px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.modal-input-sm {
+  background: #251a19;
+  border: 1px solid rgba(198, 164, 106, 0.3);
+  color: #fff;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.btn-add-item {
+  background: #c6a46a;
+  color: #140d0c;
+  border: none;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.draft-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-top: 8px;
+}
+
+.draft-items-table th {
+  border-bottom: 1px solid rgba(198, 164, 106, 0.2);
+  padding: 6px 4px;
+  color: #c6a46a;
+  text-align: left;
+}
+
+.draft-items-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-remove-draft {
+  background: transparent;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+}
+
+.draft-totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+  font-size: 0.8rem;
+  color: #c6a46a;
+  border-top: 1px dashed rgba(198, 164, 106, 0.3);
+  margin-top: 8px;
+}
+
+.inward-preview-box {
+  background: #221816;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 1rem 0;
+}
+
+.ip-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #2ecc71;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.inward-items-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.inward-items-list li {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.po-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 0.82rem;
+  background: #241917;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+  margin-bottom: 1rem;
+}
+
+.po-view-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+.po-view-items-table th {
+  background: #251b19;
+  color: #c6a46a;
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.po-view-items-table td {
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.po-notes-box {
+  background: #251b19;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}

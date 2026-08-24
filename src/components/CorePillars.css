@@ -1,0 +1,219 @@
+.core-pillars {
+  background-image: 
+    linear-gradient(to bottom, var(--bg-cream, #FAF7F2) 0%, rgba(250, 247, 242, 0) 150px),
+    url('/lowerbg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 2rem 0 8rem 0;
+  position: relative;
+  background-color: var(--bg-cream, #FAF7F2);
+  /* Added a fallback background color just in case */
+}
+
+.pillars-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 5%;
+}
+
+.pillars-header {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.pillars-subtitle {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  letter-spacing: 0.25em;
+  color: var(--gold-accent);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pillars-subtitle::before,
+.pillars-subtitle::after {
+  content: '';
+  display: inline-block;
+  width: 40px;
+  height: 1px;
+  background-color: var(--gold-accent);
+  margin: 0 15px;
+  opacity: 0.6;
+}
+
+.pillars-title {
+  font-family: var(--font-heading);
+  font-size: 2.8rem;
+  color: var(--primary-burgundy);
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pillars-desc {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: #4a4a4a;
+}
+
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  position: relative;
+}
+
+.pillar-card {
+  background: rgba(250, 247, 242, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+  padding: 4rem 2rem 3rem;
+  text-align: center;
+  position: relative;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  margin-top: 42px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  overflow: visible;
+  transition: border-color 0.4s ease;
+}
+
+.pillar-card:hover {
+  border-color: rgba(212, 175, 55, 0.6);
+  background: rgba(250, 247, 242, 0.85);
+}
+
+.pillar-icon-ring {
+  position: absolute;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  background: rgba(198, 164, 106, 0.08);
+  animation: goldPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.pillar-bottom-line {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-accent), transparent);
+  transition: width 0.5s ease;
+}
+
+.pillar-card:hover .pillar-bottom-line {
+  width: 80%;
+}
+
+.pillar-icon {
+  width: 65px;
+  height: 65px;
+  background-color: var(--primary-burgundy);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-accent);
+  position: absolute;
+  top: -32.5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid var(--bg-cream); /* creates the cutout effect */
+}
+
+.pillar-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.pillar-card-subtitle {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: var(--gold-accent);
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.pillar-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  color: var(--primary-burgundy);
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.pillar-divider {
+  color: var(--gold-accent);
+  font-size: 0.6rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pillar-divider::before,
+.pillar-divider::after {
+  content: '';
+  display: inline-block;
+  width: 30px;
+  height: 1px;
+  background-color: var(--gold-accent);
+  margin: 0 10px;
+  opacity: 0.4;
+}
+
+.pillar-card-text {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #4a4a4a;
+}
+
+@media (max-width: 1024px) {
+  .pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .pillars-grid {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+  }
+  .pillars-title {
+    font-size: 2.2rem;
+  }
+  .core-pillars {
+    padding: 5rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .core-pillars {
+    padding: 2.5rem 0 4rem 0;
+  }
+
+  .pillars-container {
+    padding: 0 1rem;
+  }
+
+  .pillars-title {
+    font-size: 1.8rem;
+  }
+
+  .pillar-card {
+    padding: 3rem 1.25rem 2rem;
+  }
+}
+

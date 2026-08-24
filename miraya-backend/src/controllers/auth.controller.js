@@ -1,0 +1,363 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import prisma from '../prisma/client.js';
+import { JWT_SECRET } from '../config/env.js';
+import { sendWelcomeEmail, sendPasswordResetOtpEmail, sendLoginOtpEmail, sendRegisterOtpEmail } from '../utils/email.service.js';
+
+export const register = async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        password_hash,
+        role: 'customer',
+      },
+    });
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '90d' }
+    );
+
+    sendWelcomeEmail(user.email, user.name);
+
+    res.status(201).json({
+      message: 'Registration successful',
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during registration', error: error.message });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '90d' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during login', error: error.message });
+  }
+};
+
+export const getMe = async (req, res) => {
+  const user = req.user;
+  const nameParts = (user.name || '').split(' ');
+  const formattedUser = {
+    ...user,
+    firstName: nameParts[0] || user.name || 'User',
+    lastName: nameParts.slice(1).join(' ') || '',
+  };
+  res.json(formattedUser);
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, firstName, lastName, phone, email } = req.body;
+    let displayName = name;
+    if (!displayName && (firstName || lastName)) {
+      displayName = `${firstName || ''} ${lastName || ''}`.trim();
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        ...(displayName && { name: displayName }),
+        ...(phone !== undefined && { phone }),
+        ...(email && { email }),
+      },
+      select: { id: true, name: true, email: true, phone: true, role: true },
+    });
+
+    const nameParts = (updated.name || '').split(' ');
+    const formattedUser = {
+      ...updated,
+      firstName: nameParts[0] || updated.name || 'User',
+      lastName: nameParts.slice(1).join(' ') || '',
+    };
+
+    res.json(formattedUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating profile', error: error.message });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email address is required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (!user) {
+      return res.status(404).json({ message: 'No registered account found with this email address.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { reset_otp: otp, reset_otp_expiry: expiry },
+    });
+
+    await sendPasswordResetOtpEmail(user.email, otp);
+
+    res.json({ message: `Password reset OTP sent to ${user.email}` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending OTP', error: error.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: 'Email and new password are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (!user) {
+      return res.status(404).json({ message: 'No registered account found with this email address.' });
+    }
+
+    const password_hash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password_hash, reset_otp: null, reset_otp_expiry: null },
+    });
+
+    res.json({ message: 'Password updated successfully! You can now sign in with your new password.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error resetting password', error: error.message });
+  }
+};
+
+export const makeAdmin = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.update({
+      where: { email },
+      data: { role: 'admin' },
+      select: { id: true, email: true, role: true },
+    });
+    res.json({ success: true, message: 'User granted Admin privileges', user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error granting admin role', error: error.message });
+  }
+};
+
+/**
+ * Set user role — super_admin only
+ * Supports: customer, cashier, inventory_staff, store_manager, admin, super_admin
+ */
+export const setUserRole = async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    const validRoles = ['customer', 'cashier', 'inventory_staff', 'store_manager', 'admin', 'super_admin'];
+
+    if (!email || !role) {
+      return res.status(400).json({ success: false, message: 'Email and role are required' });
+    }
+
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
+    }
+
+    const user = await prisma.user.update({
+      where: { email },
+      data: { role },
+      select: { id: true, email: true, name: true, role: true },
+    });
+
+    res.json({ success: true, message: `User role updated to ${role}`, user });
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'User not found with that email' });
+    }
+    res.status(500).json({ success: false, message: 'Error updating user role', error: error.message });
+  }
+};
+
+export const sendLoginOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email address is required' });
+    }
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      const defaultPassword = await bcrypt.hash(Math.random().toString(36), 10);
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: email.split('@')[0],
+          password_hash: defaultPassword,
+          role: 'customer'
+        }
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { reset_otp: otp, reset_otp_expiry: expiry }
+    });
+
+    await sendLoginOtpEmail(email, otp);
+
+    res.json({ message: `Login OTP sent successfully to ${email}` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending OTP', error: error.message });
+  }
+};
+
+export const verifyLoginOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user || user.reset_otp !== String(otp).trim() || new Date() > user.reset_otp_expiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code' });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { reset_otp: null, reset_otp_expiry: null }
+    });
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'OTP Login successful',
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error verifying OTP', error: error.message });
+  }
+};
+
+const registrationOtpStore = new Map();
+
+export const sendRegisterOtp = async (req, res) => {
+  try {
+    const { firstName, lastName, email } = req.body;
+    if (!email || !firstName) {
+      return res.status(400).json({ message: 'First name and email are required' });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'An account already exists with this email address. Please Sign In.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = Date.now() + 10 * 60 * 1000;
+
+    registrationOtpStore.set(email.toLowerCase().trim(), {
+      otp,
+      expiry,
+      firstName,
+      lastName
+    });
+
+    const fullName = `${firstName} ${lastName || ''}`.trim();
+    await sendRegisterOtpEmail(email, otp, fullName);
+
+    res.json({ message: `Verification OTP sent to ${email}` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending registration OTP', error: error.message });
+  }
+};
+
+export const verifyRegisterOtp = async (req, res) => {
+  try {
+    const { firstName, lastName, email, otp, password } = req.body;
+    if (!email || !otp || !password) {
+      return res.status(400).json({ message: 'Email, OTP, and password are required' });
+    }
+
+    const emailKey = email.toLowerCase().trim();
+    const record = registrationOtpStore.get(emailKey);
+
+    if (!record || record.otp !== String(otp).trim() || Date.now() > record.expiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code. Please request a new OTP.' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const fullName = `${firstName || record.firstName || ''} ${lastName || record.lastName || ''}`.trim();
+
+    const user = await prisma.user.create({
+      data: {
+        name: fullName,
+        email: emailKey,
+        password_hash,
+        role: 'customer'
+      }
+    });
+
+    registrationOtpStore.delete(emailKey);
+    sendWelcomeEmail(user.email, user.name);
+
+    res.status(201).json({
+      message: 'Account created successfully! Redirecting to Sign In...'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating account', error: error.message });
+  }
+};

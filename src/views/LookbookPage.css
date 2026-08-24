@@ -1,0 +1,1243 @@
+.lookbook-page-new {
+  background-color: var(--bg-cream);
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.lookbook-hero-new {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* --- LEFT COLUMN --- */
+.lookbook-left-col {
+  flex: 0 0 55%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 4rem 4rem;
+  background-color: var(--bg-cream);
+  overflow: hidden;
+}
+
+.floral-bg-lookbook {
+  display: none;
+}
+
+.lookbook-content-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 550px;
+}
+
+.style-guide-label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  color: #cda372;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.style-guide-label .line {
+  height: 1px;
+  width: 40px;
+  background-color: #cda372;
+  opacity: 0.5;
+}
+
+.lookbook-main-title {
+  font-family: var(--font-heading);
+  font-size: clamp(3.5rem, 5vw, 5.5rem);
+  color: var(--primary-burgundy);
+  line-height: 1.1;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+
+.lookbook-main-title i {
+  font-family: var(--font-script);
+  font-style: normal;
+  font-weight: 400;
+  color: #cda372;
+  font-size: 1.3em;
+  margin-left: 10px;
+}
+
+.lotus-ornament {
+  text-align: center;
+  margin: 1.5rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.lookbook-desc {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: rgba(94, 10, 11, 0.75);
+  margin-bottom: 2.5rem;
+  text-align: justify;
+}
+
+/* Solid Burgundy Button */
+.btn-shop-kurtis {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--primary-burgundy);
+  color: var(--bg-cream);
+  padding: 14px 30px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  margin-bottom: 4rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px rgba(94, 10, 11, 0.15);
+}
+
+.btn-shop-kurtis:hover {
+  background-color: #3b171c; /* darker burgundy */
+  transform: translateY(-2px);
+}
+
+.btn-lotus {
+  color: #cda372;
+  display: flex;
+  align-items: center;
+}
+
+.btn-arrow {
+  margin-left: auto;
+  font-size: 1.2rem;
+}
+
+/* Features Bottom Row */
+.lookbook-features {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(205, 163, 114, 0.3);
+  padding-top: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.feature-icon-circle {
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(205, 163, 114, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cda372;
+}
+
+.feature-item span {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: var(--primary-burgundy);
+  text-transform: uppercase;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.feature-divider {
+  width: 1px;
+  height: 40px;
+  background-color: rgba(205, 163, 114, 0.3);
+}
+
+/* --- RIGHT COLUMN (IMAGE & CURVE) --- */
+.lookbook-right-col {
+  flex: 0 0 45%;
+  position: relative;
+  background-color: var(--bg-cream);
+  padding-top: 6rem;
+  padding-left: 2rem; /* Space between gold line and image */
+}
+
+/* The curved gold arch */
+.lookbook-right-col::before {
+  content: '';
+  position: absolute;
+  top: 6rem;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 6rem);
+  border-top-left-radius: 350px;
+  border-left: 1px solid #cda372;
+  border-top: 1px solid #cda372;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* The image wrapper with matching curve */
+.lookbook-image-wrapper {
+  width: 100%;
+  height: 100%;
+  border-top-left-radius: 330px; /* slightly smaller than outline */
+  overflow: hidden;
+  position: relative;
+}
+
+.main-look-img {
+  width: 100%;
+  height: 110%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+/* Floating Tip Card */
+.style-tip-card {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  background-color: var(--primary-burgundy);
+  color: var(--bg-cream);
+  width: 250px;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+  z-index: 5;
+}
+
+.tip-lotus {
+  color: #cda372;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.style-tip-card h4 {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.style-tip-card p {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(253, 246, 233, 0.8);
+  margin-bottom: 1rem;
+}
+
+.tip-ornament {
+  color: #cda372;
+  font-size: 1rem;
+}
+
+/* Responsiveness for Hero */
+@media (max-width: 1024px) {
+  .lookbook-hero-new {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .lookbook-left-col,
+  .lookbook-right-col {
+    flex: 0 0 100%;
+  }
+
+  .lookbook-left-col {
+    padding: 7rem 2rem 3rem;
+    text-align: center;
+  }
+
+  .lookbook-content-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .lookbook-image-wrapper {
+    border-top-left-radius: 40px;
+    border-top-right-radius: 40px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    height: 500px;
+    margin: 0 2rem 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .lookbook-left-col {
+    padding: 6rem 1.25rem 2rem;
+  }
+
+  .lookbook-main-title {
+    font-size: clamp(2.2rem, 7.5vw, 3rem);
+    text-align: center;
+    line-height: 1.18;
+  }
+
+  .lookbook-desc {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .btn-shop-kurtis {
+    width: 100%;
+    max-width: 320px;
+    justify-content: center;
+    margin: 0 auto 2.5rem auto;
+    padding: 12px 24px;
+    font-size: 0.8rem;
+  }
+
+  .lookbook-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(205, 163, 114, 0.3);
+  }
+
+  .feature-divider {
+    display: none;
+  }
+
+  .feature-item {
+    gap: 0.4rem;
+  }
+
+  .feature-icon-circle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .feature-item span {
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+  }
+
+  .lookbook-right-col {
+    padding: 0 1.25rem 2.5rem;
+  }
+
+  .lookbook-image-wrapper {
+    height: 380px;
+    margin: 0;
+    border-radius: 20px;
+  }
+}
+
+/* --- SIGNATURE STYLES (NEW BENTO GRID) --- */
+.signature-styles-wrapper {
+  position: relative;
+  background-color: var(--bg-cream);
+  padding: 6rem 4rem 2rem;
+  overflow: hidden;
+}
+
+/* Floral branches background on sides */
+.floral-branch {
+  position: absolute;
+  top: 0;
+  width: 250px;
+  height: 400px;
+  background-image: url('/palace_sketch_bg.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.1;
+  pointer-events: none;
+}
+.floral-branch.left {
+  left: 0;
+  background-position: left center;
+}
+.floral-branch.right {
+  right: 0;
+  background-position: right center;
+  transform: scaleX(-1);
+}
+
+.signature-styles-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.signature-title {
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 4vw, 4.5rem);
+  color: var(--primary-burgundy);
+  margin-top: 1rem;
+}
+
+.signature-title i {
+  font-family: var(--font-script);
+  font-style: normal;
+  color: #cda372;
+  font-size: 1.2em;
+}
+
+.signature-subtitle {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: rgba(94, 10, 11, 0.7);
+  margin-top: 1.5rem;
+}
+
+/* Bento Grid */
+.signature-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  height: 450px;
+}
+
+.bento-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  background-color: transparent;
+}
+
+.bento-bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  object-position: right center;
+}
+
+.bento-col-right .bento-bg-img {
+  width: 100%;
+}
+
+.bento-gradient-overlay {
+  display: block;
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 100%);
+  z-index: 1;
+}
+
+.bento-col-right .bento-gradient-overlay {
+  display: block;
+  background: linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%);
+}
+
+
+.bento-content {
+  position: relative;
+  z-index: 2;
+  padding: 4rem 4rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 60%;
+}
+
+.bento-category {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: #cda372;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+}
+
+.bento-category::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 1px;
+  background-color: #cda372;
+  margin-top: 0.8rem;
+  opacity: 0.8;
+}
+
+.bento-heading {
+  font-family: var(--font-heading);
+  font-size: 2.8rem;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 1.2rem;
+  font-weight: 400;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.bento-heading-sm {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+  font-weight: 400;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.bento-col-right .bento-heading-sm {
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.bento-desc {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
+  margin-bottom: 3rem;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.3);
+}
+
+.bento-desc-sm {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
+  margin-bottom: 2rem;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.3);
+}
+
+.bento-col-right .bento-desc-sm {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-bento-burgundy {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--primary-burgundy);
+  color: var(--bg-cream);
+  padding: 14px 28px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  border-radius: 4px;
+  width: max-content;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(94, 10, 11, 0.2);
+}
+
+.btn-bento-burgundy:hover {
+  background-color: #3b171c;
+  transform: translateY(-2px);
+}
+
+.arrow-right {
+  margin-left: 1rem;
+  font-size: 1.2rem;
+}
+
+.btn-bento-round {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #e6d3ba;
+  color: var(--primary-burgundy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.btn-bento-round:hover {
+  background-color: #cda372;
+  color: #fff;
+  transform: translateX(4px);
+}
+
+/* Slider Controls in Large Card */
+.bento-slider-controls {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 45%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  z-index: 3;
+}
+
+.slider-btn {
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--primary-burgundy);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.slider-btn:hover {
+  background-color: var(--bg-cream);
+}
+
+.slider-dots {
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(94, 10, 11, 0.2);
+}
+
+.dot.active {
+  background-color: var(--primary-burgundy);
+}
+
+/* Right Column Stack */
+.bento-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bento-col-right .bento-card {
+  flex: 1;
+}
+
+.bento-col-right .bento-content {
+  padding: 3rem;
+  max-width: 80%;
+}
+
+/* Bottom Feature Bar */
+.signature-features-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(205, 163, 114, 0.3);
+  padding-top: 3rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.sig-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.sig-icon {
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(205, 163, 114, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sig-text h4 {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--primary-burgundy);
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}
+
+.sig-text p {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: rgba(94, 10, 11, 0.6);
+}
+
+.sig-feature-divider {
+  height: 40px;
+  width: 1px;
+  background-color: rgba(205, 163, 114, 0.3);
+}
+
+/* Responsiveness for Bento */
+@media (max-width: 1024px) {
+  .signature-bento-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .bento-card.large {
+    height: 500px;
+  }
+  .bento-col-right {
+    flex-direction: row;
+    height: 350px;
+  }
+  .signature-features-bar {
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+  }
+  .sig-feature-divider {
+    display: none;
+  }
+}
+@media (max-width: 768px) {
+  .signature-styles-wrapper {
+    padding: 3.5rem 1.25rem 2rem;
+  }
+  .bento-col-right {
+    flex-direction: column;
+    height: auto;
+  }
+  .bento-col-right .bento-card {
+    height: 400px;
+  }
+  .bento-card.large {
+    height: 480px;
+    border-radius: 14px;
+  }
+  .bento-content {
+    max-width: 100%;
+    padding: 2rem 1.5rem 5rem 1.5rem;
+    justify-content: flex-end;
+  }
+  .bento-heading {
+    font-size: 2.2rem;
+    line-height: 1.15;
+    margin-bottom: 0.8rem;
+  }
+  .bento-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  .bento-gradient-overlay {
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 40%, rgba(15,0,2,0.92) 100%) !important;
+  }
+  .bento-slider-controls {
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%);
+    gap: 1rem;
+  }
+  .seasonal-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .seasonal-edit-section {
+    padding: 3rem 1.25rem 4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .signature-styles-wrapper {
+    padding: 2.5rem 1rem 1.5rem;
+  }
+  .signature-title {
+    font-size: 2.3rem;
+  }
+  .signature-subtitle {
+    font-size: 0.88rem;
+    margin-top: 0.8rem;
+    padding: 0 0.5rem;
+  }
+  .bento-card.large {
+    height: 450px;
+    border-radius: 12px;
+  }
+  .bento-content {
+    padding: 1.25rem 1.25rem 4.8rem 1.25rem;
+    justify-content: flex-end;
+  }
+  .bento-category {
+    font-size: 0.68rem;
+    margin-bottom: 0.5rem;
+  }
+  .bento-category::after {
+    margin-top: 0.4rem;
+  }
+  .bento-heading {
+    font-size: 1.75rem;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  .bento-desc {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin-bottom: 1.2rem;
+  }
+  .btn-bento-burgundy {
+    padding: 10px 20px;
+    font-size: 0.72rem;
+  }
+  .slider-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 0.8rem;
+  }
+  .bento-slider-controls {
+    bottom: 1.3rem;
+    gap: 1rem;
+  }
+  .seasonal-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   SECTION 3: SEASONAL EDIT
+   ══════════════════════════════════════════════════ */
+
+.seasonal-edit-section {
+  position: relative;
+  padding: 4rem 4rem 8rem;
+  background: linear-gradient(180deg, var(--bg-cream) 0%, #f5ece3 50%, var(--bg-cream) 100%);
+  overflow: hidden;
+}
+
+.seasonal-bg-texture {
+  position: absolute;
+  inset: 0;
+  background-image: url('/palace_sketch_bg.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+.seasonal-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.seasonal-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 4vw, 4.2rem);
+  color: var(--primary-burgundy);
+  margin-top: 1rem;
+}
+
+.seasonal-title i {
+  font-family: var(--font-script);
+  font-style: normal;
+  color: #cda372;
+  font-size: 1.2em;
+}
+
+.seasonal-subtitle {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: rgba(94, 10, 11, 0.65);
+  margin-top: 1.2rem;
+}
+
+.seasonal-cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.8rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.seasonal-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(94, 10, 11, 0.06);
+  transition: box-shadow 0.4s ease;
+  cursor: pointer;
+}
+
+.seasonal-card:hover {
+  box-shadow: 0 20px 50px rgba(94, 10, 11, 0.12), 0 0 0 1px rgba(205, 163, 114, 0.3);
+}
+
+.seasonal-card-img-wrap {
+  position: relative;
+  height: 340px;
+  overflow: hidden;
+}
+
+.seasonal-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.seasonal-card:hover .seasonal-card-img-wrap img {
+  transform: scale(1.08);
+}
+
+.seasonal-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(94, 10, 11, 0.35) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.seasonal-card-info {
+  padding: 1.5rem 1.8rem 2rem;
+  text-align: center;
+}
+
+.seasonal-card-label {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: #cda372;
+  font-weight: 700;
+}
+
+.seasonal-card-caption {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: rgba(94, 10, 11, 0.7);
+  margin-top: 0.6rem;
+  line-height: 1.5;
+}
+
+.seasonal-card-line {
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cda372, transparent);
+  margin: 1.2rem auto 0;
+}
+
+@media (max-width: 1024px) {
+  .seasonal-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .seasonal-edit-section { padding: 4rem 1.5rem 5rem; }
+  .seasonal-cards-row { grid-template-columns: 1fr; }
+  .seasonal-card-img-wrap { height: 280px; }
+}
+
+/* ══════════════════════════════════════════════════
+   SECTION 4: OCCASION GUIDE
+   ══════════════════════════════════════════════════ */
+
+.occasion-guide-section {
+  position: relative;
+  padding: 7rem 4rem 6rem;
+  background-color: var(--primary-burgundy, #5e0a0b);
+  overflow: hidden;
+}
+
+.occasion-bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+}
+
+.occasion-header {
+  text-align: center;
+  margin-bottom: 4.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.occasion-header .style-guide-label {
+  color: rgba(205, 163, 114, 0.7);
+}
+
+.occasion-header .style-guide-label .line {
+  background-color: rgba(205, 163, 114, 0.4);
+}
+
+.occasion-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 4vw, 4.2rem);
+  color: #fdf6e9;
+  margin-top: 1rem;
+}
+
+.occasion-title i {
+  font-family: var(--font-script);
+  font-style: normal;
+  color: #cda372;
+  font-size: 1.2em;
+}
+
+.occasion-subtitle {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: rgba(253, 246, 233, 0.6);
+  margin-top: 1.2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+.occasion-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.occasion-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(205, 163, 114, 0.15);
+  backdrop-filter: blur(6px);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.occasion-card:hover {
+  border-color: rgba(205, 163, 114, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(205, 163, 114, 0.08);
+}
+
+.occasion-card-img-wrap {
+  position: relative;
+  height: 70%;
+  flex: 0 0 70%;
+  overflow: hidden;
+}
+
+.occasion-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.occasion-card:hover .occasion-card-img-wrap img {
+  transform: scale(1.06);
+}
+
+.occasion-card-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(94, 10, 11, 0.5) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.occasion-card-body {
+  height: 30%;
+  flex: 0 0 30%;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.occasion-card-number {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: rgba(205, 163, 114, 0.2);
+  font-weight: 200;
+  line-height: 1;
+}
+
+.occasion-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: #fdf6e9;
+  margin-top: 0.3rem;
+  font-weight: 400;
+}
+
+.occasion-card-divider {
+  margin: 1rem 0;
+  display: flex;
+}
+
+.occasion-card-tip {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: rgba(253, 246, 233, 0.7);
+  line-height: 1.7;
+}
+
+/* CTA button */
+.occasion-cta-wrap {
+  text-align: center;
+  margin-top: 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-occasion-explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 16px 36px;
+  border: 1px solid rgba(205, 163, 114, 0.5);
+  border-radius: 4px;
+  color: #cda372;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all 0.4s ease;
+  background: transparent;
+}
+
+.btn-occasion-explore:hover {
+  background: rgba(205, 163, 114, 0.1);
+  border-color: #cda372;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(205, 163, 114, 0.15);
+}
+
+.btn-occasion-diamond {
+  font-size: 0.7rem;
+}
+
+.btn-occasion-arrow {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.btn-occasion-explore:hover .btn-occasion-arrow {
+  transform: translateX(4px);
+}
+
+@media (max-width: 1024px) {
+  .occasion-strip {
+    grid-template-columns: 1fr;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .occasion-guide-section {
+    padding: 3.5rem 1.25rem 4rem;
+  }
+
+  .occasion-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .occasion-title {
+    font-size: clamp(2.2rem, 7vw, 2.8rem);
+  }
+
+  .occasion-subtitle {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin-top: 0.8rem;
+  }
+
+  .occasion-strip {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    max-width: 100%;
+  }
+
+  .occasion-card {
+    height: auto;
+    min-height: auto;
+    border-radius: 14px;
+  }
+
+  .occasion-card-img-wrap {
+    height: 240px;
+    flex: 0 0 240px;
+  }
+
+  .occasion-card-body {
+    height: auto;
+    flex: 1 1 auto;
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+
+  .occasion-card-number {
+    font-size: 1.8rem;
+  }
+
+  .occasion-card-title {
+    font-size: 1.3rem;
+  }
+
+  .occasion-card-tip {
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .occasion-cta-wrap {
+    margin-top: 2.5rem;
+  }
+
+  .btn-occasion-explore {
+    padding: 14px 24px;
+    font-size: 0.75rem;
+    width: 100%;
+    max-width: 320px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .lookbook-page-new {
+    padding-top: 0;
+  }
+
+  .occasion-guide-section {
+    padding: 2.5rem 1rem 3rem;
+  }
+
+  .occasion-card-img-wrap {
+    height: 210px;
+    flex: 0 0 210px;
+  }
+
+  .occasion-card-body {
+    padding: 1rem 1rem 1.25rem;
+  }
+}
+

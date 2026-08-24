@@ -1,0 +1,28 @@
+# Robots.txt for Miraya by Garima (Haute Couture & Luxury Bridal Boutique)
+User-agent: *
+Allow: /
+Allow: /category/
+Allow: /products/
+Allow: /product/
+Allow: /lookbook
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /terms
+Allow: /privacy-policy
+Allow: /return-policy
+Allow: /search
+
+# Disallow Private & Administrative Paths
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout
+Disallow: /account
+Disallow: /auth
+
+# Crawl-delay for optimal indexing
+Crawl-delay: 1
+
+# Sitemap Location
+Sitemap: https://www.mirayabygarima.com/sitemap.xml

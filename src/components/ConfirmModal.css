@@ -1,0 +1,215 @@
+/* =========================================================================
+   MIRAYA HAUTE COUTURE LUXURY CONFIRMATION DIALOG STYLES
+   ========================================================================= */
+
+.miraya-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 6, 6, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  animation: mirayaConfirmFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes mirayaConfirmFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.miraya-confirm-modal {
+  position: relative;
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  border-radius: 16px;
+  padding: 32px 28px 26px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(198, 164, 106, 0.3);
+  animation: mirayaConfirmSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+@keyframes mirayaConfirmSlide {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* TOP GOLD BORDER ACCENT */
+.miraya-confirm-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #c6a46a 0%, #e2cf9b 50%, #c6a46a 100%);
+}
+
+.miraya-confirm-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #999999;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.miraya-confirm-close:hover {
+  background: #f5f2eb;
+  color: #1a1a1a;
+}
+
+/* ICON BADGE */
+.miraya-confirm-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  transition: transform 0.2s ease;
+}
+
+.miraya-confirm-icon-wrapper.danger {
+  background: #fff0f1;
+  color: #c5221f;
+  border: 2px solid #fed7d7;
+  box-shadow: 0 6px 16px rgba(197, 34, 31, 0.15);
+}
+
+.miraya-confirm-icon-wrapper.warning {
+  background: #fdfaf3;
+  color: #b78103;
+  border: 2px solid #fae8b4;
+  box-shadow: 0 6px 16px rgba(183, 129, 3, 0.15);
+}
+
+.miraya-confirm-icon-wrapper.success {
+  background: #edf7ed;
+  color: #137333;
+  border: 2px solid #c6e7cf;
+  box-shadow: 0 6px 16px rgba(19, 115, 51, 0.15);
+}
+
+/* CONTENT TYPOGRAPHY */
+.miraya-confirm-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1c1413;
+  font-family: 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.miraya-confirm-message {
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  color: #333333;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.miraya-confirm-submessage {
+  margin: 0;
+  font-size: 12.5px;
+  color: #777777;
+  line-height: 1.4;
+}
+
+/* ACTION BUTTONS */
+.miraya-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.miraya-confirm-btn-cancel {
+  flex: 1;
+  max-width: 160px;
+  padding: 10px 18px;
+  background: #f5f2eb;
+  border: 1px solid #e0d7c7;
+  color: #4a3e3d;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.miraya-confirm-btn-cancel:hover {
+  background: #eae5d8;
+  color: #1a1a1a;
+}
+
+.miraya-confirm-btn-action {
+  flex: 1;
+  max-width: 180px;
+  padding: 10px 20px;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.miraya-confirm-btn-action.danger {
+  background: linear-gradient(135deg, #b51624 0%, #820e18 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(181, 22, 36, 0.35);
+}
+
+.miraya-confirm-btn-action.danger:hover {
+  background: linear-gradient(135deg, #c91b2b 0%, #94111d 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(181, 22, 36, 0.45);
+}
+
+.miraya-confirm-btn-action.primary {
+  background: linear-gradient(135deg, #5e0a0b 0%, #3e0506 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(94, 10, 11, 0.3);
+}
+
+.miraya-confirm-btn-action.primary:hover {
+  background: linear-gradient(135deg, #740c0d 0%, #4a0708 100%);
+  transform: translateY(-1px);
+}
+
+.miraya-confirm-btn-action.success {
+  background: linear-gradient(135deg, #137333 0%, #0d5324 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(19, 115, 51, 0.3);
+}
+
+.miraya-confirm-btn-action.success:hover {
+  background: linear-gradient(135deg, #188d3e 0%, #10632c 100%);
+  transform: translateY(-1px);
+}

@@ -1,0 +1,21 @@
+# Environment secrets - NEVER COMMIT
+.env
+.env.*
+.env.local
+*.env
+
+# Embedded PostgreSQL data directory
+.pgdata/
+
+# Dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS and IDE files
+.DS_Store
+.vscode
+.idea

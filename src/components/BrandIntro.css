@@ -1,0 +1,124 @@
+.brand-intro-section {
+  position: relative;
+  padding: 8rem 0;
+  background-image: url('/infobg.png');
+  background-size: cover;
+  background-position: right top;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 450px;
+  border-top: 2px solid #3d1c1a;
+  border-bottom: 2px solid #3d1c1a;
+}
+
+/* Optional: if you need the gold border on top/bottom of the thick border */
+.brand-intro-section::before,
+.brand-intro-section::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--gold-accent);
+  z-index: 10;
+}
+
+.brand-intro-section::before {
+  top: 0;
+}
+
+.brand-intro-section::after {
+  bottom: 0;
+}
+
+.brand-intro-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-top: -100px;
+}
+
+.brand-intro-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.script-title {
+  font-family: var(--font-script);
+  font-size: clamp(3.5rem, 6vw, 5rem);
+  color: var(--gold-accent);
+  font-weight: 400;
+  margin-bottom: -0.5rem;
+  line-height: 1;
+}
+
+.main-title {
+  font-family: var(--font-heading);
+  font-size: clamp(4rem, 8vw, 6rem);
+  color: #ffffff;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.brand-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: #ffffff;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.gold-line {
+  width: 60px;
+  height: 1px;
+  background-color: var(--gold-accent);
+}
+
+@media (max-width: 768px) {
+  .brand-intro-section {
+    padding: 6rem 0;
+    min-height: 300px;
+  }
+  
+  .script-title {
+    margin-bottom: 0;
+  }
+  
+  .brand-subtitle {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    padding: 0 1rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-intro-section {
+    padding: 4rem 0;
+    min-height: 250px;
+  }
+
+  .brand-intro-container {
+    margin-top: 0;
+  }
+
+  .script-title {
+    font-size: 2.8rem;
+  }
+
+  .main-title {
+    font-size: 2.6rem;
+    margin-bottom: 1rem;
+  }
+}
+

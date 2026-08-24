@@ -1,0 +1,334 @@
+.craftsmanship-section {
+  padding: 8rem 0;
+  background-color: #3b171c; /* Dark burgundy */
+  color: var(--bg-cream);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background mandala/floral shape on the left */
+.craftsmanship-section::before {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background-image: radial-gradient(circle, transparent 20%, rgba(194, 164, 120, 0.05) 21%, transparent 22%),
+                    radial-gradient(circle, transparent 40%, rgba(194, 164, 120, 0.05) 41%, transparent 42%),
+                    radial-gradient(circle, transparent 60%, rgba(194, 164, 120, 0.05) 61%, transparent 62%);
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.craft-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.craft-content-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.craft-text-col {
+  flex: 0 0 45%;
+  max-width: 500px;
+}
+
+.craft-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #cda372; /* Gold */
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.craft-subtitle::after {
+  content: '❖';
+  font-size: 0.6rem;
+}
+
+.craft-title {
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 5vw, 5rem);
+  font-weight: 400;
+  color: #fff;
+  margin-bottom: 2rem;
+  line-height: 1;
+}
+
+.craft-title i {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 400;
+  color: #cda372;
+  font-size: 1.1em;
+  display: block;
+  margin-top: -0.2em;
+}
+
+.craft-description {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.8;
+  margin-bottom: 4rem;
+  font-weight: 300;
+}
+
+.craft-description p {
+  margin-bottom: 1.5rem;
+}
+
+/* Feature Item */
+.craft-feature {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.feature-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(205, 163, 114, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cda372;
+}
+
+.feature-icon-wrapper svg {
+  width: 20px;
+  height: 20px;
+}
+
+.feature-number {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: #cda372;
+  letter-spacing: 0.1em;
+}
+
+.feature-text {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.feature-line {
+  flex-grow: 1;
+  height: 1px;
+  background-color: rgba(205, 163, 114, 0.4);
+  position: relative;
+}
+
+.feature-line::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  background-color: #cda372;
+  border-radius: 50%;
+}
+
+/* Image Column with Mask */
+.craft-image-col {
+  flex: 0 0 55%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.craft-image-mask {
+  width: 100%;
+  height: 700px;
+  position: relative;
+  /* Applying the arch mask shape */
+  border-top-left-radius: 500px;
+  border-bottom-left-radius: 500px;
+  overflow: hidden;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+}
+
+.craft-image-mask::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border: 2px solid rgba(205, 163, 114, 0.5);
+  border-top-left-radius: 500px;
+  border-bottom-left-radius: 500px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.craft-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.craft-image-mask:hover .craft-image {
+  transform: scale(1.05);
+}
+
+.craft-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(59, 23, 28, 0.4) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Floating Stat Card */
+.craft-stat-card {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 220px;
+  background-color: #fcfaf5;
+  padding: 10px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2), 0 0 0 1px rgba(198,164,106,0.15);
+  z-index: 10;
+  transition: all 0.4s ease;
+  animation: float 4s ease-in-out infinite;
+}
+
+.stat-card-inner {
+  border: 1px solid rgba(205, 163, 114, 0.3);
+  border-radius: 8px;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-icon {
+  color: #cda372;
+  margin-bottom: 20px;
+}
+
+.stat-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: #8c735c;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  color: #3b171c;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.stat-unit {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: #8c735c;
+  margin-bottom: 20px;
+}
+
+.stat-divider {
+  width: 30px;
+  height: 1px;
+  background-color: rgba(205, 163, 114, 0.3);
+  margin-bottom: 20px;
+}
+
+.stat-footer {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: #cda372;
+  line-height: 1.5;
+}
+
+.stat-heart {
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+@media (max-width: 1024px) {
+  .craft-content-split {
+    flex-direction: column;
+    gap: 4rem;
+  }
+  
+  .craft-text-col,
+  .craft-image-col {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .craft-image-mask {
+    border-radius: 20px;
+    height: 500px;
+  }
+
+  .craft-image-mask::before {
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .craftsmanship-section {
+    padding: 4rem 0;
+  }
+
+  .craft-container {
+    padding: 0 1.5rem;
+  }
+
+  .craft-stat-card {
+    position: static;
+    transform: none;
+    margin: 2rem auto 0;
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .craftsmanship-section {
+    padding: 3rem 0;
+  }
+
+  .craft-container {
+    padding: 0 1rem;
+  }
+
+  .craft-title {
+    font-size: 2.2rem;
+  }
+
+  .craft-image-mask {
+    height: 350px;
+  }
+}
+
+

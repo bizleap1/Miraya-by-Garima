@@ -1,0 +1,301 @@
+/* ==========================================================================
+   MIRAYA BY GARIMA — RETURNS & EXCHANGES STYLES
+   ========================================================================== */
+
+.admin-returns-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.returns-header-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.returns-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: #1a1211;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+}
+
+.tab-pills-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-tab-btn {
+  background: #251b19;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.status-tab-btn:hover {
+  color: #c6a46a;
+}
+
+.status-tab-btn.active {
+  background: #c6a46a;
+  color: #140d0c;
+  border-color: #c6a46a;
+}
+
+.returns-table-wrapper {
+  background: #1a1211;
+  border: 1px solid rgba(198, 164, 106, 0.25);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.returns-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  color: #fff;
+  text-align: left;
+}
+
+.returns-table th {
+  background: #221716;
+  color: #c6a46a;
+  font-weight: 700;
+  padding: 12px 14px;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(198, 164, 106, 0.25);
+  white-space: nowrap;
+}
+
+.returns-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.type-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.type-badge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.type-return {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+
+.type-exchange {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
+.cust-cell {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+}
+
+.ref-tag {
+  background: #271b19;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #c6a46a;
+}
+
+.prod-name-tag {
+  font-weight: 600;
+  color: #fff;
+}
+
+.exchange-sizes {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.old-size {
+  background: #332321;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #e74c3c;
+}
+
+.new-size {
+  background: #1e3725;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #2ecc71;
+  font-weight: 700;
+}
+
+.cond-badge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.cond-restockable {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+}
+
+.cond-damaged {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+
+.price-diff {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.price-diff.due { color: #e74c3c; }
+.price-diff.refund { color: #2ecc71; }
+.price-diff.even { color: rgba(255, 255, 255, 0.5); }
+
+/* Modals */
+.return-process-modal, .pos-direct-modal {
+  max-width: 600px;
+}
+
+.return-meta-box {
+  background: #241917;
+  border: 1px solid rgba(198, 164, 106, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  margin-bottom: 1.25rem;
+}
+
+.process-form-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.return-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-approve {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btn-reject {
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btn-complete-atomic {
+  background: #c6a46a;
+  color: #140d0c;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-complete-atomic:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* POS Direct */
+.pos-lookup-box {
+  background: #241917;
+  border: 1px solid rgba(198, 164, 106, 0.25);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 1rem;
+}
+
+.pos-lookup-box label {
+  font-size: 0.78rem;
+  color: #c6a46a;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.lookup-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.found-sale-box {
+  background: #271b19;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+}
+
+.pos-direct-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
