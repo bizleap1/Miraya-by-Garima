@@ -67,15 +67,14 @@ export const metadata = {
   },
   icons: {
     icon: [
+      { url: '/logoR.png', sizes: 'any' },
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.png', type: 'image/png' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/logoR.png', sizes: '192x192', type: 'image/png' },
     ],
     apple: [
       { url: '/logoR.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/favicon.png',
+    shortcut: '/logoR.png',
   },
   other: {
     'geo.region': 'IN-MH',
@@ -125,9 +124,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" href="/logoR.png" />
+        <link rel="shortcut icon" href="/logoR.png" />
         <link rel="apple-touch-icon" href="/logoR.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
