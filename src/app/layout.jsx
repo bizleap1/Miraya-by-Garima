@@ -4,7 +4,7 @@ import Providers from './providers';
 export const metadata = {
   metadataBase: new URL('https://www.mirayabygarima.com'),
   title: {
-    default: 'Miraya by Garima | Designer Bridal Lehengas, Drape Sarees & Luxury Couture Nagpur',
+    default: 'Miraya by Garima',
     template: '%s | Miraya by Garima',
   },
   description:

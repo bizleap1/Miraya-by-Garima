@@ -8,7 +8,7 @@ import Lookbook from '../components/Lookbook';
 import FinalCTA from '../components/FinalCTA';
 
 export const metadata = {
-  title: 'Miraya by Garima | Haute Couture, Designer Bridal Lehengas & Luxury Ethnic Wear Nagpur',
+  title: 'Miraya by Garima',
   description:
     'Miraya by Garima is Nagpur’s premier luxury bridal atelier. Explore handcrafted wedding lehengas, pre-draped sarees, cocktail gowns, and designer Indo-Western co-ord sets at Law College Square.',
   alternates: {

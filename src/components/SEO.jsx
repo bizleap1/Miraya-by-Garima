@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 const BASE_URL = 'https://www.mirayabygarima.com';
 const DEFAULT_IMAGE = `${BASE_URL}/products/Lehenga-Pink%20Blush/1.JPG`;
-const DEFAULT_TITLE = 'Miraya by Garima | Haute Couture, Designer Bridal Lehengas & Luxury Ethnic Wear Nagpur';
+const DEFAULT_TITLE = 'Miraya by Garima';
 const DEFAULT_DESCRIPTION = 'Explore Miraya by Garima - Nagpur’s premier designer couture atelier for bridal lehengas, pre-stitched drape sarees, reception gowns, and Indo-Western co-ord sets at Law College Square, Nagpur.';
 const DEFAULT_KEYWORDS = 'Miraya by Garima, Designer Boutique Nagpur, Bridal Lehengas Nagpur, Luxury Ethnic Wear, Drape Sarees, Indo Western Lehengas, Reception Gowns, Custom Bridal Trousseau, Nagpur Fashion Atelier';
 
