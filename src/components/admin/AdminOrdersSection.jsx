@@ -4,6 +4,7 @@ import {
   MapPin, Phone, Mail, User, AlertCircle, FileText, Printer
 } from 'lucide-react';
 import { exportOrdersPDF } from '../../utils/pdfExportHelper';
+import { getProductImage } from '../../utils/imageHelper';
 
 const formatINR = (amount) => {
   return new Intl.NumberFormat('en-IN', {
@@ -424,15 +425,33 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600' }}>Ordered Items</h4>
                   <div style={{ border: '1px solid var(--miraya-border)', borderRadius: '8px', overflow: 'hidden' }}>
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                      selectedOrder.items.map((it, index) => (
-                        <div key={index} style={{ padding: '12px 14px', borderBottom: index < selectedOrder.items.length - 1 ? '1px solid var(--miraya-border)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <strong style={{ fontSize: '13px', display: 'block' }}>{it.product?.name || it.title || 'Outfit'}</strong>
-                            <span style={{ fontSize: '11px', color: 'var(--miraya-muted)' }}>Size: {it.variant?.size || it.size || 'M'} | SKU: {it.sku_snapshot || it.variant?.sku || 'N/A'} | Qty: {it.quantity || 1}</span>
+                      selectedOrder.items.map((it, index) => {
+                        const productCategory = it.product?.category || 'all';
+                        const productId = it.product?.id || it.product_id || it.id || '';
+                        const productRoute = `/product/${productCategory}/${productId}`;
+                        const itemImage = getProductImage(it.product?.image_url || it.product?.image || (it.product?.images && it.product?.images[0]) || it.image);
+
+                        return (
+                          <div key={index} style={{ padding: '12px 14px', borderBottom: index < selectedOrder.items.length - 1 ? '1px solid var(--miraya-border)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                              <a href={productRoute} target="_blank" rel="noopener noreferrer" style={{ display: 'block', flexShrink: 0, textDecoration: 'none' }} title="View Product in New Tab">
+                                <img src={itemImage} alt={it.product?.name || 'Product'} style={{ width: '48px', height: '56px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--miraya-border)', background: '#FAF8F5' }} />
+                              </a>
+                              <div>
+                                <a href={productRoute} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }} title="View Product in New Tab">
+                                  <strong style={{ fontSize: '13px', display: 'block' }} className="admin-product-link">
+                                    {it.product?.name || it.title || 'Outfit'}
+                                  </strong>
+                                </a>
+                                <span style={{ fontSize: '11px', color: 'var(--miraya-muted)' }}>
+                                  Size: {it.variant?.size || it.size || 'M'} | SKU: {it.sku_snapshot || it.variant?.sku || 'N/A'} | Qty: {it.quantity || 1}
+                                </span>
+                              </div>
+                            </div>
+                            <strong style={{ fontSize: '13px' }}>{formatINR((it.price_at_purchase || it.price || it.product?.price || 0) * (it.quantity || 1))}</strong>
                           </div>
-                          <strong style={{ fontSize: '13px' }}>{formatINR((it.price_at_purchase || it.price || it.product?.price || 0) * (it.quantity || 1))}</strong>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <div style={{ padding: '14px', textAlign: 'center', color: 'var(--miraya-muted)', fontSize: '12px' }}>Garment details on invoice record</div>
                     )}

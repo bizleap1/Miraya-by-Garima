@@ -705,15 +705,15 @@
 }
 
 .add-to-cart-card-btn.added {
-  background: #1e824c !important;
-  color: #ffffff !important;
-  border-color: #1e824c !important;
-  box-shadow: 0 4px 12px rgba(30, 130, 76, 0.3) !important;
+  background: #F5EFE6 !important;
+  color: var(--primary-burgundy, #5e0a0b) !important;
+  border: 1.5px solid #c6a46a !important;
+  box-shadow: 0 2px 8px rgba(198, 164, 106, 0.25) !important;
   transform: translateY(-1px);
 }
 
 .add-to-cart-card-btn.added .check-added-icon {
-  stroke: #ffffff;
+  stroke: var(--primary-burgundy, #5e0a0b);
   animation: popInCheck 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 

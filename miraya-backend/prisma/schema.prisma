@@ -55,6 +55,11 @@ model Product {
   sizes              String[]            @default([])
   size_stock         Json?               @default("{}") // @deprecated — COMPAT FIELD. Computed from variants.
   low_stock_alert    Int                 @default(2)
+  whatsapp_inquiry   Boolean             @default(false) // If true, product shows WhatsApp inquiry button instead of price/buy
+  mrp_price          Decimal?            // Strikethrough MRP price before discount
+  discount_percent   Int?                // Calculated discount percentage
+  is_on_sale         Boolean             @default(false)
+  promo_label        String?             // e.g. "FESTIVE SALE", "15% OFF"
   category           Category?           @relation(fields: [category_id], references: [id])
   created_at         DateTime            @default(now())
   updated_at         DateTime            @default(now()) @updatedAt
@@ -82,6 +87,7 @@ model ProductVariant {
   size               String // "S", "M", "L", "XL", "Free Size"
   color              String?             @default("Default")
   price              Decimal
+  mrp_price          Decimal?            // Strikethrough MRP for variant
   cost_price         Decimal?            @default(0) // Default / baseline cost price
   stock              Int                 @default(0) // ★ AUTHORITATIVE PHYSICAL STOCK — total on hand
   reserved_stock     Int                 @default(0) // ★ CURRENTLY HELD IN ACTIVE CHECKOUTS
@@ -477,4 +483,40 @@ model InventoryReservation {
   @@index([razorpay_order_id])
   @@index([status])
   @@index([expires_at])
+}
+
+// ─── STORE SETTINGS (Master Control) ─────────────────────────────────────────
+
+model StoreSettings {
+  id                  Int      @id @default(autoincrement())
+  store_online        Boolean  @default(true)
+  online_payments     Boolean  @default(true)
+  cod_enabled         Boolean  @default(true)
+  new_orders_enabled  Boolean  @default(true)
+  whatsapp_number     String   @default("+919271218156")
+  support_phone       String   @default("+919271218156")
+  support_email       String   @default("mirayaofficial.in@gmail.com")
+  atelier_address     String   @default("Shop no. UG/5, Jagat Plaza, Mouze Pandharabodi, Law College Square, Amravati Rd, Nagpur, Maharashtra 440033")
+  instagram_url       String   @default("https://www.instagram.com/miraya_official.in/")
+  facebook_url        String   @default("https://www.facebook.com/profile.php?id=61591287333326")
+  google_review_url   String?  @default("https://g.page/r/miraya-nagpur")
+  announcement_text   String?
+  announcement_active Boolean  @default(false)
+  updated_at          DateTime @updatedAt
+}
+
+// ─── PROMOTION CAMPAIGNS (Marketing & Dynamic Pricing) ───────────────────────
+
+model PromotionCampaign {
+  id                  Int      @id @default(autoincrement())
+  title               String
+  discount_type       String   // 'percentage' | 'markup_strikethrough' | 'flat'
+  discount_value      Decimal  @default(0)
+  markup_value        Decimal? @default(0)
+  target_type         String   // 'all' | 'category' | 'products'
+  target_ids          Int[]    @default([])
+  is_active           Boolean  @default(true)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  backup_prices       Json?
 }

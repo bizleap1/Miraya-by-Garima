@@ -23,6 +23,8 @@ import supplierRoutes from './routes/supplier.routes.js';
 import purchaseRoutes from './routes/purchase.routes.js';
 import returnRoutes from './routes/return.routes.js';
 import customerRoutes from './routes/customer.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
+import promotionRoutes from './routes/promotion.routes.js';
 
 import { globalErrorHandler } from './middleware/errorHandler.middleware.js';
 import { generalLimiter } from './middleware/rateLimiter.middleware.js';
@@ -86,6 +88,8 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/returns', returnRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/promotions', promotionRoutes);
 
 // Global 404 Handler
 app.use((req, res) => {

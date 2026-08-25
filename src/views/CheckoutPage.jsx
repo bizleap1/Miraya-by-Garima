@@ -31,6 +31,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useLoading } from '../context/LoadingContext';
+import { useStoreSettings } from '../context/StoreSettingsContext';
 import API_URL from '../config';
 import { getProductImage } from '../utils/imageHelper';
 import './CheckoutPage.css';
@@ -58,6 +59,9 @@ const CheckoutPage = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const { toast } = useToast();
   const { showLoading, hideLoading } = useLoading();
+  const { store_online, online_payments, cod_enabled, new_orders_enabled, whatsapp_number } = useStoreSettings();
+
+  const isStoreOffline = !store_online || !new_orders_enabled;
 
   // Determine if direct product from Buy Now or full Cart
   const [directItem, setDirectItem] = useState(() => {
@@ -76,24 +80,56 @@ const CheckoutPage = () => {
   // Active items being checked out
   const checkoutItems = useMemo(() => {
     if (useDirectMode && directItem) {
+      const price = typeof directItem.price === 'number'
+        ? directItem.price
+        : parseInt(String(directItem.price || 0).replace(/[^\d]/g, ''), 10) || 0;
+      const rawMrp = directItem.mrp_price;
+      const mrp = rawMrp
+        ? (typeof rawMrp === 'number' ? rawMrp : parseInt(String(rawMrp).replace(/[^\d]/g, ''), 10) || null)
+        : null;
+
       return [{
         ...directItem,
         qty: directItem.qty || 1,
         selectedSize: directItem.selectedSize || directItem.size || 'M',
-        price: typeof directItem.price === 'number'
-          ? directItem.price
-          : parseInt(String(directItem.price || 0).replace(/[^\d]/g, ''), 10) || 0
+        price,
+        mrp_price: mrp,
+        promo_label: directItem.promo_label,
+        discount_percent: directItem.discount_percent,
+        is_on_sale: directItem.is_on_sale || (mrp && mrp > price),
       }];
     }
-    return cartItems.map(item => ({
-      ...item,
-      qty: item.qty || item.quantity || 1,
-      selectedSize: item.selectedSize || item.size || 'M',
-      price: typeof item.price === 'number'
+    return cartItems.map(item => {
+      const price = typeof item.price === 'number'
         ? item.price
-        : (item.product?.priceValue || parseInt(String(item.price || 0).replace(/[^\d]/g, ''), 10) || 0)
-    }));
+        : (item.product?.priceValue || parseInt(String(item.price || 0).replace(/[^\d]/g, ''), 10) || 0);
+      const rawMrp = item.mrp_price || item.product?.mrp_price;
+      const mrp = rawMrp
+        ? (typeof rawMrp === 'number' ? rawMrp : parseInt(String(rawMrp).replace(/[^\d]/g, ''), 10) || null)
+        : null;
+
+      return {
+        ...item,
+        qty: item.qty || item.quantity || 1,
+        selectedSize: item.selectedSize || item.size || 'M',
+        price,
+        mrp_price: mrp,
+        promo_label: item.promo_label || item.product?.promo_label,
+        discount_percent: item.discount_percent || item.product?.discount_percent,
+        is_on_sale: item.is_on_sale || item.product?.is_on_sale || (mrp && mrp > price),
+      };
+    });
   }, [useDirectMode, directItem, cartItems]);
+
+  // Subtotal & Promotional MRP Calculations
+  const subtotal = checkoutItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  const totalMrp = checkoutItems.reduce((acc, item) => {
+    const itemMrp = item.mrp_price && Number(item.mrp_price) > Number(item.price)
+      ? Number(item.mrp_price)
+      : item.price;
+    return acc + (itemMrp * item.qty);
+  }, 0);
+  const totalPromoSavings = Math.max(0, totalMrp - subtotal);
 
   // User & Address State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -121,12 +157,26 @@ const CheckoutPage = () => {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
+  const [paymentMethod, setPaymentMethod] = useState(() => {
+    if (online_payments) return 'razorpay';
+    if (cod_enabled) return 'cod';
+    return 'whatsapp';
+  });
   const [notes, setNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCodModal, setShowCodModal] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  useEffect(() => {
+    if (!online_payments && !cod_enabled) {
+      setPaymentMethod('whatsapp');
+    } else if (!online_payments && paymentMethod === 'razorpay') {
+      setPaymentMethod('cod');
+    } else if (!cod_enabled && paymentMethod === 'cod') {
+      setPaymentMethod('razorpay');
+    }
+  }, [online_payments, cod_enabled, paymentMethod]);
 
   // Initial Data Load & Mandatory Authentication Gate
   useEffect(() => {
@@ -239,10 +289,6 @@ const CheckoutPage = () => {
   };
 
   // Calculations (18% Inclusive GST Standard)
-  const subtotal = useMemo(() => {
-    return checkoutItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
-  }, [checkoutItems]);
-
   const packagingCharge = 0; // Complimentary Luxury Silk Box
   const shippingCharge = 0; // Free Insured Express Courier
   const finalTotal = Math.max(0, subtotal - couponDiscount + packagingCharge + shippingCharge);
@@ -252,7 +298,7 @@ const CheckoutPage = () => {
   const netTaxableAmount = finalTotal - gstInclusiveAmount;
   const isInterstate = (shippingForm.state || '').toLowerCase().trim() !== 'maharashtra' && (shippingForm.state || '').toLowerCase().trim() !== 'mh' && Boolean(shippingForm.state);
 
-  // Apply Coupon
+  // Apply Coupon (Strict Database Validation)
   const handleApplyCoupon = async (codeToApply) => {
     const code = (codeToApply || couponCode).trim().toUpperCase();
     if (!code) return;
@@ -272,27 +318,16 @@ const CheckoutPage = () => {
         setCouponApplied(true);
         setCouponCode(code);
         toast.coupon(`Privilege Applied! Saved ${formatINR(data.discountAmount)}`, 'CODE APPLIED');
-        hideLoading();
-        return;
+      } else {
+        const msg = data.error || data.message || 'Invalid or expired coupon code.';
+        setCouponError(msg);
+        toast.error(msg, 'COUPON ERROR');
       }
-    } catch (_) {}
-
-    // Fallback known promotional coupons
-    if (code === 'MIRAYA10' || code === 'WELCOME10') {
-      const discount = Math.round(subtotal * 0.10);
-      setCouponDiscount(discount);
-      setCouponApplied(true);
-      setCouponCode(code);
-      toast.coupon(`10% Luxury Privilege Applied! Saved ${formatINR(discount)}`, 'CODE APPLIED');
-    } else if (code === 'LUXURY500') {
-      setCouponDiscount(500);
-      setCouponApplied(true);
-      setCouponCode(code);
-      toast.coupon('₹500 Atelier Privilege Applied!', 'CODE APPLIED');
-    } else {
-      setCouponError('Invalid or expired coupon code.');
-      toast.error('Invalid or expired coupon code.', 'PROMO ERROR');
+    } catch (_) {
+      setCouponError('Unable to validate coupon.');
+      toast.error('Unable to validate coupon.', 'NETWORK ERROR');
     }
+
     hideLoading();
   };
 
@@ -345,12 +380,61 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (isStoreOffline || paymentMethod === 'whatsapp' || (!online_payments && !cod_enabled)) {
+      handleWhatsAppCheckout();
+      return;
+    }
+
     if (paymentMethod === 'cod') {
+      if (!cod_enabled) {
+        toast.warning('Cash on Delivery is currently disabled.', 'COD UNAVAILABLE');
+        handleWhatsAppCheckout();
+        return;
+      }
       setShowCodModal(true);
       return;
     }
 
     executeOrderPlacement();
+  };
+
+  const handleWhatsAppCheckout = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mirayabygarima.com';
+    
+    const itemsFormatted = checkoutItems.map((item, idx) => {
+      const imgPath = item.image || item.image_url || (item.images && item.images[0]) || '';
+      const fullImgUrl = imgPath ? (imgPath.startsWith('http') ? imgPath : `${origin}${imgPath}`) : '';
+      const itemMrpStr = item.mrp_price && Number(item.mrp_price) > Number(item.price)
+        ? ` (MRP: ${formatINR(item.mrp_price)}, Save ${item.discount_percent || Math.round(((item.mrp_price - item.price) / item.mrp_price) * 100)}%)`
+        : '';
+
+      return `${idx + 1}. 👗 *${item.title || item.name}*\n   • *Size:* ${item.selectedSize || item.size || 'M'}\n   • *Quantity:* ${item.qty || 1}\n   • *Price:* ${formatINR(item.price * (item.qty || 1))}${itemMrpStr}${fullImgUrl ? `\n   • 🖼️ *Image:* ${fullImgUrl}` : ''}`;
+    }).join('\n\n');
+
+    const addressFormatted = `• *Name:* ${shippingForm.fullName}\n• *Phone:* ${shippingForm.phone}\n• *Email:* ${shippingForm.email || 'N/A'}\n• *Address:* ${shippingForm.line1}${shippingForm.line2 ? ', ' + shippingForm.line2 : ''}\n• *City/State/PIN:* ${shippingForm.city}, ${shippingForm.state} - ${shippingForm.pincode} (${shippingForm.label || 'Home'})`;
+
+    const savingsText = totalPromoSavings > 0 ? `\n• 🎉 *Promotional Discount:* −${formatINR(totalPromoSavings)}` : '';
+    const couponText = couponApplied ? `\n• 🏷️ *Privilege Coupon (${couponCode}):* −${formatINR(couponDiscount)}` : '';
+
+    const message = `👑 *NEW ORDER INQUIRY — MIRAYA BY GARIMA ATELIER*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `📦 *ORDERED OUTFITS:*\n\n${itemsFormatted}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `💰 *BILLING SUMMARY:*\n` +
+      (totalPromoSavings > 0 ? `• Total Catalog MRP: ${formatINR(totalMrp)}\n` : '') +
+      `• Subtotal: ${formatINR(subtotal)}` +
+      savingsText +
+      couponText +
+      `\n• 🌟 *Total Payable Amount:* ${formatINR(finalTotal)}\n` +
+      `• Payment Mode: ${paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Direct Atelier Confirmation'}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `📍 *DELIVERY DESTINATION:*\n${addressFormatted}\n` +
+      (notes ? `\n📝 *Atelier Customization Notes:* ${notes}\n` : '') +
+      `\nPlease confirm stock reservation and dispatch schedule! 🙏`;
+
+    const encodedMsg = encodeURIComponent(message);
+    const waNum = (whatsapp_number || '+919271218156').replace(/[^0-9]/g, '');
+    window.open(`https://wa.me/${waNum}?text=${encodedMsg}`, '_blank');
   };
 
   // Execute Order Placement & Razorpay Payment
@@ -408,7 +492,7 @@ const CheckoutPage = () => {
         }
 
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TO10SlvSmqJqhX',
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TO10SlvSmqJqhX',
           amount: Math.round(finalTotal * 100),
           currency: 'INR',
           name: 'Miraya by Garima',
@@ -633,6 +717,18 @@ const CheckoutPage = () => {
           </div>
 
           <div className="success-action-buttons">
+            <a
+              href={`https://wa.me/${(whatsapp_number || '+919271218156').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                `Hi Miraya by Garima Atelier! 👑\n\nI just placed Order *#MRY-${orderIdNum}* on the website.\n\n💰 *Total Paid/Payable:* ${formatINR(finalTotal)}\n📍 *Delivery To:* ${shippingForm.fullName}, ${shippingForm.city}\n\nPlease share dispatch tracking updates. 🙏`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-view-orders"
+              style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', color: '#fff', textDecoration: 'none' }}
+            >
+              <MessageCircle size={18} /> CONFIRM / TRACK ON WHATSAPP
+            </a>
+
             <button
               type="button"
               className="btn-download-invoice"
@@ -1010,54 +1106,82 @@ const CheckoutPage = () => {
 
             <div className="payment-cards-container">
               {/* Razorpay Online Payment */}
-              <div
-                className={`payment-method-card ${paymentMethod === 'razorpay' ? 'selected' : ''}`}
-                onClick={() => setPaymentMethod('razorpay')}
-              >
-                <div className="pm-top-row">
-                  <div className="pm-title-wrap">
-                    <div className={`custom-radio ${paymentMethod === 'razorpay' ? 'checked' : ''}`}>
-                      {paymentMethod === 'razorpay' && <div className="radio-inner" />}
+              {online_payments && (
+                <div
+                  className={`payment-method-card ${paymentMethod === 'razorpay' ? 'selected' : ''}`}
+                  onClick={() => setPaymentMethod('razorpay')}
+                >
+                  <div className="pm-top-row">
+                    <div className="pm-title-wrap">
+                      <div className={`custom-radio ${paymentMethod === 'razorpay' ? 'checked' : ''}`}>
+                        {paymentMethod === 'razorpay' && <div className="radio-inner" />}
+                      </div>
+                      <div>
+                        <h4 className="pm-title">Online Payment (UPI, Cards, NetBanking)</h4>
+                        <p className="pm-desc">Google Pay, PhonePe, Paytm, Visa, MasterCard, RuPay, All Major Banks</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="pm-title">Online Payment (UPI, Cards, NetBanking)</h4>
-                      <p className="pm-desc">Google Pay, PhonePe, Paytm, Visa, MasterCard, RuPay, All Major Banks</p>
-                    </div>
+                    <span className="pm-recom-badge">
+                      <Sparkles size={12} /> RECOMMENDED
+                    </span>
                   </div>
-                  <span className="pm-recom-badge">
-                    <Sparkles size={12} /> RECOMMENDED
-                  </span>
-                </div>
 
-                <div className="pm-perks-row">
-                  <span className="perk-pill">⚡ Instant Dispatch Priority</span>
-                  <span className="perk-pill">🔒 Zero Transaction Surcharge</span>
-                  <span className="perk-pill">🛡️ Razorpay Buyer Protection</span>
+                  <div className="pm-perks-row">
+                    <span className="perk-pill">⚡ Instant Dispatch Priority</span>
+                    <span className="perk-pill">🔒 Zero Transaction Surcharge</span>
+                    <span className="perk-pill">🛡️ Razorpay Buyer Protection</span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Cash On Delivery */}
-              <div
-                className={`payment-method-card ${paymentMethod === 'cod' ? 'selected' : ''}`}
-                onClick={() => setPaymentMethod('cod')}
-              >
-                <div className="pm-top-row">
-                  <div className="pm-title-wrap">
-                    <div className={`custom-radio ${paymentMethod === 'cod' ? 'checked' : ''}`}>
-                      {paymentMethod === 'cod' && <div className="radio-inner" />}
-                    </div>
-                    <div>
-                      <h4 className="pm-title">Cash on Delivery (COD)</h4>
-                      <p className="pm-desc">Pay in cash or via UPI to the delivery executive upon arrival at your doorstep.</p>
+              {cod_enabled && (
+                <div
+                  className={`payment-method-card ${paymentMethod === 'cod' ? 'selected' : ''}`}
+                  onClick={() => setPaymentMethod('cod')}
+                >
+                  <div className="pm-top-row">
+                    <div className="pm-title-wrap">
+                      <div className={`custom-radio ${paymentMethod === 'cod' ? 'checked' : ''}`}>
+                        {paymentMethod === 'cod' && <div className="radio-inner" />}
+                      </div>
+                      <div>
+                        <h4 className="pm-title">Cash on Delivery (COD)</h4>
+                        <p className="pm-desc">Pay in cash or via UPI to the delivery executive upon arrival at your doorstep.</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="pm-perks-row">
-                  <span className="perk-pill">📦 Doorstep Verification</span>
-                  <span className="perk-pill">📱 OTP Confirmation on Delivery</span>
+                  <div className="pm-perks-row">
+                    <span className="perk-pill">📦 Doorstep Verification</span>
+                    <span className="perk-pill">📱 OTP Confirmation on Delivery</span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* WhatsApp Direct Order Option if either store is offline or payments disabled */}
+              {(!online_payments || !cod_enabled || isStoreOffline) && (
+                <div
+                  className={`payment-method-card ${paymentMethod === 'whatsapp' || isStoreOffline ? 'selected' : ''}`}
+                  onClick={() => setPaymentMethod('whatsapp')}
+                  style={{ border: '1.5px solid #25D366', background: 'rgba(37,211,102,0.05)' }}
+                >
+                  <div className="pm-top-row">
+                    <div className="pm-title-wrap">
+                      <div className={`custom-radio ${paymentMethod === 'whatsapp' || isStoreOffline ? 'checked' : ''}`} style={{ borderColor: '#25D366' }}>
+                        <div className="radio-inner" style={{ background: '#25D366' }} />
+                      </div>
+                      <div>
+                        <h4 className="pm-title" style={{ color: '#128C7E' }}>Order &amp; Inquire via WhatsApp</h4>
+                        <p className="pm-desc">Complete order via direct consultation with our atelier team on WhatsApp.</p>
+                      </div>
+                    </div>
+                    <span className="pm-recom-badge" style={{ background: '#25D366', color: 'white' }}>
+                      WHATSAPP
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -1152,12 +1276,60 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
-                  <div className="product-price-box">
+                  <div className="product-price-box" style={{ textAlign: 'right' }}>
+                    {item.mrp_price && Number(item.mrp_price) > Number(item.price) && (
+                      <del style={{ fontSize: '0.8rem', color: '#999', textDecoration: 'line-through', display: 'block' }}>
+                        {formatINR(item.mrp_price * (item.qty || 1))}
+                      </del>
+                    )}
                     <span className="item-calculated-price">{formatINR(item.price * (item.qty || 1))}</span>
+                    {(item.promo_label || (item.discount_percent && item.discount_percent > 0)) && (
+                      <span style={{ display: 'inline-block', fontSize: '0.65rem', color: '#27ae60', fontWeight: 700, background: 'rgba(39, 174, 96, 0.1)', padding: '2px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                        {item.promo_label || `${item.discount_percent}% OFF`}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Promotional Offer Automatically Claimed Banner */}
+            {totalPromoSavings > 0 && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(39, 174, 96, 0.12), rgba(46, 204, 113, 0.08))',
+                border: '1.5px solid rgba(39, 174, 96, 0.35)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                marginBottom: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.3rem' }}>🎉</span>
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e824c' }}>
+                      Promotional Offer Automatically Claimed!
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#555' }}>
+                      You saved <strong>{formatINR(totalPromoSavings)}</strong> across your selected items.
+                    </div>
+                  </div>
+                </div>
+                <span style={{
+                  background: '#27ae60',
+                  color: '#fff',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  whiteSpace: 'nowrap'
+                }}>
+                  OFFER APPLIED
+                </span>
+              </div>
+            )}
 
             {/* Privilege Coupon / Promo Section */}
             <div className="privilege-coupon-wrap">
@@ -1202,30 +1374,30 @@ const CheckoutPage = () => {
                     </button>
                   </div>
                   {couponError && <p className="coupon-err-msg">{couponError}</p>}
-
-                  {/* Quick-Click Coupons */}
-                  <div className="quick-coupon-pills">
-                    <button
-                      type="button"
-                      className="quick-code-pill"
-                      onClick={() => handleApplyCoupon('MIRAYA10')}
-                    >
-                      ✨ <strong>MIRAYA10</strong> (10% Off)
-                    </button>
-                    <button
-                      type="button"
-                      className="quick-code-pill"
-                      onClick={() => handleApplyCoupon('LUXURY500')}
-                    >
-                      👑 <strong>LUXURY500</strong> (₹500 Off)
-                    </button>
-                  </div>
                 </>
               )}
             </div>
 
             {/* Price Calculations */}
             <div className="price-breakdown-card">
+              {totalPromoSavings > 0 && (
+                <div className="breakdown-row">
+                  <span className="row-label">Total Catalog Value (MRP)</span>
+                  <span className="row-val" style={{ textDecoration: 'line-through', color: '#999' }}>
+                    {formatINR(totalMrp)}
+                  </span>
+                </div>
+              )}
+
+              {totalPromoSavings > 0 && (
+                <div className="breakdown-row discount" style={{ color: '#27ae60' }}>
+                  <span className="row-label">✨ Promotional Offer Discount</span>
+                  <span className="row-val discount-val" style={{ color: '#27ae60', fontWeight: 700 }}>
+                    −{formatINR(totalPromoSavings)}
+                  </span>
+                </div>
+              )}
+
               <div className="breakdown-row">
                 <span className="row-label">Ensemble Subtotal</span>
                 <span className="row-val">{formatINR(subtotal)}</span>
@@ -1289,12 +1461,15 @@ const CheckoutPage = () => {
               className="btn-place-luxury-order"
               onClick={handlePlaceOrderClick}
               disabled={isProcessing}
+              style={isStoreOffline || paymentMethod === 'whatsapp' || (!online_payments && !cod_enabled) ? { background: 'linear-gradient(135deg, #25D366, #128C7E)' } : {}}
             >
               <div className="btn-content">
                 <Lock size={18} />
                 <span>
                   {isProcessing
                     ? 'SECURING YOUR ORDER...'
+                    : isStoreOffline || paymentMethod === 'whatsapp' || (!online_payments && !cod_enabled)
+                    ? `ORDER VIA WHATSAPP (${formatINR(finalTotal)})`
                     : paymentMethod === 'cod'
                     ? `CONFIRM CASH ON DELIVERY (${formatINR(finalTotal)})`
                     : `PROCEED TO SECURE PAYMENT (${formatINR(finalTotal)})`}

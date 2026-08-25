@@ -5,6 +5,7 @@ import { ToastProvider } from '../context/ToastContext';
 import { LoadingProvider, useLoading } from '../context/LoadingContext';
 import { CartProvider } from '../context/CartContext';
 import { WishlistProvider } from '../context/WishlistContext';
+import { StoreSettingsProvider, useStoreSettings } from '../context/StoreSettingsContext';
 import GlobalLoadingOverlay, { TopProgressBar } from '../components/GlobalLoadingOverlay';
 import ModalScrollLockWatcher from '../components/ModalScrollLockWatcher';
 import Navbar from '../components/Navbar';
@@ -65,6 +66,41 @@ function ScrollToTopManager() {
   return null;
 }
 
+function AnnouncementBanner() {
+  const { announcement_active, announcement_text } = useStoreSettings();
+  const [dismissed, setDismissed] = React.useState(false);
+
+  if (!announcement_active || !announcement_text || dismissed) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0,
+      zIndex: 9999,
+      background: 'linear-gradient(90deg, #5e0a0b 0%, #8B1A1A 50%, #5e0a0b 100%)',
+      color: '#FAF8F5',
+      textAlign: 'center',
+      padding: '8px 48px',
+      fontSize: '13px',
+      fontFamily: 'Cormorant Garamond, serif',
+      letterSpacing: '1.5px',
+      fontWeight: 500,
+      borderBottom: '1px solid rgba(198,164,106,0.4)',
+    }}>
+      <span>{announcement_text}</span>
+      <button
+        onClick={() => setDismissed(true)}
+        style={{
+          position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+          background: 'none', border: 'none', color: 'rgba(250,248,245,0.7)',
+          cursor: 'pointer', fontSize: '16px', padding: '4px 8px', lineHeight: 1,
+        }}
+        aria-label="Dismiss"
+      >✕</button>
+    </div>
+  );
+}
+
 function AppLayoutInner({ children }) {
   const pathname = usePathname() || '/';
   const { navLoading } = useLoading();
@@ -97,6 +133,7 @@ function AppLayoutInner({ children }) {
     <ReactLenis root options={{ lerp: 0.08, duration: 1.5, smoothWheel: true }}>
       <ScrollToTopManager />
       <ModalScrollLockWatcher />
+      <AnnouncementBanner />
       <TopProgressBar active={isNavigating || navLoading} />
       <GlobalLoadingOverlay />
       <AnimatePresence>
@@ -124,14 +161,16 @@ function AppLayoutInner({ children }) {
 
 export default function Providers({ children }) {
   return (
-    <LoadingProvider>
-      <ToastProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <AppLayoutInner>{children}</AppLayoutInner>
-          </WishlistProvider>
-        </CartProvider>
-      </ToastProvider>
-    </LoadingProvider>
+    <StoreSettingsProvider>
+      <LoadingProvider>
+        <ToastProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <AppLayoutInner>{children}</AppLayoutInner>
+            </WishlistProvider>
+          </CartProvider>
+        </ToastProvider>
+      </LoadingProvider>
+    </StoreSettingsProvider>
   );
 }

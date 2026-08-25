@@ -94,7 +94,14 @@ export default function CheckoutModal({ isOpen, onClose }) {
                       Size: {item.selectedSize || item.size || 'M'}
                     </p>
                     
-                    <div className="cd-item-price">{formatINR(priceNum)}</div>
+                    <div className="cd-item-price" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>{formatINR(priceNum)}</span>
+                      {item.mrp_price && Number(item.mrp_price) > priceNum && (
+                        <del style={{ fontSize: '0.78rem', color: '#999', textDecoration: 'line-through', fontWeight: 400 }}>
+                          {formatINR(item.mrp_price)}
+                        </del>
+                      )}
+                    </div>
                     
                     <div className="cd-qty-controls">
                       <button

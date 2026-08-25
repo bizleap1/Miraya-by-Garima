@@ -4,12 +4,14 @@ import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
 import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2, Check, Trash2, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API_URL from '../config';
-import { getProductImage } from '../utils/imageHelper';
+import { getProductImage, getProductGallery } from '../utils/imageHelper';
 import ConfirmModal from '../components/ConfirmModal';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import CheckoutModal from '../components/CheckoutModal';
+import WhatsAppOrderModal from '../components/WhatsAppOrderModal';
+import { useStoreSettings } from '../context/StoreSettingsContext';
 import SEO from '../components/SEO';
 import './ProductDetailPage.css';
 
@@ -49,6 +51,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('M');
   const [confirmConfig, setConfirmConfig] = useState(null);
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutDirectItem, setCheckoutDirectItem] = useState(null);
   const [isCartHovered, setIsCartHovered] = useState(false);
@@ -57,6 +60,9 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   const { cartItems, addToCart: contextAddToCart, removeFromCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
+  const { store_online, new_orders_enabled } = useStoreSettings();
+
+  const isStoreOffline = !store_online || !new_orders_enabled;
 
   const [product, setProduct] = useState(() => {
     if (initialProduct) {
@@ -162,6 +168,10 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     const numPrice = typeof rawPrice === 'number'
       ? rawPrice
       : parseInt(String(rawPrice || 0).replace(/[^\d]/g, ''), 10);
+    const rawMrp = product.mrp_price;
+    const numMrp = rawMrp
+      ? (typeof rawMrp === 'number' ? rawMrp : parseInt(String(rawMrp).replace(/[^\d]/g, ''), 10) || null)
+      : null;
 
     const directItem = {
       id: product.id,
@@ -169,6 +179,10 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
       title: product.title || product.name || 'Outfit',
       name: product.title || product.name || 'Outfit',
       price: isNaN(numPrice) ? 0 : numPrice,
+      mrp_price: numMrp,
+      promo_label: product.promo_label,
+      discount_percent: product.discount_percent,
+      is_on_sale: product.is_on_sale || (numMrp && numMrp > numPrice),
       image: getProductImage(product.image || product.image_url || (product.images && product.images[0]) || '/products/Lehenga-Pink Blush/1.JPG'),
       selectedSize: selectedSize || (product.sizes ? product.sizes[0] : 'M'),
       size: selectedSize || (product.sizes ? product.sizes[0] : 'M'),
@@ -227,11 +241,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     setQuantity(quantity + 1);
   };
 
-  const rawList = product.images && product.images.length > 0
-    ? product.images
-    : (product.gallery || [product.image || product.image_url || '/products/Lehenga-Pink Blush/1.JPG']);
-
-  const galleryImages = rawList.map(img => getProductImage(img));
+  const galleryImages = getProductGallery(product);
 
   const currentImg = (galleryImages && galleryImages[activeImageIndex]) || '';
   const imgStr = typeof currentImg === 'string' ? currentImg : '';
@@ -246,11 +256,19 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     const numPrice = typeof rawPrice === 'number'
       ? rawPrice
       : parseInt(String(rawPrice || 0).replace(/[^\d]/g, ''), 10);
+    const rawMrp = product.mrp_price;
+    const numMrp = rawMrp
+      ? (typeof rawMrp === 'number' ? rawMrp : parseInt(String(rawMrp).replace(/[^\d]/g, ''), 10) || null)
+      : null;
 
     contextAddToCart({
       id: product.id,
       title: product.title || product.name || 'Outfit',
       price: isNaN(numPrice) ? 0 : numPrice,
+      mrp_price: numMrp,
+      promo_label: product.promo_label,
+      discount_percent: product.discount_percent,
+      is_on_sale: product.is_on_sale || (numMrp && numMrp > numPrice),
       image: product.image || product.image_url || (product.images && product.images[0]) || '/products/Lehenga-Pink Blush/1.JPG'
     }, selectedSize, quantity);
 
@@ -354,10 +372,8 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                   className="product-main-img" 
                   style={{
                     ...(imgStr.includes('Drape Saree') && !imgStr.includes('4.JPG') && !imgStr.includes('Black Color/2.JPG') ? { objectPosition: '80% center' } : {}),
-                    ...(imgStr.includes('4.JPG') ? { objectPosition: 'center 15%', transform: 'scale(1.3)' } : {}),
-                    ...(imgStr.includes('Black Color/2.JPG') ? { objectPosition: '30% center', transform: 'scale(1.15)', transformOrigin: 'left center' } : {}),
-                    ...(imgStr.includes('Lehenga-Golden/5.JPG') ? { transform: 'scale(1.1)', transformOrigin: '25% center' } : {}),
-                    ...(imgStr.includes('Rajastani-pink/DSC05133.JPG') ? { transform: 'scale(1.18) translateX(8%)', transformOrigin: 'top center' } : {})
+                    ...(imgStr.includes('4.JPG') ? { objectPosition: 'center 15%' } : {}),
+                    ...(imgStr.includes('Black Color/2.JPG') ? { objectPosition: '30% center' } : {})
                   }}
                 />
               </AnimatePresence>
@@ -372,21 +388,56 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             </div>
             
             <h1 className="product-title">{product.title || product.name}</h1>
-            <div className="product-detail-price" style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-burgundy)', fontWeight: 600, margin: '0.5rem 0 0.35rem' }}>
-              {(() => {
-                if (product.price === undefined || product.price === null || product.price === '') return '';
-                const str = String(product.price).trim();
-                if (str.startsWith('₹')) return str;
-                const num = typeof product.price === 'number' ? product.price : parseInt(str.replace(/[^\d]/g, ''), 10);
-                if (isNaN(num)) return str;
-                return `₹${num.toLocaleString('en-IN')}`;
-              })()}
-            </div>
-            
-            <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
-              <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
-              <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
-            </div>
+            {product.whatsapp_inquiry ? (
+              <div style={{ margin: '0.5rem 0 1.2rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(135deg, #e8f5e9, #f1fdf3)', border: '1px solid rgba(37,211,102,0.4)', borderRadius: '24px', padding: '8px 20px' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                  <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700, color: '#1a7a42' }}>Price on Request</span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#777', marginTop: '6px', fontFamily: 'var(--font-body)' }}>Contact us on WhatsApp to get the price for this piece.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', margin: '0.5rem 0 0.35rem' }}>
+                  <div className="product-detail-price" style={{ fontSize: '1.85rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-burgundy)', fontWeight: 700 }}>
+                    {(() => {
+                      if (product.price === undefined || product.price === null || product.price === '') return '';
+                      const str = String(product.price).trim();
+                      if (str.startsWith('₹')) return str;
+                      const num = typeof product.price === 'number' ? product.price : parseInt(str.replace(/[^\d]/g, ''), 10);
+                      if (isNaN(num)) return str;
+                      return `₹${num.toLocaleString('en-IN')}`;
+                    })()}
+                  </div>
+
+                  {product.mrp_price && Number(product.mrp_price) > Number(product.price) && (
+                    <del style={{ fontSize: '1.25rem', color: '#999', textDecoration: 'line-through', fontWeight: 500 }}>
+                      ₹{Number(product.mrp_price).toLocaleString('en-IN')}
+                    </del>
+                  )}
+
+                  {(product.is_on_sale || (product.mrp_price && Number(product.mrp_price) > Number(product.price)) || product.discount_percent) && (
+                    <span style={{
+                      background: 'linear-gradient(135deg, #27ae60, #1e824c)',
+                      color: 'white',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.5px',
+                      boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)'
+                    }}>
+                      {product.promo_label || (product.discount_percent ? `${product.discount_percent}% OFF` : 'SPECIAL SALE')}
+                    </span>
+                  )}
+                </div>
+
+                <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
+                  <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
+                  <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
+                </div>
+              </>
+            )}
             
             <div className="product-description">
               <p>
@@ -491,7 +542,27 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
               </div>
 
               <div style={{display: 'flex', gap: '1.2rem', flexWrap: 'wrap', alignItems: 'stretch', width: '100%'}}>
-                {(sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
+                {product.whatsapp_inquiry || isStoreOffline ? (
+                  <button
+                    type="button"
+                    onClick={() => setWhatsAppOpen(true)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                      background: 'linear-gradient(135deg, #25D366, #1aab55)',
+                      color: 'white', border: 'none', borderRadius: '6px',
+                      padding: '14px 28px', fontSize: '0.95rem',
+                      fontFamily: 'var(--font-body)', fontWeight: 700,
+                      letterSpacing: '0.5px', flex: 1, minWidth: '200px',
+                      cursor: 'pointer', boxShadow: '0 4px 16px rgba(37,211,102,0.35)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(37,211,102,0.5)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.35)'; }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                    {product.whatsapp_inquiry ? "Ask Price on WhatsApp" : "Order via WhatsApp"}
+                  </button>
+                ) : (sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
                   <button className="inquire-btn-new" disabled style={{background: '#e74c3c', color: 'white', flex: 1, minWidth: '150px', cursor: 'not-allowed', whiteSpace: 'nowrap', margin: 0, fontWeight: 700, letterSpacing: '1px'}}>
                     OUT OF STOCK ({selectedSize})
                   </button>
@@ -505,9 +576,15 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                       onMouseLeave={() => setIsCartHovered(false)}
                       style={{
                         background: isItemInCart 
-                          ? (isCartHovered ? '#c0392b' : '#1e824c') 
+                          ? (isCartHovered ? '#c0392b' : '#F5EFE6') 
                           : 'var(--primary-burgundy)',
-                        color: 'white',
+                        color: isItemInCart 
+                          ? (isCartHovered ? '#ffffff' : 'var(--primary-burgundy, #5e0a0b)') 
+                          : 'white',
+                        border: isItemInCart
+                          ? (isCartHovered ? '1.5px solid #c0392b' : '1.5px solid #c6a46a')
+                          : '1.5px solid var(--primary-burgundy)',
+                        fontWeight: 700,
                         flex: 1,
                         minWidth: '160px',
                         whiteSpace: 'nowrap',
@@ -518,7 +595,9 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                         gap: '6px',
                         transition: 'all 0.25s ease',
                         cursor: 'pointer',
-                        boxShadow: isItemInCart && isCartHovered ? '0 4px 15px rgba(192, 57, 43, 0.35)' : 'none'
+                        boxShadow: isItemInCart 
+                          ? (isCartHovered ? '0 4px 15px rgba(192, 57, 43, 0.35)' : '0 2px 8px rgba(198, 164, 106, 0.25)') 
+                          : 'none'
                       }}
                       title={isItemInCart ? (isCartHovered ? "Click to remove from cart" : "In your shopping bag") : "Add to shopping bag"}
                     >
@@ -567,6 +646,14 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                 </button>
               </div>
             </div>
+
+            {/* WhatsApp Inquiry Modal */}
+            <WhatsAppOrderModal
+              isOpen={whatsAppOpen}
+              onClose={() => setWhatsAppOpen(false)}
+              product={product}
+              selectedSize={selectedSize}
+            />
 
             <div className="trust-badges">
               <div className="badge">

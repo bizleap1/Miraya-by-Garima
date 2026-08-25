@@ -3,6 +3,13 @@ import { productsData, getProductById as getStaticProductById } from '../data/pr
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 function formatApiProduct(data, categoryParam) {
+  let images = Array.isArray(data.images) && data.images.length > 0 ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
+  const primary = data.image_url || data.image || images[0];
+  if (primary && primary.includes('/products/') && (primary.endsWith('/1.JPG') || primary.endsWith('/1.jpg')) && images.length === 1) {
+    const basePath = primary.substring(0, primary.lastIndexOf('/'));
+    images = [1, 2, 3, 4, 5].map(n => `${basePath}/${n}.JPG`);
+  }
+
   return {
     id: data.id,
     name: data.name || data.title || 'Haute Couture Garment',
@@ -11,8 +18,8 @@ function formatApiProduct(data, categoryParam) {
     rawPrice: typeof data.price === 'number' ? data.price : parseFloat(String(data.price).replace(/[^0-9.]/g, '') || 0),
     category: data.category?.slug || data.category?.name || data.category || categoryParam || 'indo-western',
     description: data.description || 'Handcrafted Haute Couture ensemble designed with artisanal precision by Miraya by Garima Nagpur.',
-    image: data.image_url || data.image || (data.images && data.images[0]) || '/products/Lehenga-Pink%20Blush/1.JPG',
-    images: data.images?.length ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'],
+    image: primary,
+    images: images,
     sizes: data.sizes?.length ? data.sizes : ['S', 'M', 'L', 'XL'],
     fabric: data.fabric || 'Pure Silk, Georgette & Organza Blend',
     color: data.color || 'Artisanal Palette',

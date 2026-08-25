@@ -19,11 +19,17 @@ const AboutPage = () => {
         keywords="About Miraya by Garima, Designer Garima Nagpur, Couture Atelier Nagpur, Indian Fashion Heritage"
       />
       <motion.div 
-        className="about-page-header"
+        className="about-page-header-wrapper"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
       >
+        <img
+          src="/infobg.png"
+          alt="Discover Miraya - A Legacy of Craftsmanship & Modern Elegance"
+          className="about-page-banner-img"
+          loading="eager"
+        />
       </motion.div>
       <About />
       <BrandVoice />

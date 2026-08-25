@@ -34,6 +34,8 @@ import {
   Loader2,
   Crown,
   ArrowRight,
+  SlidersHorizontal,
+  Percent,
 } from "lucide-react";
 
 import API_URL from "../config";
@@ -45,6 +47,8 @@ import AdminCustomersSection from "../components/admin/AdminCustomersSection";
 import AdminCategoriesSection from "../components/admin/AdminCategoriesSection";
 import AdminCouponsSection from "../components/admin/AdminCouponsSection";
 import AdminCancellationsSection from "../components/admin/AdminCancellationsSection";
+import AdminStoreSettingsSection from "../components/admin/AdminStoreSettingsSection";
+import AdminPromotionsSection from "../components/admin/AdminPromotionsSection";
 import { exportStoreAuditPDF } from "../utils/pdfExportHelper";
 import "./AdminDashboard.css";
 
@@ -59,6 +63,8 @@ const menuItems = [
   { id: "customers", label: "Customers", icon: Users },
   { id: "categories", label: "Categories", icon: Layers3 },
   { id: "coupons", label: "Coupons", icon: Tag },
+  { id: "promotions", label: "Promotions & Pricing", icon: Percent },
+  { id: "settings", label: "Store Settings", icon: SlidersHorizontal },
 ];
 
 const money = (value = 0) =>
@@ -1391,6 +1397,19 @@ export default function AdminDashboard() {
               API_BASE_URL={API}
               onRefresh={loadDashboard}
             />
+          )}
+
+          {activeTab === "promotions" && (
+            <AdminPromotionsSection
+              products={products}
+              categories={categories}
+              token={token}
+              onRefresh={loadDashboard}
+            />
+          )}
+
+          {activeTab === "settings" && (
+            <AdminStoreSettingsSection />
           )}
         </section>
       </main>

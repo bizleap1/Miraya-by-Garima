@@ -9,9 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(248, 245, 240, 0.6); /* Transparent cream */
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: #FAF8F5; /* Solid elegant cream */
   pointer-events: all;
   user-select: none;
 }
@@ -21,36 +19,55 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
 }
 
 .luxury-loading-logo {
-  height: 60px;
+  height: 120px;
   width: auto;
   object-fit: contain;
-  /* Smooth continuous rotation */
-  animation: logoSpin 3s linear infinite;
-  filter: drop-shadow(0 4px 12px rgba(198, 164, 106, 0.4));
+  /* Removed spinning, made it stable and bigger */
+  filter: drop-shadow(0 4px 15px rgba(198, 164, 106, 0.15));
+  margin-bottom: 30px;
 }
 
-@keyframes logoSpin {
-  0% { transform: rotateY(0deg); }
-  50% { transform: rotateY(180deg); }
-  100% { transform: rotateY(360deg); }
+.loading-line-wrapper {
+  width: 140px;
+  height: 2px;
+  background: rgba(198, 164, 106, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.loading-line-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: #c6a46a;
+  border-radius: 2px;
+  animation: slideLine 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes slideLine {
+  0% { transform: translateX(-20%); }
+  100% { transform: translateX(250%); }
 }
 
 .luxury-loading-message {
   font-family: var(--font-heading, 'Playfair Display', serif);
   font-size: 0.95rem;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   color: var(--primary-burgundy, #5e0a0b);
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   animation: textPulse 2s ease-in-out infinite;
 }
 
 @keyframes textPulse {
-  0%, 100% { opacity: 0.7; }
+  0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
 

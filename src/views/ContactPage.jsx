@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Clock, User, Mail, PenLine, MessageSquare, Calendar, Navigation, ExternalLink } from 'lucide-react';
+import { useStoreSettings } from '../context/StoreSettingsContext';
 import SEO from '../components/SEO';
 import './ContactPage.css';
 
@@ -46,6 +47,8 @@ const contactSchema = {
 };
 
 const ContactPage = () => {
+  const { support_phone, support_email, atelier_address, google_review_url } = useStoreSettings();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -148,11 +151,9 @@ const ContactPage = () => {
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <h3 className="info-title">FLAGSHIP STORE</h3>
+                    <h3 className="info-title">FLAGSHIP ATELIER</h3>
                     <address className="info-text">
-                      Shop no. UG/5, Jagat Plaza,<br />
-                      Mouze Pandharabodi, Law College Square,<br />
-                      Amravati Rd, Nagpur, Maharashtra 440033
+                      {atelier_address || "Shop no. UG/5, Jagat Plaza, Mouze Pandharabodi, Law College Square, Amravati Rd, Nagpur, Maharashtra 440033"}
                     </address>
                   </div>
                 </div>
@@ -164,8 +165,8 @@ const ContactPage = () => {
                   <div>
                     <h3 className="info-title">CONTACT DETAILS</h3>
                     <p className="info-text">
-                      <a href="mailto:mirayaofficial.in@gmail.com">mirayaofficial.in@gmail.com</a><br />
-                      <a href="tel:+919271218156" style={{ color: 'inherit', textDecoration: 'none' }}>+91 92712 18156</a>
+                      <a href={`mailto:${support_email || "mirayaofficial.in@gmail.com"}`}>{support_email || "mirayaofficial.in@gmail.com"}</a><br />
+                      <a href={`tel:${(support_phone || "+919271218156").replace(/\s/g, "")}`} style={{ color: 'inherit', textDecoration: 'none' }}>{support_phone || "+91 92712 18156"}</a>
                     </p>
                   </div>
                 </div>

@@ -23,13 +23,18 @@ export const GlobalLoadingOverlay = () => {
             exit={{ scale: 0.95, opacity: 0, y: -5 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Spinning Logo */}
+            {/* Stable Logo */}
             <img
               src="/logo.png"
               alt="Loading"
               className="luxury-loading-logo"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
+            
+            {/* Loading effect line */}
+            <div className="loading-line-wrapper">
+              <div className="loading-line-inner"></div>
+            </div>
 
             {/* Dynamic Message */}
             <p className="luxury-loading-message">
