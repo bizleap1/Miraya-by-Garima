@@ -72,7 +72,40 @@ export function useLocation() {
 
 export function useParams() {
   const params = useNextParams();
-  return params || {};
+  const pathname = usePathname() || '';
+  const result = { ...(params || {}) };
+
+  // If slug is present (e.g. array [...slug])
+  if (result.slug) {
+    if (Array.isArray(result.slug)) {
+      if (result.slug.length === 1) {
+        if (!result.id) result.id = result.slug[0];
+      } else if (result.slug.length >= 2) {
+        if (!result.category) result.category = result.slug[0];
+        if (!result.id) result.id = result.slug[result.slug.length - 1];
+      }
+    } else if (typeof result.slug === 'string') {
+      if (!result.id) result.id = result.slug;
+    }
+  }
+
+  // Fallback to pathname parsing if parameters are missing
+  if (typeof pathname === 'string') {
+    if (pathname.startsWith('/product/')) {
+      const parts = pathname.replace(/^\/product\/?/, '').split('/').filter(Boolean);
+      if (parts.length === 1) {
+        if (!result.id) result.id = decodeURIComponent(parts[0]);
+      } else if (parts.length >= 2) {
+        if (!result.category) result.category = decodeURIComponent(parts[0]);
+        if (!result.id) result.id = decodeURIComponent(parts[parts.length - 1]);
+      }
+    } else if (pathname.startsWith('/collection/')) {
+      const cat = pathname.replace(/^\/collection\/?/, '').split('/')[0];
+      if (cat && !result.category) result.category = decodeURIComponent(cat);
+    }
+  }
+
+  return result;
 }
 
 export function useNavigationType() {

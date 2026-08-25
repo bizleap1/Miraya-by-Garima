@@ -1,59 +1,83 @@
-import { productsData } from '../data/products';
+import { productsData, getProductById as getStaticProductById } from '../data/products';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
+function formatApiProduct(data, categoryParam) {
+  return {
+    id: data.id,
+    name: data.name || data.title || 'Haute Couture Garment',
+    title: data.name || data.title || 'Haute Couture Garment',
+    price: typeof data.price === 'number' ? `₹${data.price.toLocaleString('en-IN')}` : data.price,
+    rawPrice: typeof data.price === 'number' ? data.price : parseFloat(String(data.price).replace(/[^0-9.]/g, '') || 0),
+    category: data.category?.slug || data.category?.name || data.category || categoryParam || 'indo-western',
+    description: data.description || 'Handcrafted Haute Couture ensemble designed with artisanal precision by Miraya by Garima Nagpur.',
+    image: data.image_url || data.image || (data.images && data.images[0]) || '/products/Lehenga-Pink%20Blush/1.JPG',
+    images: data.images?.length ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'],
+    sizes: data.sizes?.length ? data.sizes : ['S', 'M', 'L', 'XL'],
+    fabric: data.fabric || 'Pure Silk, Georgette & Organza Blend',
+    color: data.color || 'Artisanal Palette',
+    wash_care: data.wash_care || 'Professional Dry Clean Only',
+    craftsmanship: data.craftsmanship || 'Handcrafted Zari, Sequins & Thread Embroidery',
+    inStock: (data.stock ?? 1) > 0,
+    stock: data.stock ?? 10,
+  };
+}
 
 /**
  * Fetch a single product for Server-Side Rendering (SSR)
  */
 export async function getProductById(id, categoryParam) {
+  if (!id) return null;
+  const cleanId = String(id).trim();
+
   // 1. Try fetching from Backend API
   try {
-    const res = await fetch(`${API_BASE}/api/products/${id}`, {
+    const res = await fetch(`${API_BASE}/api/products/${cleanId}`, {
       next: { revalidate: 60 }, // ISR cache revalidation every 60 seconds
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.id) {
-        return {
-          id: data.id,
-          name: data.name || data.title || 'Haute Couture Garment',
-          title: data.name || data.title || 'Haute Couture Garment',
-          price: typeof data.price === 'number' ? `₹${data.price.toLocaleString('en-IN')}` : data.price,
-          rawPrice: typeof data.price === 'number' ? data.price : parseFloat(String(data.price).replace(/[^0-9.]/g, '') || 0),
-          category: data.category?.name || data.category || categoryParam || 'couture',
-          description: data.description || 'Handcrafted Haute Couture ensemble designed with artisanal precision by Miraya by Garima Nagpur.',
-          image: data.image_url || data.image || (data.images && data.images[0]) || '/products/Lehenga-Pink%20Blush/1.JPG',
-          images: data.images?.length ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'],
-          sizes: data.sizes?.length ? data.sizes : ['S', 'M', 'L', 'XL'],
-          fabric: data.fabric || 'Pure Silk, Georgette & Organza Blend',
-          color: data.color || 'Artisanal Palette',
-          wash_care: data.wash_care || 'Professional Dry Clean Only',
-          craftsmanship: data.craftsmanship || 'Handcrafted Zari, Sequins & Thread Embroidery',
-          inStock: (data.stock ?? 1) > 0,
-          stock: data.stock ?? 10,
-        };
+      if (data && (data.id || data.name || data.title)) {
+        return formatApiProduct(data, categoryParam);
       }
     }
   } catch (e) {
-    console.warn(`[SSR Catalog] API fetch failed for product ${id}, falling back to static catalog.`, e.message);
+    // API is offline or unreachable - fallback to static
   }
 
-  // 2. Fallback to static catalog dataset
-  const catKeys = categoryParam ? [categoryParam, ...Object.keys(productsData)] : Object.keys(productsData);
-  for (const cat of catKeys) {
-    const list = productsData[cat] || [];
-    const found = list.find((p) => String(p.id) === String(id));
-    if (found) {
-      const rawPrice = parseFloat(String(found.price).replace(/[^0-9.]/g, '') || 0);
-      return {
-        ...found,
-        name: found.title || 'Haute Couture Garment',
-        rawPrice,
-        description: found.description || `Handcrafted ${found.title} in ${found.fabric || 'pure luxury fabric'} with ${found.craftsmanship || 'bespoke detailing'} by Miraya by Garima.`,
-        inStock: true,
-        stock: 5,
-      };
+  // 1b. If cleanId contains category prefix (e.g. "indo-western-iw-1"), try stripped ID on backend
+  if (cleanId.includes('-')) {
+    const parts = cleanId.split('-');
+    const strippedId = parts.slice(-2).join('-');
+    if (strippedId && strippedId !== cleanId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/products/${strippedId}`, {
+          next: { revalidate: 60 },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && (data.id || data.name || data.title)) {
+            return formatApiProduct(data, categoryParam);
+          }
+        }
+      } catch (e) {}
     }
+  }
+
+  // 2. Fallback to static catalog dataset using robust lookup
+  const found = getStaticProductById(cleanId, categoryParam);
+  if (found) {
+    const rawPrice = typeof found.price === 'number'
+      ? found.price
+      : parseFloat(String(found.price).replace(/[^0-9.]/g, '') || 0);
+    return {
+      ...found,
+      name: found.title || found.name || 'Haute Couture Garment',
+      rawPrice,
+      description: found.description || `Handcrafted ${found.title} in ${found.fabric || 'pure luxury fabric'} with ${found.craftsmanship || 'bespoke detailing'} by Miraya by Garima.`,
+      inStock: true,
+      stock: 5,
+    };
   }
 
   return null;

@@ -12,10 +12,37 @@ import CheckoutModal from '../components/CheckoutModal';
 import SEO from '../components/SEO';
 import './ProductDetailPage.css';
 
-const ProductDetailPage = () => {
-  const { category, id } = useParams();
+const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
+  const params = useParams();
   const location = useLocation();
-  const initialProduct = location.state?.product || null;
+  const initialProduct = ssrProduct || location.state?.product || null;
+
+  // Robust parameter extraction supporting both /product/:category/:id and /product/:id or [...slug]
+  let category = params?.category;
+  let id = params?.id;
+
+  if (!id && params?.slug) {
+    if (Array.isArray(params.slug)) {
+      if (params.slug.length === 1) {
+        id = params.slug[0];
+      } else if (params.slug.length >= 2) {
+        category = params.slug[0];
+        id = params.slug[params.slug.length - 1];
+      }
+    } else if (typeof params.slug === 'string') {
+      id = params.slug;
+    }
+  }
+
+  if (!id && typeof window !== 'undefined' && window.location.pathname) {
+    const parts = window.location.pathname.replace(/^\/product\/?/, '').split('/').filter(Boolean);
+    if (parts.length === 1) {
+      id = decodeURIComponent(parts[0]);
+    } else if (parts.length >= 2) {
+      if (!category) category = decodeURIComponent(parts[0]);
+      id = decodeURIComponent(parts[parts.length - 1]);
+    }
+  }
 
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -36,7 +63,19 @@ const ProductDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
+    // If product is already provided via SSR, only update if id changed
+    if (initialProduct && (initialProduct.id === id || String(initialProduct.id).endsWith(String(id)))) {
+      setProduct(initialProduct);
+      setLoading(false);
+      return;
+    }
+
     const fetchProduct = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
       let fetched = false;
       try {
         const res = await fetch(`${API_URL}/api/products/${id}`);
@@ -47,21 +86,20 @@ const ProductDetailPage = () => {
             id: data.id,
             title: data.name || data.title || 'Outfit',
             price: data.price,
-            category: data.category?.name || data.category || category,
+            category: data.category?.slug || data.category?.name || data.category || category,
             image: data.image_url || data.image || (data.images && data.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
             images: data.images?.length ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink Blush/1.JPG']
           });
           fetched = true;
         }
       } catch (error) {
-        console.error("Failed to fetch product from API:", error);
+        // Silently fall back to local dataset
       }
 
       if (!fetched) {
         try {
-          const { getProductById, getAllProducts } = await import('../data/products');
-          const localProd = getProductById(`${category}-${id}`) ||
-            getAllProducts().find(p => String(p.id) === String(id) || String(p.id) === `${category}-${id}` || String(id).endsWith(String(p.id)));
+          const { getProductById } = await import('../data/products');
+          const localProd = getProductById(id, category);
           if (localProd) {
             setProduct(localProd);
           }
@@ -72,7 +110,7 @@ const ProductDetailPage = () => {
       setLoading(false);
     };
     fetchProduct();
-  }, [category, id]);
+  }, [category, id, initialProduct]);
 
   const buyNow = () => {
     if (!product) return;

@@ -440,7 +440,58 @@ export const getAllProducts = () => {
   ];
 };
 
-export const getProductById = (uniqueId) => {
+export const getProductById = (uniqueId, category) => {
+  if (!uniqueId) return null;
   const allProducts = getAllProducts();
-  return allProducts.find(product => `${product.category}-${product.id}` === uniqueId || product.id === uniqueId);
+  const rawId = String(uniqueId).trim();
+  const lowerId = rawId.toLowerCase();
+  const cleanCat = category ? String(category).toLowerCase().trim() : null;
+
+  // 1. Direct ID match (e.g. "iw-1", "ds-1", "coord-1")
+  let found = allProducts.find(p => String(p.id).toLowerCase() === lowerId);
+  if (found) return found;
+
+  // 2. Composite ID match (e.g., "indo-western-iw-1")
+  found = allProducts.find(p => `${String(p.category).toLowerCase()}-${String(p.id).toLowerCase()}` === lowerId);
+  if (found) return found;
+
+  // 3. Suffix match (e.g. "indo-western-iw-1" ends with "-iw-1" or "iw-1")
+  found = allProducts.find(p => {
+    const pId = String(p.id).toLowerCase();
+    return lowerId.endsWith(`-${pId}`) || lowerId.endsWith(pId) || pId.endsWith(lowerId);
+  });
+  if (found) return found;
+
+  // 4. Normalized category composite
+  found = allProducts.find(p => {
+    const normP = String(p.category).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normId = lowerId.replace(/[^a-z0-9]/g, '');
+    return normId.includes(normP) && normId.includes(String(p.id).toLowerCase().replace(/[^a-z0-9]/g, ''));
+  });
+  if (found) return found;
+
+  // 5. Category-scoped search if category provided
+  if (cleanCat) {
+    const normCat = cleanCat.replace(/[^a-z0-9]/g, '');
+    const filtered = allProducts.filter(p => {
+      const pNorm = String(p.category).toLowerCase().replace(/[^a-z0-9]/g, '');
+      return pNorm.includes(normCat) || normCat.includes(pNorm);
+    });
+    found = filtered.find(p => {
+      const pId = String(p.id).toLowerCase();
+      return lowerId.includes(pId) || pId.includes(lowerId);
+    });
+    if (found) return found;
+  }
+
+  // 6. Title or slug match
+  found = allProducts.find(p => {
+    if (!p.title) return false;
+    const titleSlug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const idSlug = lowerId.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return p.title.toLowerCase() === lowerId || titleSlug === idSlug;
+  });
+  if (found) return found;
+
+  return null;
 };

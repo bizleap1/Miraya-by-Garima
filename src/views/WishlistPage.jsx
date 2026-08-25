@@ -20,7 +20,7 @@ const resolveProductLink = (item) => {
     else if (prefix === 'ds') cat = 'drape-sarees';
     else if (prefix === 'suit') cat = 'designer-suits';
     else if (prefix === 'psm') cat = 'premium-suit-materials';
-    else if (prefix === 'cs') cat = 'coord-sets';
+    else if (prefix === 'cs' || prefix === 'coord') cat = 'coord-sets';
   } else if (!item.category && item.sub_category) {
     cat = item.sub_category.toLowerCase().replace(/\s+/g, '-');
   }

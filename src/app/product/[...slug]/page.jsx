@@ -1,9 +1,25 @@
-import { getProductById } from '../../../../lib/catalog';
-import ProductDetailPage from '../../../../views/ProductDetailPage';
+import { getProductById } from '../../../lib/catalog';
+import ProductDetailPage from '../../../views/ProductDetailPage';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }) {
-  const { category, id } = await params;
+  const resolved = await params;
+  const slug = resolved?.slug || [];
+  
+  let category = null;
+  let id = null;
+
+  if (Array.isArray(slug)) {
+    if (slug.length === 1) {
+      id = slug[0];
+    } else if (slug.length >= 2) {
+      category = slug[0];
+      id = slug[slug.length - 1];
+    }
+  } else if (typeof slug === 'string') {
+    id = slug;
+  }
+
   const product = await getProductById(id, category);
 
   if (!product) {
@@ -13,14 +29,15 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const title = `${product.name} | Designer ${product.category} | Miraya by Garima Nagpur`;
+  const cat = product.category || category || 'indo-western';
+  const title = `${product.name} | Designer ${cat} | Miraya by Garima Nagpur`;
   const description = `${product.description} Handcrafted luxury couture piece priced at ${product.price}. Available at Miraya by Garima, Law College Square, Nagpur.`;
   const primaryImage = product.images?.[0] || product.image || '/products/Lehenga-Pink%20Blush/1.JPG';
   const fullImageUrl = primaryImage.startsWith('http')
     ? primaryImage
     : `https://www.mirayabygarima.com${primaryImage}`;
 
-  const canonicalUrl = `https://www.mirayabygarima.com/product/${category}/${id}`;
+  const canonicalUrl = `https://www.mirayabygarima.com/product/${cat}/${product.id}`;
 
   return {
     title,
@@ -53,13 +70,30 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductPage({ params }) {
-  const { category, id } = await params;
+  const resolved = await params;
+  const slug = resolved?.slug || [];
+  
+  let category = null;
+  let id = null;
+
+  if (Array.isArray(slug)) {
+    if (slug.length === 1) {
+      id = slug[0];
+    } else if (slug.length >= 2) {
+      category = slug[0];
+      id = slug[slug.length - 1];
+    }
+  } else if (typeof slug === 'string') {
+    id = slug;
+  }
+
   const product = await getProductById(id, category);
 
   if (!product) {
     notFound();
   }
 
+  const cat = product.category || category || 'indo-western';
   const primaryImage = product.images?.[0] || product.image || '/products/Lehenga-Pink%20Blush/1.JPG';
   const fullImageUrl = primaryImage.startsWith('http')
     ? primaryImage
@@ -81,7 +115,7 @@ export default async function ProductPage({ params }) {
     },
     offers: {
       '@type': 'Offer',
-      url: `https://www.mirayabygarima.com/product/${category}/${id}`,
+      url: `https://www.mirayabygarima.com/product/${cat}/${product.id}`,
       priceCurrency: 'INR',
       price: product.rawPrice || 15000,
       priceValidUntil: '2028-12-31',
@@ -113,14 +147,14 @@ export default async function ProductPage({ params }) {
       {
         '@type': 'ListItem',
         position: 2,
-        name: (product.category || category || 'Couture').toUpperCase(),
-        item: `https://www.mirayabygarima.com/collection/${category}`,
+        name: (product.category || cat || 'Couture').toUpperCase(),
+        item: `https://www.mirayabygarima.com/collection/${cat}`,
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: product.name,
-        item: `https://www.mirayabygarima.com/product/${category}/${id}`,
+        item: `https://www.mirayabygarima.com/product/${cat}/${product.id}`,
       },
     ],
   };
@@ -148,7 +182,7 @@ export default async function ProductPage({ params }) {
       </div>
 
       {/* Interactive Client Product Page */}
-      <ProductDetailPage />
+      <ProductDetailPage initialProduct={product} />
     </>
   );
 }

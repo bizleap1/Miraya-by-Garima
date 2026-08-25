@@ -219,7 +219,7 @@ const CategoryPage = () => {
           if (fallback.length === 0 && (category === 'coord-sets' || category === 'kurtis')) {
             fallback = productsData['coord-sets'] || [];
           }
-          setSamples(fallback.map(item => ({ ...item, id: String(item.id).includes('-') ? item.id : `${item.category}-${item.id}` })));
+          setSamples(fallback.map(item => ({ ...item, id: item.id })));
         }
       } catch (err) {
         console.error("Failed to fetch category products", err);
@@ -233,7 +233,7 @@ const CategoryPage = () => {
         }
         const mappedData = data.map(item => ({
           ...item,
-          id: `${item.category}-${item.id}`
+          id: item.id
         }));
         setSamples(mappedData);
       }

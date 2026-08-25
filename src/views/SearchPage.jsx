@@ -15,17 +15,38 @@ const SearchPage = () => {
     const fetchResults = async () => {
       if (query) {
         setLoading(true);
+        let found = false;
         try {
           const res = await fetch(`${API_URL}/api/products?search=${encodeURIComponent(query)}`);
           if (res.ok) {
             const data = await res.json();
-            setResults(data);
+            if (Array.isArray(data) && data.length > 0) {
+              setResults(data);
+              found = true;
+            }
           }
         } catch (error) {
-          console.error("Search fetch failed:", error);
-        } finally {
-          setLoading(false);
+          // Fall back to local search
         }
+
+        if (!found) {
+          try {
+            const { getAllProducts } = await import('../data/products');
+            const allProds = getAllProducts();
+            const q = query.toLowerCase().trim();
+            const localResults = allProds.filter(p => 
+              (p.title && p.title.toLowerCase().includes(q)) ||
+              (p.category && p.category.toLowerCase().includes(q)) ||
+              (p.fabric && p.fabric.toLowerCase().includes(q)) ||
+              (p.color && p.color.toLowerCase().includes(q)) ||
+              (p.craftsmanship && p.craftsmanship.toLowerCase().includes(q))
+            );
+            setResults(localResults);
+          } catch (e) {
+            console.error("Local search fallback error:", e);
+          }
+        }
+        setLoading(false);
       } else {
         setResults([]);
       }
