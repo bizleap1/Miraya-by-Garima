@@ -38,17 +38,10 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     if (!token) {
-      if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-        const adminUser = await prisma.user.findFirst({ where: { role: { in: ['admin', 'super_admin'] } } });
-        if (adminUser) {
-          req.user = adminUser;
-          return next();
-        }
-      }
       return res.status(401).json({
         success: false,
         code: 'NO_TOKEN',
-        message: 'Unauthorized: No authentication token provided',
+        message: 'Unauthorized: Please sign in or create an account to proceed.',
       });
     }
 
@@ -57,14 +50,18 @@ export const authMiddleware = async (req, res, next) => {
     try {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (jwtErr) {
-      if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-        const adminUser = await prisma.user.findFirst({ where: { role: { in: ['admin', 'super_admin'] } } });
-        if (adminUser) {
-          req.user = adminUser;
-          return next();
-        }
+      if (jwtErr.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          code: 'TOKEN_EXPIRED',
+          message: 'Unauthorized: Session expired. Please log in again.',
+        });
       }
-      throw jwtErr;
+      return res.status(401).json({
+        success: false,
+        code: 'INVALID_TOKEN',
+        message: 'Unauthorized: Invalid authentication token. Please log in.',
+      });
     }
 
     const user = await prisma.user.findUnique({
@@ -73,17 +70,10 @@ export const authMiddleware = async (req, res, next) => {
     });
 
     if (!user) {
-      if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-        const adminUser = await prisma.user.findFirst({ where: { role: { in: ['admin', 'super_admin'] } } });
-        if (adminUser) {
-          req.user = adminUser;
-          return next();
-        }
-      }
       return res.status(401).json({
         success: false,
         code: 'USER_NOT_FOUND',
-        message: 'Unauthorized: User account not found',
+        message: 'Unauthorized: User account not found. Please log in again.',
       });
     }
 

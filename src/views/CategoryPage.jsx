@@ -1,8 +1,8 @@
 'use client';
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ChevronDown, ChevronUp, LayoutGrid, List, RefreshCw, ShoppingBag, Sparkles, Gem, Shirt, ArrowRight, Layers, X, Check } from 'lucide-react';
+import { Heart, ChevronDown, ChevronUp, LayoutGrid, List, RefreshCw, ShoppingBag, Sparkles, Gem, Shirt, ArrowRight, Layers, X, Check, Trash2 } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import CheckoutModal from '../components/CheckoutModal';
@@ -24,7 +24,8 @@ const Ornament = () => (
 
 const CornerOrnament = ({ className }) => (
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className={className}>
-    <path d="M0 20 Q 20 20 20 0 M20 40 Q 20 20 40 20" stroke="#c6a46a" strokeWidth="1" />
+    <path d="M0 0 H40 V4 H4 V40 H0 Z" fill="#C6A46A" fillOpacity="0.4" />
+    <path d="M6 6 H34 V8 H8 V34 H6 Z" fill="#C6A46A" fillOpacity="0.2" />
   </svg>
 );
 
@@ -41,9 +42,12 @@ const CategoryPage = () => {
   const { category } = useParams();
   const location = useLocation();
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const { addToCart } = useCart();
+  const { cartItems, addToCart, removeFromCart } = useCart();
   
+  const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState(location.state?.filters || []);
+  const [categoryFilterOpen, setCategoryFilterOpen] = useState(true);
+  const [hoveredCartCardId, setHoveredCartCardId] = useState(null);
   
   const displayTitle = category === 'all'
     ? 'All Collections'
@@ -84,15 +88,27 @@ const CategoryPage = () => {
   const [selectedBuySize, setSelectedBuySize] = useState('M');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutDirectItem, setCheckoutDirectItem] = useState(null);
-  const [categoryFilterOpen, setCategoryFilterOpen] = useState(true);
+
+  const handleToggleCartItem = (item) => {
+    const chosenSize = item.sizes && item.sizes.length > 0
+      ? item.sizes[0]
+      : (item.category === 'drape-sarees' || item.category === 'premium-suit-materials' ? 'Free Size' : 'M');
+
+    const inCart = cartItems.some(ci => String(ci.id) === String(item.id) || ci.productId === item.id);
+    if (inCart) {
+      removeFromCart(item.id, chosenSize);
+      showToast(`Removed from cart`);
+    } else {
+      addToCart(item, chosenSize, 1);
+      showToast(`Added to cart!`);
+    }
+  };
 
   const handleBuyNowClick = (product) => {
-    let availableSizes = ['S', 'M', 'L', 'XL'];
-    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
-      availableSizes = product.sizes;
-    }
-    setSelectedBuySize(availableSizes[0] || 'M');
-    setSizeModalProduct(product);
+    const prodCat = product.category || category || 'indo-western';
+    navigate(`/product/${prodCat}/${product.id}`, {
+      state: { product, from: `/collection/${category}`, filters: selectedCategories }
+    });
   };
 
   const handleProceedToPayment = () => {
@@ -251,9 +267,11 @@ const CategoryPage = () => {
       const element = document.getElementById(id);
       if (element) {
         element.scrollIntoView({ behavior: 'instant', block: 'center' });
+        return;
       }
     }
-  }, [location.hash, samples]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.hash, samples, category]);
 
   const handleWishlistToggle = (item, e) => {
     e.preventDefault();
@@ -574,30 +592,56 @@ const CategoryPage = () => {
                         </span>
                       ) : (
                         <>
-                          <button
-                            type="button"
+                          <Link
+                            to={`/product/${item.category || category}/${item.id}`}
+                            state={{ product: item, from: `/collection/${category}`, filters: selectedCategories }}
                             className="buy-now-card-btn"
                             onClick={(e) => {
-                              e.preventDefault();
                               e.stopPropagation();
-                              handleBuyNowClick(item);
                             }}
                           >
                             BUY NOW <ArrowRight size={13} className="ml-1" />
-                          </button>
-                          <button 
-                            type="button"
-                            className="add-to-cart-card-btn"
-                            title="Add to Cart"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              addToCart(item, item.sizes ? item.sizes[0] : 'M', 1);
-                              showToast('Added to cart!');
-                            }}
-                          >
-                            <ShoppingBag size={13} /> ADD TO CART
-                          </button>
+                          </Link>
+                          {(() => {
+                            const inCart = cartItems.some(ci => String(ci.id) === String(item.id) || ci.productId === item.id);
+                            const isHovered = hoveredCartCardId === item.id;
+                            return (
+                              <button 
+                                type="button"
+                                className={`add-to-cart-card-btn ${inCart ? 'added' : ''}`}
+                                title={inCart ? (isHovered ? "Click to remove from cart" : "In cart") : "Add to Cart"}
+                                onMouseEnter={() => setHoveredCartCardId(item.id)}
+                                onMouseLeave={() => setHoveredCartCardId(null)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleToggleCartItem(item);
+                                }}
+                                style={{
+                                  background: inCart ? (isHovered ? '#c0392b' : '#1e824c') : undefined,
+                                  borderColor: inCart ? (isHovered ? '#c0392b' : '#1e824c') : undefined,
+                                  color: inCart ? '#ffffff' : undefined,
+                                  transition: 'all 0.25s ease'
+                                }}
+                              >
+                                {inCart ? (
+                                  isHovered ? (
+                                    <>
+                                      <Trash2 size={13} className="check-added-icon" /> REMOVE
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Check size={13} className="check-added-icon" /> ADDED TO CART
+                                    </>
+                                  )
+                                ) : (
+                                  <>
+                                    <ShoppingBag size={13} /> ADD TO CART
+                                  </>
+                                )}
+                              </button>
+                            );
+                          })()}
                         </>
                       )}
                     </div>

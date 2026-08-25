@@ -135,7 +135,7 @@ const AccountPage = () => {
       }
     };
     loadData();
-  }, [token, navigate, location.state, api]);
+  }, []); // Removed token, navigate, location.state, api to prevent infinite re-renders
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -677,7 +677,7 @@ const AccountPage = () => {
           </nav>
         </aside>
 
-        {activeTab === 'overview' ? renderTabContent() : <main className="main-content-boxed">{renderTabContent()}</main>}
+        {activeTab === 'overview' ? <main className="main-content-boxed">{renderTabContent()}</main> : <main className="main-content-boxed">{renderTabContent()}</main>}
       </div>
 
       {/* MODALS */}

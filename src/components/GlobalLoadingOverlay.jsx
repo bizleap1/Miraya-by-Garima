@@ -17,44 +17,24 @@ export const GlobalLoadingOverlay = () => {
           transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
           <motion.div
-            className="luxury-loading-card"
+            className="luxury-loading-container"
             initial={{ scale: 0.9, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: -5 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Corner details */}
-            <div className="luxury-corner tl" />
-            <div className="luxury-corner tr" />
-            <div className="luxury-corner bl" />
-            <div className="luxury-corner br" />
-
-            {/* Logo */}
-            <div className="luxury-loading-logo-wrap">
-              <img
-                src="/logoR.png"
-                alt="Miraya By Garima"
-                className="luxury-loading-logo"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-            </div>
-
-            {/* Gem & Ring Spinner */}
-            <div className="luxury-spinner-ring">
-              <div className="luxury-spinner-circle" />
-              <span className="luxury-spinner-gem">◈</span>
-            </div>
-
-            {/* Title */}
-            <p className="luxury-loading-brand">MIRAYA BY GARIMA</p>
+            {/* Spinning Logo */}
+            <img
+              src="/logo.png"
+              alt="Loading"
+              className="luxury-loading-logo"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
 
             {/* Dynamic Message */}
             <p className="luxury-loading-message">
               {loadingMessage || 'PLEASE WAIT...'}
             </p>
-
-            {/* Shimmer accent line */}
-            <div className="luxury-loading-shimmer-line" />
           </motion.div>
         </motion.div>
       )}

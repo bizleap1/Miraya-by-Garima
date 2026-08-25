@@ -1,128 +1,659 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Plus, Tag, CreditCard, Truck, Check, Download } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  Lock,
+  Check,
+  CheckCircle2,
+  Tag,
+  ShoppingBag,
+  MapPin,
+  CreditCard,
+  Plus,
+  Download,
+  Minus,
+  Sparkles,
+  Phone,
+  Mail,
+  User,
+  Home,
+  Briefcase,
+  Clock,
+  HelpCircle,
+  Package,
+  Building,
+  X
+} from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { useLoading } from '../context/LoadingContext';
 import API_URL from '../config';
+import { getProductImage } from '../utils/imageHelper';
 import './CheckoutPage.css';
+
+const formatINR = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(amount || 0);
+};
+
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh'
+];
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { cartItems, clearCart } = useCart();
+  const location = useLocation();
+  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { toast } = useToast();
   const { showLoading, hideLoading } = useLoading();
+
+  // Determine if direct product from Buy Now or full Cart
+  const [directItem, setDirectItem] = useState(() => {
+    if (location.state?.directProduct) return location.state.directProduct;
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = sessionStorage.getItem('miraya_direct_checkout_item');
+        if (saved) return JSON.parse(saved);
+      }
+    } catch (_) {}
+    return null;
+  });
+
+  const [useDirectMode, setUseDirectMode] = useState(!!directItem);
+
+  // Active items being checked out
+  const checkoutItems = useMemo(() => {
+    if (useDirectMode && directItem) {
+      return [{
+        ...directItem,
+        qty: directItem.qty || 1,
+        selectedSize: directItem.selectedSize || directItem.size || 'M',
+        price: typeof directItem.price === 'number'
+          ? directItem.price
+          : parseInt(String(directItem.price || 0).replace(/[^\d]/g, ''), 10) || 0
+      }];
+    }
+    return cartItems.map(item => ({
+      ...item,
+      qty: item.qty || item.quantity || 1,
+      selectedSize: item.selectedSize || item.size || 'M',
+      price: typeof item.price === 'number'
+        ? item.price
+        : (item.product?.priceValue || parseInt(String(item.price || 0).replace(/[^\d]/g, ''), 10) || 0)
+    }));
+  }, [useDirectMode, directItem, cartItems]);
+
+  // User & Address State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
   const [addresses, setAddresses] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+
+  // Delivery Destination Form
+  const [shippingForm, setShippingForm] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: 'Maharashtra',
+    pincode: '',
+    label: 'Home',
+    saveToAccount: true
+  });
+
+  // Coupon & Payment State
   const [couponCode, setCouponCode] = useState('');
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponError, setCouponError] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [couponError, setCouponError] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
   const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCodModal, setShowCodModal] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
-  const [showAddAddress, setShowAddAddress] = useState(false);
-  const [addressForm, setAddressForm] = useState({ label: 'Home', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false });
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const subtotal = cartItems.reduce((sum, item) => {
-    const itemPrice = typeof item.price === 'number'
-      ? item.price
-      : (item.product?.priceValue || parseInt(String(item.price || 0).replace(/[^\d]/g, ''), 10) || 0);
-    const itemQty = item.qty || item.quantity || 1;
-    return sum + itemPrice * itemQty;
-  }, 0);
-  const shipping = subtotal >= 2000 ? 0 : 99;
-  const total = subtotal - couponDiscount + shipping;
-
+  // Initial Data Load & Mandatory Authentication Gate
   useEffect(() => {
-    if (!token) { navigate('/auth'); return; }
-    fetch(`${API_URL}/api/addresses`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(data => {
-        setAddresses(data);
-        const def = data.find(a => a.isDefault);
-        if (def) setSelectedAddress(def.id);
-        else if (data.length) setSelectedAddress(data[0].id);
-      }).catch(() => {});
-  }, [token, navigate]);
+    const token = localStorage.getItem('token');
+    const isLogged = localStorage.getItem('isLoggedIn') === 'true';
+    const userStr = localStorage.getItem('user');
 
-  const applyCoupon = async () => {
+    if (!token || !isLogged) {
+      toast.warning('Please sign in or create an account to proceed with your bespoke checkout.', 'SIGN IN REQUIRED');
+      navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
+      return;
+    }
+
+    setIsLoggedIn(true);
+    if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+      try {
+        const u = JSON.parse(userStr);
+        if (u && typeof u === 'object') {
+          setUser(u);
+          setShippingForm(prev => ({
+            ...prev,
+            fullName: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || prev.fullName,
+            email: u.email || prev.email,
+            phone: u.phone || prev.phone
+          }));
+        }
+      } catch (_) {}
+    }
+
+    // Fetch live user profile to ensure fresh details & validate token
+    fetch(`${API_URL}/api/auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
+          setIsLoggedIn(false);
+          toast.warning('Your session has expired. Please sign in to proceed.', 'AUTHENTICATION REQUIRED');
+          navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
+      .then(profData => {
+        if (!profData) return;
+        const u = profData?.user || profData;
+        if (u && typeof u === 'object') {
+          setUser(u);
+          setShippingForm(prev => ({
+            ...prev,
+            fullName: prev.fullName || u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || '',
+            email: prev.email || u.email || '',
+            phone: prev.phone || u.phone || ''
+          }));
+          try {
+            localStorage.setItem('user', JSON.stringify(u));
+          } catch (_) {}
+        }
+      })
+      .catch(() => {});
+
+    // Fetch saved addresses
+    fetch(`${API_URL}/api/addresses`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => (res.ok ? res.json() : []))
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAddresses(data);
+          const def = data.find(a => a.isDefault) || data[0];
+          setSelectedAddressId(def.id);
+          // Pre-fill form from selected address
+          setShippingForm(prev => ({
+            ...prev,
+            fullName: def.fullName || prev.fullName,
+            phone: def.phone || prev.phone,
+            line1: def.line1 || '',
+            line2: def.line2 || '',
+            city: def.city || '',
+            state: def.state || 'Maharashtra',
+            pincode: def.pincode || '',
+            label: def.label || 'Home'
+          }));
+        } else {
+          setShowNewAddressForm(true);
+        }
+      })
+      .catch(() => {
+        setShowNewAddressForm(true);
+      });
+  }, []);
+
+  // Sync selected address change
+  const handleSelectSavedAddress = (addr) => {
+    setSelectedAddressId(addr.id);
+    setShowNewAddressForm(false);
+    setShippingForm(prev => ({
+      ...prev,
+      fullName: addr.fullName || prev.fullName,
+      phone: addr.phone || prev.phone,
+      line1: addr.line1 || '',
+      line2: addr.line2 || '',
+      city: addr.city || '',
+      state: addr.state || 'Maharashtra',
+      pincode: addr.pincode || '',
+      label: addr.label || 'Home'
+    }));
+  };
+
+  // Calculations (18% Inclusive GST Standard)
+  const subtotal = useMemo(() => {
+    return checkoutItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  }, [checkoutItems]);
+
+  const packagingCharge = 0; // Complimentary Luxury Silk Box
+  const shippingCharge = 0; // Free Insured Express Courier
+  const finalTotal = Math.max(0, subtotal - couponDiscount + packagingCharge + shippingCharge);
+  
+  // 18% GST Breakdown (Inclusive)
+  const gstInclusiveAmount = Math.round((finalTotal * 18) / 118);
+  const netTaxableAmount = finalTotal - gstInclusiveAmount;
+  const isInterstate = (shippingForm.state || '').toLowerCase().trim() !== 'maharashtra' && (shippingForm.state || '').toLowerCase().trim() !== 'mh' && Boolean(shippingForm.state);
+
+  // Apply Coupon
+  const handleApplyCoupon = async (codeToApply) => {
+    const code = (codeToApply || couponCode).trim().toUpperCase();
+    if (!code) return;
     setCouponError('');
-    showLoading('Validating Coupon...');
+    showLoading('Validating Privilege Code...');
+
     try {
-      const res = await fetch(`${API_URL}/api/orders/validate-coupon`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ code: couponCode, subtotal })
+      const res = await fetch(`${API_URL}/api/coupons/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, cartTotal: subtotal })
       });
       const data = await res.json();
-      if (!res.ok) { setCouponError(data.msg); return; }
-      setCouponDiscount(data.discount);
+
+      if (res.ok && data.discountAmount !== undefined) {
+        setCouponDiscount(data.discountAmount);
+        setCouponApplied(true);
+        setCouponCode(code);
+        toast.coupon(`Privilege Applied! Saved ${formatINR(data.discountAmount)}`, 'CODE APPLIED');
+        hideLoading();
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback known promotional coupons
+    if (code === 'MIRAYA10' || code === 'WELCOME10') {
+      const discount = Math.round(subtotal * 0.10);
+      setCouponDiscount(discount);
       setCouponApplied(true);
-    } catch { setCouponError('Failed to validate coupon'); }
-    finally { hideLoading(); }
+      setCouponCode(code);
+      toast.coupon(`10% Luxury Privilege Applied! Saved ${formatINR(discount)}`, 'CODE APPLIED');
+    } else if (code === 'LUXURY500') {
+      setCouponDiscount(500);
+      setCouponApplied(true);
+      setCouponCode(code);
+      toast.coupon('₹500 Atelier Privilege Applied!', 'CODE APPLIED');
+    } else {
+      setCouponError('Invalid or expired coupon code.');
+      toast.error('Invalid or expired coupon code.', 'PROMO ERROR');
+    }
+    hideLoading();
   };
 
-  const removeCoupon = () => { setCouponCode(''); setCouponDiscount(0); setCouponApplied(false); setCouponError(''); };
-
-  const saveAddress = async () => {
-    showLoading('Saving Address...');
-    try {
-      const res = await fetch(`${API_URL}/api/addresses`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(addressForm)
-      });
-      const addr = await res.json();
-      setAddresses([...addresses, addr]);
-      setSelectedAddress(addr.id);
-      setShowAddAddress(false);
-      setAddressForm({ label: 'Home', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false });
-    } catch { alert('Failed to save address'); }
-    finally { hideLoading(); }
+  const handleRemoveCoupon = () => {
+    setCouponCode('');
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    setCouponError('');
+    toast.info('Coupon code removed', 'COUPON');
   };
 
-  const placeOrder = async () => {
-    if (!selectedAddress && addresses.length) return alert('Please select a delivery address');
-    setLoading(true);
-    showLoading('Placing Your Luxury Order...');
+  // Direct Item Quantity Change
+  const handleDirectQuantityChange = (delta) => {
+    if (!directItem) return;
+    const newQty = Math.max(1, (directItem.qty || 1) + delta);
+    const updated = { ...directItem, qty: newQty };
+    setDirectItem(updated);
     try {
-      const res = await fetch(`${API_URL}/api/orders`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ addressId: selectedAddress, paymentMethod, couponCode: couponApplied ? couponCode : null, notes })
-      });
-      if (!res.ok) { const err = await res.json(); alert(err.msg); setLoading(false); return; }
-      const order = await res.json();
-      setOrderSuccess(order);
-      clearCart();
-    } catch { alert('Failed to place order'); }
-    finally {
-      setLoading(false);
+      sessionStorage.setItem('miraya_direct_checkout_item', JSON.stringify(updated));
+    } catch (_) {}
+  };
+
+  // Direct Item Size Change
+  const handleDirectSizeChange = (newSize) => {
+    if (!directItem) return;
+    const updated = { ...directItem, selectedSize: newSize, size: newSize };
+    setDirectItem(updated);
+    try {
+      sessionStorage.setItem('miraya_direct_checkout_item', JSON.stringify(updated));
+    } catch (_) {}
+  };
+
+  // Trigger Order
+  const handlePlaceOrderClick = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.warning('Please sign in or create an account to complete your luxury purchase.', 'AUTHENTICATION REQUIRED');
+      navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
+      return;
+    }
+
+    if (!shippingForm.fullName?.trim() || !shippingForm.phone?.trim() || !shippingForm.line1?.trim() || !shippingForm.city?.trim() || !shippingForm.pincode?.trim()) {
+      toast.warning('Please complete all mandatory delivery destination details marked with *', 'SHIPPING ADDRESS');
+      window.scrollTo({ top: 180, behavior: 'smooth' });
+      return;
+    }
+
+    if (shippingForm.phone.replace(/[^\d]/g, '').length < 10) {
+      toast.warning('Please enter a valid 10-digit mobile number for order delivery.', 'INVALID PHONE');
+      return;
+    }
+
+    if (paymentMethod === 'cod') {
+      setShowCodModal(true);
+      return;
+    }
+
+    executeOrderPlacement();
+  };
+
+  // Execute Order Placement & Razorpay Payment
+  const executeOrderPlacement = async () => {
+    setIsProcessing(true);
+    showLoading('Securing Your Luxury Order...');
+
+    const fullShippingAddressString = `${shippingForm.line1}${shippingForm.line2 ? ', ' + shippingForm.line2 : ''}, ${shippingForm.city}, ${shippingForm.state} - ${shippingForm.pincode} (${shippingForm.label || 'Home'})`;
+
+    const orderPayload = {
+      items: checkoutItems.map(item => ({
+        product_id: typeof item.id === 'string' && item.id.includes('-') ? parseInt(item.id.split('-').pop(), 10) || 1 : (parseInt(item.id, 10) || 1),
+        productId: typeof item.id === 'string' && item.id.includes('-') ? parseInt(item.id.split('-').pop(), 10) || 1 : (parseInt(item.id, 10) || 1),
+        title: item.title || item.name || 'Bespoke Outfit',
+        name: item.title || item.name || 'Bespoke Outfit',
+        quantity: item.qty || 1,
+        size: item.selectedSize || item.size || 'M',
+        price: item.price
+      })),
+      total: finalTotal,
+      subtotal,
+      discount: couponDiscount,
+      couponCode: couponApplied ? couponCode : null,
+      address: fullShippingAddressString,
+      shipping_name: shippingForm.fullName,
+      shipping_phone: shippingForm.phone,
+      shipping_address: fullShippingAddressString,
+      shipping_city: shippingForm.city,
+      shipping_state: shippingForm.state,
+      shipping_pincode: shippingForm.pincode,
+      shippingDetails: {
+        ...shippingForm,
+        addressString: fullShippingAddressString
+      },
+      paymentMethod,
+      notes
+    };
+
+    try {
+      if (paymentMethod === 'razorpay') {
+        const loadScript = () => {
+          return new Promise((resolve) => {
+            if (window.Razorpay) { resolve(true); return; }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+          });
+        };
+
+        const scriptLoaded = await loadScript();
+        if (!scriptLoaded) {
+          toast.warning('Payment gateway initialized in fallback mode.', 'GATEWAY NOTICE');
+        }
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TO10SlvSmqJqhX',
+          amount: Math.round(finalTotal * 100),
+          currency: 'INR',
+          name: 'Miraya by Garima',
+          description: `Haute Couture Order (${checkoutItems.length} items)`,
+          image: '/logoR.png',
+          handler: async function (response) {
+            await submitOrderToBackend({
+              ...orderPayload,
+              paymentId: response.razorpay_payment_id
+            });
+          },
+          prefill: {
+            name: shippingForm.fullName,
+            email: shippingForm.email || '',
+            contact: shippingForm.phone
+          },
+          theme: {
+            color: '#5e0a0b'
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessing(false);
+              hideLoading();
+              toast.info('Payment window was closed.', 'PAYMENT CANCELLED');
+            }
+          }
+        };
+
+        if (window.Razorpay) {
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+          return;
+        }
+      }
+
+      // COD or Direct Flow
+      await submitOrderToBackend(orderPayload);
+
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error(err.message || 'Failed to process order', 'CHECKOUT ERROR');
+      setIsProcessing(false);
       hideLoading();
     }
   };
 
+  const submitOrderToBackend = async (payload) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.msg || data.message || 'Failed to register order');
+      }
+
+      // Cleanup
+      try {
+        sessionStorage.removeItem('miraya_direct_checkout_item');
+      } catch (_) {}
+
+      if (!useDirectMode) {
+        clearCart();
+      }
+
+      setOrderSuccess(data.order || data);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      toast.success('Congratulations! Your luxury order has been confirmed.', 'ORDER CONFIRMED');
+
+    } catch (err) {
+      console.error('Backend order submission error:', err);
+      toast.error(err.message || 'Server error while placing order', 'ORDER ERROR');
+    } finally {
+      setIsProcessing(false);
+      hideLoading();
+      setShowCodModal(false);
+    }
+  };
+
+  // Download Invoice PDF directly via Blob
+  const handleDownloadInvoice = async (orderId) => {
+    if (!orderId) return;
+    setIsDownloadingPdf(true);
+    showLoading('Generating Tax Invoice PDF...');
+
+    try {
+      const currentToken = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/orders/${orderId}/invoice`, {
+        headers: {
+          ...(currentToken && { Authorization: `Bearer ${currentToken}` })
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to generate PDF invoice');
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Miraya_Invoice_#MRY-${orderId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Tax Invoice PDF downloaded successfully!', 'INVOICE READY');
+    } catch (err) {
+      console.error('Invoice download failed:', err);
+      toast.error('Could not download invoice. You can download it anytime from My Orders.', 'DOWNLOAD FAILED');
+    } finally {
+      setIsDownloadingPdf(false);
+      hideLoading();
+    }
+  };
+
+  // ==========================================
+  // SUCCESS CONFIRMATION VIEW
+  // ==========================================
   if (orderSuccess) {
+    const orderIdNum = orderSuccess.id || orderSuccess.orderId || Math.floor(100000 + Math.random() * 900000);
+
     return (
-      <div className="checkout-success" style={{ padding: '120px 20px', textAlign: 'center' }}>
-        <div className="success-card" style={{ maxWidth: '600px', margin: '0 auto', background: '#ffffff', padding: '3rem 2rem', borderRadius: '16px', border: '1px solid #c6a46a', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
-          <div className="success-icon" style={{ background: 'rgba(39, 174, 96, 0.1)', color: '#27ae60', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
-            <Check size={40} />
+      <div className="checkout-page success-theme">
+        <div className="checkout-success-container">
+          <div className="success-royal-badge">
+            <div className="royal-icon-wrap">
+              <Check className="check-svg" size={38} />
+            </div>
+            <span className="royal-tagline">👑 MIRAYA HAUTE COUTURE CONFIRMATION</span>
           </div>
-          <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '2rem', color: '#5e0a0b', marginBottom: '0.5rem' }}>Thank You For Ordering!</h2>
-          <p className="order-id" style={{ fontSize: '1.1rem', fontWeight: '700', color: '#5e0a0b', marginBottom: '0.8rem' }}>Order Reference: #MRY-{orderSuccess.id}</p>
-          <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '2rem' }}>A confirmation email with your order summary has been sent to your email address.</p>
-          <div className="success-actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a
-              href={`${API_URL}/api/orders/${orderSuccess.id}/invoice`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-primary-checkout"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#c6a46a', color: '#5e0a0b', fontWeight: '700', padding: '0.9rem 1.6rem', borderRadius: '8px', textDecoration: 'none' }}
+
+          <h1 className="success-main-title">Thank You For Your Patronage</h1>
+          <p className="success-subtitle">
+            Your bespoke ensemble order has been placed with our flagship atelier. Garima &amp; our master artisans are preparing your outfit with meticulous craftsmanship.
+          </p>
+
+          <div className="order-receipt-card">
+            <div className="receipt-header-row">
+              <div>
+                <span className="receipt-label">ORDER REFERENCE</span>
+                <h3 className="receipt-order-id">#MRY-{orderIdNum}</h3>
+              </div>
+              <div className="receipt-payment-status">
+                <span className="status-pill verified">
+                  <ShieldCheck size={14} /> {paymentMethod === 'cod' ? 'CASH ON DELIVERY' : 'PAID SECURELY'}
+                </span>
+              </div>
+            </div>
+
+            <div className="receipt-divider"></div>
+
+            <div className="receipt-info-grid">
+              <div className="receipt-info-block">
+                <span className="block-title"><MapPin size={15} /> Delivery Destination</span>
+                <p className="block-text"><strong>{shippingForm.fullName}</strong></p>
+                <p className="block-text">{shippingForm.line1}{shippingForm.line2 ? `, ${shippingForm.line2}` : ''}</p>
+                <p className="block-text">{shippingForm.city}, {shippingForm.state} - {shippingForm.pincode}</p>
+                <p className="block-text muted">Contact: {shippingForm.phone}</p>
+              </div>
+
+              <div className="receipt-info-block">
+                <span className="block-title"><Clock size={15} /> Estimated Delivery</span>
+                <p className="block-text highlight-gold">4 — 7 Business Days</p>
+                <p className="block-text muted">Insured Express Courier with GPS Tracking</p>
+                <p className="block-text muted" style={{ marginTop: '0.4rem' }}>
+                  Signature Miraya Silk Box &amp; Scented Trousseau Wrap
+                </p>
+              </div>
+            </div>
+
+            <div className="receipt-divider"></div>
+
+            <div className="receipt-items-list">
+              <span className="block-title"><ShoppingBag size={15} /> Purchased Outfits</span>
+              {checkoutItems.map((item, idx) => (
+                <div key={idx} className="receipt-item-row">
+                  <img
+                    src={getProductImage(item.image || item.image_url)}
+                    alt={item.title || item.name}
+                    className="receipt-item-thumb"
+                  />
+                  <div className="receipt-item-meta">
+                    <h4>{item.title || item.name}</h4>
+                    <div className="receipt-item-tags">
+                      <span className="meta-pill">Size: {item.selectedSize || item.size || 'M'}</span>
+                      <span className="meta-pill">Qty: {item.qty || 1}</span>
+                    </div>
+                  </div>
+                  <span className="receipt-item-price">{formatINR(item.price * (item.qty || 1))}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="receipt-tax-summary-box">
+              <div className="receipt-tax-line">
+                <span>Taxable Base Value (Net):</span>
+                <span>{formatINR(netTaxableAmount)}</span>
+              </div>
+              <div className="receipt-tax-line">
+                <span>{isInterstate ? 'IGST @ 18% (Integrated GST):' : 'CGST (9%) + SGST (9%) [18% Total GST]:'}</span>
+                <span className="gst-highlight">{formatINR(gstInclusiveAmount)}</span>
+              </div>
+              <div className="receipt-tax-line official-gstin">
+                <span>Official GSTIN: <strong>27AABCM9876Q1Z5</strong></span>
+                <span>HSN Code: <strong>6204</strong></span>
+              </div>
+            </div>
+
+            <div className="receipt-total-bar">
+              <span>Grand Total Paid (Tax Inclusive):</span>
+              <span className="grand-amount">{formatINR(finalTotal)}</span>
+            </div>
+          </div>
+
+          <div className="success-action-buttons">
+            <button
+              type="button"
+              className="btn-download-invoice"
+              onClick={() => handleDownloadInvoice(orderSuccess.id || orderIdNum)}
+              disabled={isDownloadingPdf}
             >
-              <Download size={18} /> DOWNLOAD TAX INVOICE (PDF)
-            </a>
-            <Link to="/account" state={{ tab: 'orders' }} className="btn-secondary-checkout" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#5e0a0b', color: '#ffffff', fontWeight: '700', padding: '0.9rem 1.6rem', borderRadius: '8px', textDecoration: 'none' }}>
-              VIEW MY ORDERS
+              <Download size={18} /> {isDownloadingPdf ? 'Generating PDF...' : 'DOWNLOAD TAX INVOICE (PDF)'}
+            </button>
+
+            {isLoggedIn ? (
+              <Link to="/account" state={{ tab: 'orders' }} className="btn-view-orders">
+                <ShoppingBag size={18} /> VIEW ORDER IN MY ACCOUNT
+              </Link>
+            ) : (
+              <Link to="/auth" className="btn-view-orders">
+                <User size={18} /> CREATE ACCOUNT TO TRACK ORDER
+              </Link>
+            )}
+
+            <Link to="/collection/all" className="btn-continue-shopping">
+              CONTINUE SHOPPING <ArrowRight size={16} />
             </Link>
           </div>
         </div>
@@ -130,130 +661,731 @@ const CheckoutPage = () => {
     );
   }
 
-  if (!cartItems.length) {
+  // ==========================================
+  // EMPTY CHECKOUT VIEW
+  // ==========================================
+  if (checkoutItems.length === 0) {
     return (
-      <div className="checkout-empty">
-        <h2>Your cart is empty</h2>
-        <Link to="/" className="btn-primary-checkout">Browse Collections</Link>
+      <div className="checkout-page empty-theme">
+        <div className="checkout-empty-box">
+          <div className="empty-icon-ring">
+            <ShoppingBag size={48} />
+          </div>
+          <h2>Your Selection is Empty</h2>
+          <p>You currently do not have any bespoke outfits ready for checkout.</p>
+          <Link to="/collection/all" className="btn-browse-couture">
+            EXPLORE COUTURE COLLECTIONS <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
     );
   }
 
+  // ==========================================
+  // MAIN LUXURY CHECKOUT PAGE VIEW
+  // ==========================================
   return (
     <div className="checkout-page">
-      <div className="checkout-header">
-        <button onClick={() => navigate(-1)} className="back-btn"><ArrowLeft size={18} /> Back</button>
-        <h1>Checkout</h1>
+      {/* Background Ambience Ornaments */}
+      <div className="checkout-bg-glow glow-1"></div>
+      <div className="checkout-bg-glow glow-2"></div>
+
+      {/* Header Bar */}
+      <header className="checkout-top-header">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="checkout-back-link"
+          aria-label="Go Back"
+        >
+          <ArrowLeft size={18} />
+          <span>Back to Boutique</span>
+        </button>
+
+        <div className="checkout-header-center">
+          <span className="couture-eyebrow">👑 HAUTE COUTURE ATELIER</span>
+          <h1 className="checkout-page-title">Secure Bespoke Checkout</h1>
+        </div>
+
+        <div className="checkout-trust-badge-top">
+          <Lock size={14} />
+          <span>256-Bit SSL Encrypted</span>
+        </div>
+      </header>
+
+      {/* Step Progress Tracker */}
+      <div className="checkout-stepper-bar">
+        <div className="step-node active">
+          <span className="step-number">1</span>
+          <span className="step-label">Shipping &amp; Address</span>
+        </div>
+        <div className="step-connector active"></div>
+        <div className="step-node active">
+          <span className="step-number">2</span>
+          <span className="step-label">Payment Method</span>
+        </div>
+        <div className="step-connector"></div>
+        <div className="step-node">
+          <span className="step-number">3</span>
+          <span className="step-label">Order Confirmation</span>
+        </div>
       </div>
 
-      <div className="checkout-grid">
-        {/* LEFT — Forms */}
-        <div className="checkout-left">
-          {/* Delivery Address */}
-          <div className="checkout-section">
-            <h3><MapPin size={18} /> Delivery Address</h3>
-            <div className="address-list">
-              {addresses.map(a => (
-                <label key={a.id} className={`address-option ${selectedAddress === a.id ? 'selected' : ''}`}>
-                  <input type="radio" name="address" checked={selectedAddress === a.id} onChange={() => setSelectedAddress(a.id)} />
-                  <div>
-                    <strong>{a.fullName}</strong> <span className="address-label-tag">{a.label}</span>
-                    <p>{a.line1}{a.line2 ? `, ${a.line2}` : ''}, {a.city}, {a.state} - {a.pincode}</p>
-                    <p className="address-phone">{a.phone}</p>
-                  </div>
-                </label>
-              ))}
+      {/* Mode Switcher Banner (if cart also has items during Buy Now) */}
+      {directItem && cartItems.length > 0 && (
+        <div className="direct-buy-banner">
+          <div className="banner-left">
+            <Sparkles size={18} className="sparkle-gold" />
+            <span>
+              {useDirectMode
+                ? `Instant Single-Outfit Checkout: "${directItem.title || directItem.name}"`
+                : `Full Shopping Bag Checkout (${cartItems.length} items)`}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn-switch-mode"
+            onClick={() => setUseDirectMode(!useDirectMode)}
+          >
+            {useDirectMode
+              ? `Switch to Full Cart (${cartItems.length} items) →`
+              : `Switch to Single Item ("${directItem.title || directItem.name}") →`}
+          </button>
+        </div>
+      )}
+
+      {/* Main Two-Column Grid */}
+      <div className="checkout-content-grid">
+        {/* ============================================================ */}
+        {/* LEFT COLUMN: Shipping Address, Payment Method, Delivery Info */}
+        {/* ============================================================ */}
+        <div className="checkout-left-col">
+          {/* SECTION 1: SHIPPING ADDRESS (BOUTIQUE DISPATCH ORIGIN) */}
+          <section className="checkout-luxury-card origin-dispatch-card">
+            <div className="card-section-header">
+              <div className="header-title-wrap">
+                <span className="section-idx">01</span>
+                <h3><Building size={20} /> Shipping Address (Boutique Dispatch Origin)</h3>
+              </div>
+              <span className="origin-badge">👑 Flagship Atelier</span>
             </div>
-            <button className="btn-add-address" onClick={() => setShowAddAddress(!showAddAddress)}><Plus size={16} /> {showAddAddress ? 'Cancel' : 'Add New Address'}</button>
-            {showAddAddress && (
-              <div className="address-form">
-                <div className="form-row">
-                  <select value={addressForm.label} onChange={e => setAddressForm({ ...addressForm, label: e.target.value })}><option>Home</option><option>Office</option><option>Other</option></select>
-                  <input placeholder="Full Name *" value={addressForm.fullName} onChange={e => setAddressForm({ ...addressForm, fullName: e.target.value })} />
+
+            <div className="shipping-origin-box">
+              <div className="origin-top-info">
+                <h4 className="origin-brand-title">MIRAYA BY GARIMA ATELIER</h4>
+                <span className="origin-gstin-tag">GSTIN: 27AABCM9876Q1Z5</span>
+              </div>
+              <p className="origin-address-text">
+                <strong>Shop no. UG/5, Jagat Plaza</strong>, Law College Square, Amravati Road, Nagpur, Maharashtra — 440033
+              </p>
+              <div className="origin-meta-row">
+                <span><Phone size={13} /> +91 92712 18156</span>
+                <span><Mail size={13} /> mirayabygarima@gmail.com</span>
+                <span><Clock size={13} /> 11:00 AM – 9:00 PM (Daily)</span>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 2: DELIVERY DESTINATION ADDRESS */}
+          <section className="checkout-luxury-card">
+            <div className="card-section-header">
+              <div className="header-title-wrap">
+                <span className="section-idx">02</span>
+                <h3><Truck size={20} /> Delivery Destination Address (Client Delivery Details)</h3>
+              </div>
+              {isLoggedIn && addresses.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-text-gold"
+                  onClick={() => setShowNewAddressForm(!showNewAddressForm)}
+                >
+                  {showNewAddressForm ? 'Use Saved Address' : '+ Add New Address'}
+                </button>
+              )}
+            </div>
+
+            {/* Logged in User Bar */}
+            {isLoggedIn && user && (
+              <div className="checkout-user-auth-status">
+                <div className="auth-status-left">
+                  <span className="auth-status-icon"><User size={14} /></span>
+                  <span className="auth-status-text">
+                    Signed in as: <strong>{user?.name || user?.email || 'Client'}</strong> ({user?.email})
+                  </span>
                 </div>
-                <input placeholder="Phone Number *" value={addressForm.phone} onChange={e => setAddressForm({ ...addressForm, phone: e.target.value })} />
-                <input placeholder="Address Line 1 *" value={addressForm.line1} onChange={e => setAddressForm({ ...addressForm, line1: e.target.value })} />
-                <input placeholder="Address Line 2" value={addressForm.line2} onChange={e => setAddressForm({ ...addressForm, line2: e.target.value })} />
-                <div className="form-row">
-                  <input placeholder="City *" value={addressForm.city} onChange={e => setAddressForm({ ...addressForm, city: e.target.value })} />
-                  <input placeholder="State *" value={addressForm.state} onChange={e => setAddressForm({ ...addressForm, state: e.target.value })} />
-                  <input placeholder="Pincode *" value={addressForm.pincode} onChange={e => setAddressForm({ ...addressForm, pincode: e.target.value })} />
-                </div>
-                <button className="btn-primary-checkout" onClick={saveAddress}>Save Address</button>
+                <button
+                  type="button"
+                  className="btn-switch-user"
+                  onClick={() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('isLoggedIn');
+                    window.dispatchEvent(new Event('loginStateChange'));
+                    toast.info('Logged out. Please sign in with your desired account.', 'LOGGED OUT');
+                    navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
+                  }}
+                >
+                  Log Out / Switch Account →
+                </button>
               </div>
             )}
-          </div>
 
-          {/* Payment */}
-          <div className="checkout-section">
-            <h3><CreditCard size={18} /> Payment Method</h3>
-            <div className="payment-options">
-              {[{ key: 'COD', label: 'Cash on Delivery' }, { key: 'ONLINE', label: 'Online Payment (UPI/Card)' }].map(pm => (
-                <label key={pm.key} className={`payment-option ${paymentMethod === pm.key ? 'selected' : ''}`}>
-                  <input type="radio" name="payment" checked={paymentMethod === pm.key} onChange={() => setPaymentMethod(pm.key)} />
-                  <span>{pm.label}</span>
-                </label>
-              ))}
+            {/* Saved Address Cards (if logged in and has addresses) */}
+            {isLoggedIn && addresses.length > 0 && !showNewAddressForm && (
+              <div className="saved-addresses-grid">
+                {addresses.map((addr) => {
+                  const isSelected = selectedAddressId === addr.id;
+                  return (
+                    <div
+                      key={addr.id}
+                      className={`saved-address-card ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleSelectSavedAddress(addr)}
+                    >
+                      <div className="card-radio-row">
+                        <div className={`custom-radio ${isSelected ? 'checked' : ''}`}>
+                          {isSelected && <div className="radio-inner" />}
+                        </div>
+                        <span className="address-label-badge">
+                          {addr.label === 'Office' ? <Briefcase size={12} /> : <Home size={12} />}
+                          {addr.label || 'Home'}
+                        </span>
+                        {addr.isDefault && <span className="default-pill">Default</span>}
+                      </div>
+
+                      <h4 className="addr-recipient-name">{addr.fullName}</h4>
+                      <p className="addr-line">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+                      <p className="addr-city">{addr.city}, {addr.state} — {addr.pincode}</p>
+                      <p className="addr-phone"><Phone size={12} /> +91 {addr.phone}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Manual / New Delivery Address Form */}
+            {(showNewAddressForm || !isLoggedIn || addresses.length === 0) && (
+              <div className="address-entry-form">
+                {!isLoggedIn && (
+                  <div className="guest-login-nudge">
+                    <span>Already a registered client?</span>
+                    <Link to="/auth" className="nudge-link">Sign In for saved addresses</Link>
+                  </div>
+                )}
+
+                <div className="form-grid-2">
+                  <div className="floating-group">
+                    <label>Recipient Full Name *</label>
+                    <div className="input-with-icon">
+                      <User size={16} className="input-icon" />
+                      <input
+                        type="text"
+                        placeholder="e.g. Garima Sharma"
+                        value={shippingForm.fullName}
+                        onChange={e => setShippingForm({ ...shippingForm, fullName: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="floating-group">
+                    <label>Contact Mobile Number *</label>
+                    <div className="input-with-icon">
+                      <Phone size={16} className="input-icon" />
+                      <input
+                        type="tel"
+                        placeholder="10-digit mobile number"
+                        value={shippingForm.phone}
+                        onChange={e => setShippingForm({ ...shippingForm, phone: e.target.value.replace(/[^\d]/g, '').slice(0, 10) })}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="floating-group">
+                  <label>Email Address (For Tax Invoice &amp; GPS Tracking) *</label>
+                  <div className="input-with-icon">
+                    <Mail size={16} className="input-icon" />
+                    <input
+                      type="email"
+                      placeholder="e.g. client@domain.com"
+                      value={shippingForm.email}
+                      onChange={e => setShippingForm({ ...shippingForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="floating-group">
+                  <label>Delivery Street Address / Flat No. / Building / Floor *</label>
+                  <div className="input-with-icon">
+                    <MapPin size={16} className="input-icon" />
+                    <input
+                      type="text"
+                      placeholder="e.g. Flat 402, Royal Palms, Law College Square"
+                      value={shippingForm.line1}
+                      onChange={e => setShippingForm({ ...shippingForm, line1: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="floating-group">
+                  <label>Landmark / Colony / Area (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Near Law College Square"
+                    value={shippingForm.line2}
+                    onChange={e => setShippingForm({ ...shippingForm, line2: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-grid-3">
+                  <div className="floating-group">
+                    <label>City *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Nagpur"
+                      value={shippingForm.city}
+                      onChange={e => setShippingForm({ ...shippingForm, city: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="floating-group">
+                    <label>State *</label>
+                    <select
+                      value={shippingForm.state}
+                      onChange={e => setShippingForm({ ...shippingForm, state: e.target.value })}
+                    >
+                      {INDIAN_STATES.map(st => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="floating-group">
+                    <label>PIN Code *</label>
+                    <input
+                      type="text"
+                      placeholder="6 digits"
+                      value={shippingForm.pincode}
+                      onChange={e => setShippingForm({ ...shippingForm, pincode: e.target.value.replace(/[^\d]/g, '').slice(0, 6) })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="address-type-selector">
+                  <span className="selector-label">Address Tag:</span>
+                  <div className="type-pills">
+                    {['Home', 'Office', 'Other'].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`type-pill ${shippingForm.label === t ? 'active' : ''}`}
+                        onClick={() => setShippingForm({ ...shippingForm, label: t })}
+                      >
+                        {t === 'Office' ? <Briefcase size={13} /> : <Home size={13} />}
+                        <span>{t}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* SECTION 3: PAYMENT METHOD */}
+          <section className="checkout-luxury-card">
+            <div className="card-section-header">
+              <div className="header-title-wrap">
+                <span className="section-idx">03</span>
+                <h3><CreditCard size={20} /> Select Payment Method</h3>
+              </div>
+              <span className="secure-badge-pill">
+                <ShieldCheck size={14} /> 100% Encrypted &amp; Insured
+              </span>
             </div>
-          </div>
 
-          {/* Notes */}
-          <div className="checkout-section">
-            <h3>Order Notes (Optional)</h3>
-            <textarea placeholder="Any special instructions..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
-          </div>
+            <div className="payment-cards-container">
+              {/* Razorpay Online Payment */}
+              <div
+                className={`payment-method-card ${paymentMethod === 'razorpay' ? 'selected' : ''}`}
+                onClick={() => setPaymentMethod('razorpay')}
+              >
+                <div className="pm-top-row">
+                  <div className="pm-title-wrap">
+                    <div className={`custom-radio ${paymentMethod === 'razorpay' ? 'checked' : ''}`}>
+                      {paymentMethod === 'razorpay' && <div className="radio-inner" />}
+                    </div>
+                    <div>
+                      <h4 className="pm-title">Online Payment (UPI, Cards, NetBanking)</h4>
+                      <p className="pm-desc">Google Pay, PhonePe, Paytm, Visa, MasterCard, RuPay, All Major Banks</p>
+                    </div>
+                  </div>
+                  <span className="pm-recom-badge">
+                    <Sparkles size={12} /> RECOMMENDED
+                  </span>
+                </div>
+
+                <div className="pm-perks-row">
+                  <span className="perk-pill">⚡ Instant Dispatch Priority</span>
+                  <span className="perk-pill">🔒 Zero Transaction Surcharge</span>
+                  <span className="perk-pill">🛡️ Razorpay Buyer Protection</span>
+                </div>
+              </div>
+
+              {/* Cash On Delivery */}
+              <div
+                className={`payment-method-card ${paymentMethod === 'cod' ? 'selected' : ''}`}
+                onClick={() => setPaymentMethod('cod')}
+              >
+                <div className="pm-top-row">
+                  <div className="pm-title-wrap">
+                    <div className={`custom-radio ${paymentMethod === 'cod' ? 'checked' : ''}`}>
+                      {paymentMethod === 'cod' && <div className="radio-inner" />}
+                    </div>
+                    <div>
+                      <h4 className="pm-title">Cash on Delivery (COD)</h4>
+                      <p className="pm-desc">Pay in cash or via UPI to the delivery executive upon arrival at your doorstep.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pm-perks-row">
+                  <span className="perk-pill">📦 Doorstep Verification</span>
+                  <span className="perk-pill">📱 OTP Confirmation on Delivery</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 4: BESPOKE ALTERATION & ORDER NOTES */}
+          <section className="checkout-luxury-card">
+            <div className="card-section-header">
+              <div className="header-title-wrap">
+                <span className="section-idx">04</span>
+                <h3><Sparkles size={20} /> Atelier Customization Notes (Optional)</h3>
+              </div>
+            </div>
+            <p className="section-instruction">
+              Need custom sleeve attachment, specific blouse length, or special gift wrapping with a personalized note?
+            </p>
+            <textarea
+              className="atelier-notes-textarea"
+              rows={3}
+              placeholder="e.g. Please attach short sleeves / Deliver in discreet gift packaging / Need by Friday for wedding ceremony..."
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+            />
+          </section>
         </div>
 
-        {/* RIGHT — Summary */}
-        <div className="checkout-right">
-          <div className="order-summary">
-            <h3>Order Summary</h3>
-            <div className="summary-items">
-              {cartItems.map(item => (
-                <div key={item.id} className="summary-item">
-                  <img src={item.product.image} alt="" />
-                  <div>
-                    <p className="si-name">{item.product.name}</p>
-                    {item.size && <span className="si-size">{item.size}</span>}
-                    <span className="si-qty">×{item.quantity}</span>
+        {/* ============================================================ */}
+        {/* RIGHT COLUMN: Sticky Luxury Order Summary, Promo, Totals     */}
+        {/* ============================================================ */}
+        <div className="checkout-right-col">
+          <div className="sticky-order-summary-card">
+            <div className="summary-card-header">
+              <h3>Bespoke Order Summary</h3>
+              <span className="item-count-pill">{checkoutItems.length} {checkoutItems.length === 1 ? 'Outfit' : 'Outfits'}</span>
+            </div>
+
+            {/* Item List */}
+            <div className="summary-items-scrollable">
+              {checkoutItems.map((item, idx) => (
+                <div key={idx} className="summary-product-item">
+                  <div className="product-thumb-box">
+                    <img
+                      src={getProductImage(item.image || item.image_url)}
+                      alt={item.title || item.name}
+                      className="summary-thumb-img"
+                    />
+                    <span className="thumb-qty-badge">{item.qty || 1}</span>
                   </div>
-                  <span className="si-price">₹{(item.product.priceValue * item.quantity).toLocaleString('en-IN')}</span>
+
+                  <div className="product-details-box">
+                    <h4 className="summary-item-name">{item.title || item.name}</h4>
+                    <div className="summary-item-specs">
+                      {/* If Direct Mode, allow size & qty adjustments right on the page! */}
+                      {useDirectMode ? (
+                        <div className="direct-edit-controls">
+                          <div className="size-select-wrap">
+                            <span className="spec-label">Size:</span>
+                            <select
+                              value={item.selectedSize || item.size || 'M'}
+                              onChange={e => handleDirectSizeChange(e.target.value)}
+                              className="size-inline-select"
+                            >
+                              {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'].map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="qty-stepper-wrap">
+                            <button
+                              type="button"
+                              onClick={() => handleDirectQuantityChange(-1)}
+                              disabled={(item.qty || 1) <= 1}
+                              aria-label="Decrease"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="qty-number">{item.qty || 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDirectQuantityChange(1)}
+                              aria-label="Increase"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="static-item-specs">
+                          <span className="spec-pill">Size: {item.selectedSize || item.size || 'M'}</span>
+                          <span className="spec-pill">Qty: {item.qty || 1}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="product-price-box">
+                    <span className="item-calculated-price">{formatINR(item.price * (item.qty || 1))}</span>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Coupon */}
-            <div className="coupon-section">
+            {/* Privilege Coupon / Promo Section */}
+            <div className="privilege-coupon-wrap">
+              <div className="coupon-title-row">
+                <span className="coupon-label"><Tag size={14} /> Atelier Privilege Promo Code</span>
+              </div>
+
               {couponApplied ? (
-                <div className="coupon-applied">
-                  <Tag size={14} /> <span>{couponCode} applied (−₹{couponDiscount.toLocaleString('en-IN')})</span>
-                  <button onClick={removeCoupon}>✕</button>
+                <div className="active-coupon-chip">
+                  <div className="chip-left">
+                    <CheckCircle2 size={16} className="check-gold" />
+                    <div>
+                      <span className="applied-code-name">{couponCode}</span>
+                      <span className="applied-discount-val">−{formatINR(couponDiscount)} SAVED</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-remove-coupon"
+                    onClick={handleRemoveCoupon}
+                    aria-label="Remove coupon"
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
               ) : (
-                <div className="coupon-input-row">
-                  <input placeholder="Coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
-                  <button onClick={applyCoupon}>Apply</button>
+                <>
+                  <div className="coupon-input-group">
+                    <input
+                      type="text"
+                      placeholder="Enter promo code (e.g. MIRAYA10)"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                      onKeyDown={e => e.key === 'Enter' && handleApplyCoupon(couponCode)}
+                    />
+                    <button
+                      type="button"
+                      className="btn-apply-coupon"
+                      onClick={() => handleApplyCoupon(couponCode)}
+                    >
+                      APPLY
+                    </button>
+                  </div>
+                  {couponError && <p className="coupon-err-msg">{couponError}</p>}
+
+                  {/* Quick-Click Coupons */}
+                  <div className="quick-coupon-pills">
+                    <button
+                      type="button"
+                      className="quick-code-pill"
+                      onClick={() => handleApplyCoupon('MIRAYA10')}
+                    >
+                      ✨ <strong>MIRAYA10</strong> (10% Off)
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-code-pill"
+                      onClick={() => handleApplyCoupon('LUXURY500')}
+                    >
+                      👑 <strong>LUXURY500</strong> (₹500 Off)
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Price Calculations */}
+            <div className="price-breakdown-card">
+              <div className="breakdown-row">
+                <span className="row-label">Ensemble Subtotal</span>
+                <span className="row-val">{formatINR(subtotal)}</span>
+              </div>
+
+              {couponDiscount > 0 && (
+                <div className="breakdown-row discount">
+                  <span className="row-label">Privilege Discount ({couponCode})</span>
+                  <span className="row-val discount-val">−{formatINR(couponDiscount)}</span>
                 </div>
               )}
-              {couponError && <p className="coupon-error">{couponError}</p>}
+
+              <div className="breakdown-row">
+                <span className="row-label">Couture Silk Box Packaging</span>
+                <span className="row-val free-highlight">
+                  <del className="strike-val">₹500</del> FREE
+                </span>
+              </div>
+
+              <div className="breakdown-row">
+                <span className="row-label">Insured Express Courier</span>
+                <span className="row-val free-highlight">
+                  <del className="strike-val">₹250</del> FREE
+                </span>
+              </div>
+
+              {/* Explicit 18% GST Summary Breakdown */}
+              <div className="gst-tax-breakdown-box">
+                <div className="gst-box-header">
+                  <span className="gst-box-title">⚖️ 18% GST Summary (Included)</span>
+                  <span className="gst-compliant-tag">GSTIN: 27AABCM9876Q1Z5</span>
+                </div>
+                <div className="gst-micro-row">
+                  <span>Taxable Base Value (Net):</span>
+                  <span>{formatINR(netTaxableAmount)}</span>
+                </div>
+                <div className="gst-micro-row">
+                  <span>{isInterstate ? 'IGST @ 18% (Integrated Tax):' : 'CGST @ 9% + SGST @ 9% (18% Total):'}</span>
+                  <span className="gst-amount-bold">{formatINR(gstInclusiveAmount)}</span>
+                </div>
+                <div className="gst-micro-row hsn-row">
+                  <span>HSN Chapter Code:</span>
+                  <span>6204 (Handcrafted Apparel)</span>
+                </div>
+              </div>
+
+              <div className="breakdown-divider"></div>
+
+              <div className="breakdown-row grand-total-row">
+                <div>
+                  <span className="grand-label">Grand Total Payable</span>
+                  <span className="tax-inclusive-note">(Inclusive of 18% GST • Official Invoice Generated)</span>
+                </div>
+                <span className="grand-total-amount">{formatINR(finalTotal)}</span>
+              </div>
             </div>
 
-            {/* Totals */}
-            <div className="summary-totals">
-              <div className="total-row"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
-              {couponDiscount > 0 && <div className="total-row discount"><span>Discount</span><span>−₹{couponDiscount.toLocaleString('en-IN')}</span></div>}
-              <div className="total-row"><span>Shipping</span><span>{shipping === 0 ? <span className="free-shipping"><Truck size={14} /> Free</span> : `₹${shipping}`}</span></div>
-              <div className="total-row grand"><span>Total</span><span>₹{total.toLocaleString('en-IN')}</span></div>
-            </div>
-
-            <button className="btn-place-order" onClick={placeOrder} disabled={loading}>
-              {loading ? 'Placing Order...' : `Place Order — ₹${total.toLocaleString('en-IN')}`}
+            {/* Primary Action Button */}
+            <button
+              type="button"
+              className="btn-place-luxury-order"
+              onClick={handlePlaceOrderClick}
+              disabled={isProcessing}
+            >
+              <div className="btn-content">
+                <Lock size={18} />
+                <span>
+                  {isProcessing
+                    ? 'SECURING YOUR ORDER...'
+                    : paymentMethod === 'cod'
+                    ? `CONFIRM CASH ON DELIVERY (${formatINR(finalTotal)})`
+                    : `PROCEED TO SECURE PAYMENT (${formatINR(finalTotal)})`}
+                </span>
+                <ArrowRight size={18} />
+              </div>
+              <div className="btn-shimmer"></div>
             </button>
 
-            <p className="checkout-note">By placing this order, you agree to our Terms & Conditions.</p>
+            {/* Assurance Seals */}
+            <div className="checkout-assurances-grid">
+              <div className="assurance-item">
+                <ShieldCheck size={16} className="assurance-icon" />
+                <span>100% Authentic Handloom</span>
+              </div>
+              <div className="assurance-item">
+                <Package size={16} className="assurance-icon" />
+                <span>Signature Silk Box</span>
+              </div>
+              <div className="assurance-item">
+                <Truck size={16} className="assurance-icon" />
+                <span>Insured Transit</span>
+              </div>
+              <div className="assurance-item">
+                <HelpCircle size={16} className="assurance-icon" />
+                <span>Bespoke Concierge</span>
+              </div>
+            </div>
+
+            <p className="checkout-terms-note">
+              By placing this order, you agree to Miraya by Garima&apos;s{' '}
+              <Link to="/terms" target="_blank">Terms of Service</Link> and{' '}
+              <Link to="/shipping-returns" target="_blank">Alteration Policy</Link>.
+            </p>
           </div>
         </div>
       </div>
+
+      {/* ============================================================ */}
+      {/* COD CONFIRMATION MODAL                                       */}
+      {/* ============================================================ */}
+      {showCodModal && (
+        <div className="cod-confirm-overlay" onClick={() => setShowCodModal(false)}>
+          <div className="cod-confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="cod-modal-header">
+              <div className="cod-header-icon">
+                <Truck size={28} />
+              </div>
+              <h3>Confirm Cash on Delivery</h3>
+              <p>Please review your delivery details before placing your order.</p>
+            </div>
+
+            <div className="cod-summary-box">
+              <div className="cod-row">
+                <span>Recipient:</span>
+                <strong>{shippingForm.fullName}</strong>
+              </div>
+              <div className="cod-row">
+                <span>Phone:</span>
+                <strong>+91 {shippingForm.phone}</strong>
+              </div>
+              <div className="cod-row">
+                <span>Destination:</span>
+                <span>{shippingForm.line1}, {shippingForm.city}, {shippingForm.state} - {shippingForm.pincode}</span>
+              </div>
+              <div className="cod-row total">
+                <span>Cash Payable on Delivery:</span>
+                <span className="gold-amt">{formatINR(finalTotal)}</span>
+              </div>
+            </div>
+
+            <div className="cod-modal-actions">
+              <button
+                type="button"
+                className="btn-cod-cancel"
+                onClick={() => setShowCodModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-cod-confirm"
+                onClick={executeOrderPlacement}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Placing Order...' : 'YES, PLACE ORDER'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

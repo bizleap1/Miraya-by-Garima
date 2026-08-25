@@ -193,7 +193,7 @@ export const exportStoreAuditPDF = ({ dashboard = {}, orders = [], products = []
   const lowStockCount = dashboard.lowStock || 0;
 
   // Financial and Tax breakdowns
-  const gstCollected = Math.round((totalRevenue * 12) / 112);
+  const gstCollected = Math.round((totalRevenue * 18) / 118);
   const netTaxableRevenue = totalRevenue - gstCollected;
   const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
@@ -226,7 +226,7 @@ export const exportStoreAuditPDF = ({ dashboard = {}, orders = [], products = []
   const kpis = [
     { label: 'Gross Revenue', value: formatINR(totalRevenue), color: GOLD, sub: `Net: ${formatINR(netTaxableRevenue)}` },
     { label: 'Total Orders', value: totalOrders, color: BURGUNDY, sub: `Avg Order: ${formatINR(avgOrderValue)}` },
-    { label: 'GST (12%)', value: formatINR(gstCollected), color: BLUE, sub: 'CGST 6% + SGST 6%' },
+    { label: 'GST (18%)', value: formatINR(gstCollected), color: BLUE, sub: 'CGST 9% + SGST 9%' },
     { label: 'Catalog Stock', value: `${totalInventoryUnits} Pcs`, color: GREEN, sub: `${totalProducts} Unique Garments` },
     { label: 'Low Stock Alerts', value: lowStockCount, color: lowStockCount > 0 ? RED : GREEN, valColor: lowStockCount > 0 ? RED : GREEN, sub: lowStockCount > 0 ? 'Restock Required' : 'Optimal Stock' }
   ];
@@ -257,7 +257,7 @@ export const exportStoreAuditPDF = ({ dashboard = {}, orders = [], products = []
     }
 
     const totalAmt = Number(o?.total || o?.total_amount || 0);
-    const taxAmt = Math.round((totalAmt * 12) / 112);
+    const taxAmt = Math.round((totalAmt * 18) / 118);
     const netAmt = totalAmt - taxAmt;
 
     const statusText = String(o?.status || 'Pending').toUpperCase();
@@ -450,7 +450,7 @@ export const exportOrdersPDF = (orders = [], activeFilter = 'All') => {
     }
 
     const subtotal = Number(o.total || 0);
-    const gst = Math.round((subtotal * 12) / 112);
+    const gst = Math.round((subtotal * 18) / 118);
     const net = subtotal - gst;
     const isPaid = (String(o?.payment_status || '').toLowerCase() === 'paid') || Boolean(o?.payment_id && o?.payment_id !== 'COD' && o?.payment_id !== 'CASH_ON_DELIVERY') || (Array.isArray(o?.payments) && o.payments.some(p => p.status === 'PAID' || p.gateway === 'RAZORPAY'));
     const statusText = (o.status || 'Pending').toUpperCase();
@@ -472,7 +472,7 @@ export const exportOrdersPDF = (orders = [], activeFilter = 'All') => {
 
   autoTable(doc, {
     startY: tableStartY + 2,
-    head: [['Order & Inv #', 'Date & Time', 'Customer Details', 'Shipping Destination', 'Garment Pieces & Sizes', 'Net + GST (12%)', 'Gross Total', 'Payment Mode', 'Pay Status', 'Status']],
+    head: [['Order & Inv #', 'Date & Time', 'Customer Details', 'Shipping Destination', 'Garment Pieces & Sizes', 'Net + GST (18%)', 'Gross Total', 'Payment Mode', 'Pay Status', 'Status']],
     body: tableRows.length > 0 ? tableRows : [['N/A', 'N/A', 'No orders found matching filter.', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A']],
     theme: 'grid',
     headStyles: {

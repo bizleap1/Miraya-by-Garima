@@ -219,7 +219,16 @@ const AuthPage = () => {
             localStorage.setItem('user', JSON.stringify(loginData.user));
             localStorage.setItem('isLoggedIn', 'true');
             window.dispatchEvent(new Event('loginStateChange'));
-            navigate('/');
+
+            if (loginData.user && (loginData.user.role === 'admin' || loginData.user.role === 'ADMIN' || loginData.user.role === 'super_admin' || loginData.user.role === 'store_manager')) {
+              navigate('/admin');
+            } else if (location.state?.from) {
+              navigate(location.state.from, { state: location.state });
+            } else if (location.state?.returnUrl) {
+              navigate(location.state.returnUrl, { state: location.state });
+            } else {
+              navigate('/');
+            }
           } else {
             setAuthMode('login');
           }
@@ -318,6 +327,8 @@ const AuthPage = () => {
             navigate('/admin');
           } else if (location.state?.from) {
             navigate(location.state.from, { state: location.state });
+          } else if (location.state?.returnUrl) {
+            navigate(location.state.returnUrl, { state: location.state });
           } else {
             navigate('/');
           }

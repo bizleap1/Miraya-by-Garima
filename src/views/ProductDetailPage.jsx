@@ -1,13 +1,14 @@
 'use client';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useLayoutEffect, useState } from 'react';
-import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2 } from 'lucide-react';
+import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
+import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2, Check, Trash2, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API_URL from '../config';
 import { getProductImage } from '../utils/imageHelper';
 import ConfirmModal from '../components/ConfirmModal';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useToast } from '../context/ToastContext';
 import CheckoutModal from '../components/CheckoutModal';
 import SEO from '../components/SEO';
 import './ProductDetailPage.css';
@@ -34,13 +35,13 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     }
   }
 
-  if (!id && typeof window !== 'undefined' && window.location.pathname) {
+  // Fallback to pathname parsing if parameters are missing
+  if (typeof window !== 'undefined' && (!id || !category)) {
     const parts = window.location.pathname.replace(/^\/product\/?/, '').split('/').filter(Boolean);
-    if (parts.length === 1) {
-      id = decodeURIComponent(parts[0]);
-    } else if (parts.length >= 2) {
+    if (parts.length === 1 && !id) id = decodeURIComponent(parts[0]);
+    if (parts.length >= 2) {
       if (!category) category = decodeURIComponent(parts[0]);
-      id = decodeURIComponent(parts[parts.length - 1]);
+      if (!id) id = decodeURIComponent(parts[parts.length - 1]);
     }
   }
 
@@ -50,12 +51,48 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   const [confirmConfig, setConfirmConfig] = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutDirectItem, setCheckoutDirectItem] = useState(null);
+  const [isCartHovered, setIsCartHovered] = useState(false);
   
   const navigate = useNavigate();
-  const { addToCart: contextAddToCart } = useCart();
+  const { cartItems, addToCart: contextAddToCart, removeFromCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toast } = useToast();
 
-  const [product, setProduct] = useState(initialProduct);
+  const [product, setProduct] = useState(() => {
+    if (initialProduct) {
+      return {
+        ...initialProduct,
+        id: initialProduct.id,
+        title: initialProduct.name || initialProduct.title || 'Outfit',
+        price: initialProduct.price,
+        category: initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category,
+        image: initialProduct.image_url || initialProduct.image || (initialProduct.images && initialProduct.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
+        images: initialProduct.images?.length ? initialProduct.images : [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG']
+      };
+    }
+    return null;
+  });
+
+  // Check if current product in selected size is in cart
+  const isItemInCart = useMemo(() => {
+    if (!product) return false;
+    return cartItems.some(item => 
+      String(item.id) === String(product.id) && 
+      (item.selectedSize === selectedSize || item.size === selectedSize || product.category === 'drape-sarees' || product.category === 'premium-suit-materials')
+    );
+  }, [cartItems, product, selectedSize]);
+
+  const handleCartButtonClick = () => {
+    if (!product) return;
+    if (isItemInCart) {
+      removeFromCart(product.id, selectedSize);
+      toast.info(`Removed "${product.title || product.name || 'Outfit'}" from your shopping bag.`);
+    } else {
+      contextAddToCart(product, selectedSize, quantity);
+      toast.success(`Added "${product.title || product.name || 'Outfit'}" to your shopping bag!`);
+    }
+  };
+
   const [loading, setLoading] = useState(!initialProduct);
 
   useLayoutEffect(() => {
@@ -63,9 +100,16 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   }, [id]);
 
   useEffect(() => {
-    // If product is already provided via SSR, only update if id changed
-    if (initialProduct && (initialProduct.id === id || String(initialProduct.id).endsWith(String(id)))) {
-      setProduct(initialProduct);
+    if (initialProduct) {
+      setProduct({
+        ...initialProduct,
+        id: initialProduct.id,
+        title: initialProduct.name || initialProduct.title || 'Outfit',
+        price: initialProduct.price,
+        category: initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category,
+        image: initialProduct.image_url || initialProduct.image || (initialProduct.images && initialProduct.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
+        images: initialProduct.images?.length ? initialProduct.images : [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG']
+      });
       setLoading(false);
       return;
     }
@@ -119,15 +163,31 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
       ? rawPrice
       : parseInt(String(rawPrice || 0).replace(/[^\d]/g, ''), 10);
 
-    setCheckoutDirectItem({
+    const directItem = {
       id: product.id,
+      productId: product.id,
       title: product.title || product.name || 'Outfit',
+      name: product.title || product.name || 'Outfit',
       price: isNaN(numPrice) ? 0 : numPrice,
-      image: product.image || product.image_url || (product.images && product.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
-      selectedSize: selectedSize || 'M',
+      image: getProductImage(product.image || product.image_url || (product.images && product.images[0]) || '/products/Lehenga-Pink Blush/1.JPG'),
+      selectedSize: selectedSize || (product.sizes ? product.sizes[0] : 'M'),
+      size: selectedSize || (product.sizes ? product.sizes[0] : 'M'),
       qty: quantity || 1
-    });
-    setCheckoutOpen(true);
+    };
+
+    try {
+      sessionStorage.setItem('miraya_direct_checkout_item', JSON.stringify(directItem));
+    } catch (_) {}
+
+    const token = localStorage.getItem('token');
+    const isLogged = localStorage.getItem('isLoggedIn') === 'true';
+    if (!token || !isLogged) {
+      toast.warning('Please sign in or create an account to proceed with your bespoke checkout.', 'SIGN IN REQUIRED');
+      navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
+      return;
+    }
+
+    navigate('/checkout', { state: { directProduct: directItem } });
   };
 
   if (loading) {
@@ -312,7 +372,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             </div>
             
             <h1 className="product-title">{product.title || product.name}</h1>
-            <div className="product-detail-price" style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-burgundy)', fontWeight: 600, margin: '0.5rem 0 1rem' }}>
+            <div className="product-detail-price" style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-burgundy)', fontWeight: 600, margin: '0.5rem 0 0.35rem' }}>
               {(() => {
                 if (product.price === undefined || product.price === null || product.price === '') return '';
                 const str = String(product.price).trim();
@@ -321,6 +381,11 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                 if (isNaN(num)) return str;
                 return `₹${num.toLocaleString('en-IN')}`;
               })()}
+            </div>
+            
+            <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
+              <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
+              <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
             </div>
             
             <div className="product-description">
@@ -432,8 +497,46 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                   </button>
                 ) : (
                   <>
-                    <button className="inquire-btn-new" onClick={addToCart} style={{background: 'var(--primary-burgundy)', color: 'white', flex: 1, minWidth: '150px', whiteSpace: 'nowrap', margin: 0}}>
-                      ADD TO CART
+                    <button
+                      type="button"
+                      className="inquire-btn-new"
+                      onClick={handleCartButtonClick}
+                      onMouseEnter={() => setIsCartHovered(true)}
+                      onMouseLeave={() => setIsCartHovered(false)}
+                      style={{
+                        background: isItemInCart 
+                          ? (isCartHovered ? '#c0392b' : '#1e824c') 
+                          : 'var(--primary-burgundy)',
+                        color: 'white',
+                        flex: 1,
+                        minWidth: '160px',
+                        whiteSpace: 'nowrap',
+                        margin: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.25s ease',
+                        cursor: 'pointer',
+                        boxShadow: isItemInCart && isCartHovered ? '0 4px 15px rgba(192, 57, 43, 0.35)' : 'none'
+                      }}
+                      title={isItemInCart ? (isCartHovered ? "Click to remove from cart" : "In your shopping bag") : "Add to shopping bag"}
+                    >
+                      {isItemInCart ? (
+                        isCartHovered ? (
+                          <>
+                            <Trash2 size={16} /> REMOVE
+                          </>
+                        ) : (
+                          <>
+                            <Check size={16} /> ADDED TO CART
+                          </>
+                        )
+                      ) : (
+                        <>
+                          <ShoppingBag size={16} /> ADD TO CART
+                        </>
+                      )}
                     </button>
                     <button className="inquire-btn-new" onClick={buyNow} style={{background: '#8a1f1f', color: 'white', flex: 1, minWidth: '150px', whiteSpace: 'nowrap', margin: 0}}>
                       BUY NOW

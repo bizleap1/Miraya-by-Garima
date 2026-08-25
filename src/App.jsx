@@ -32,18 +32,16 @@ const ReturnPolicyPage = lazy(() => import('./pages/ReturnPolicyPage'));
 
 function ScrollManager() {
   const location = useLocation();
-  const navType = useNavigationType();
   const lenis = useLenis();
 
   useEffect(() => {
-    if (navType !== 'POP') {
-      if (lenis) {
-        lenis.scrollTo(0, { immediate: true });
-      } else {
-        window.scrollTo(0, 0);
-      }
+    if (lenis && typeof lenis.scrollTo === 'function') {
+      lenis.scrollTo(0, { immediate: true });
     }
-  }, [location.pathname, lenis, navType]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [location.pathname, lenis]);
 
   return null;
 }

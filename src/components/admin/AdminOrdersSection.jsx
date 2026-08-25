@@ -334,14 +334,14 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
         const netTaxable = subtotal - gst;
 
         return (
-          <div className="admin-drawer-overlay" onClick={() => setSelectedOrder(null)}>
-            <div className="admin-drawer" onClick={(e) => e.stopPropagation()}>
+          <div className="admin-drawer-overlay" data-lenis-prevent="true" onClick={() => setSelectedOrder(null)}>
+            <div className="admin-drawer" data-lenis-prevent="true" onClick={(e) => e.stopPropagation()}>
               <div className="drawer-header">
                 <h3>Order #ORD-{selectedOrder.id}</h3>
                 <button onClick={() => setSelectedOrder(null)} style={{ background: 'none', border: 'none' }}><X size={18} /></button>
               </div>
 
-              <div className="drawer-content">
+              <div className="drawer-content" data-lenis-prevent="true">
                 {/* ORDER META & STATUS UPDATE */}
                 <div style={{ background: 'var(--miraya-bg)', border: '1px solid var(--miraya-border)', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -484,8 +484,9 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
           : new Date().toLocaleDateString('en-IN');
 
         return (
-          <div className="admin-drawer-overlay" style={{ zIndex: 1050, background: 'rgba(0, 0, 0, 0.75)' }} onClick={() => setInvoiceModalOrder(null)}>
+          <div className="admin-drawer-overlay" data-lenis-prevent="true" style={{ zIndex: 1050, background: 'rgba(0, 0, 0, 0.75)' }} onClick={() => setInvoiceModalOrder(null)}>
             <div
+              data-lenis-prevent="true"
               style={{
                 width: '900px',
                 maxWidth: '95vw',
@@ -552,7 +553,7 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
               </div>
 
               {/* PRINTABLE INVOICE BODY */}
-              <div className="printable-store-report miraya-invoice-printable" style={{ padding: '24px 32px', overflowY: 'auto', flex: 1, background: '#FAF8F5' }} id="miraya-invoice-printable">
+              <div data-lenis-prevent="true" className="printable-store-report miraya-invoice-printable" style={{ padding: '24px 32px', overflowY: 'auto', flex: 1, background: '#FAF8F5' }} id="miraya-invoice-printable">
                 {/* BRAND & HEADER BANNER */}
                 <div style={{ borderTop: '4px solid #5e0a0b', borderBottom: '1px solid #e6d8c3', paddingTop: '12px', paddingBottom: '14px', marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

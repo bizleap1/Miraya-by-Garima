@@ -26,19 +26,22 @@ export const ToastProvider = ({ children }) => {
       ...options
     };
 
-    setToasts((prev) => [...prev.slice(-4), newToast]); // keep max 4 toasts at once
+    setToasts((prev) => {
+      if (prev.some(t => t.message === message)) return prev;
+      return [...prev.slice(-4), newToast]; // keep max 4 toasts at once
+    });
 
     return id;
   }, []);
 
-  const toast = {
+  const toast = React.useMemo(() => ({
     success: (msg, title, options = {}) => showToast(msg, 'success', { title, ...options }),
     error: (msg, title, options = {}) => showToast(msg, 'error', { title, ...options }),
     warning: (msg, title, options = {}) => showToast(msg, 'warning', { title, ...options }),
     info: (msg, title, options = {}) => showToast(msg, 'info', { title, ...options }),
     coupon: (msg, title = 'PROMO CODE APPLIED', options = {}) => showToast(msg, 'coupon', { title, ...options }),
     remove: removeToast
-  };
+  }), [showToast, removeToast]);
 
   // Expose on window for convenience
   if (typeof window !== 'undefined') {

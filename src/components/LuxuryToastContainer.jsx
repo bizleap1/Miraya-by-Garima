@@ -34,7 +34,7 @@ const ToastItem = ({ toast, onRemove }) => {
         return <AlertTriangle size={20} />;
       case 'info':
       default:
-        return <Info size={20} />;
+        return <CheckCircle2 size={20} />;
     }
   };
 
@@ -54,11 +54,13 @@ const ToastItem = ({ toast, onRemove }) => {
       </div>
 
       <div className="luxury-toast-body">
-        <div className="luxury-toast-header">
-          <span className="luxury-toast-badge">
-            <span className="diamond">◈</span> {toast.title}
-          </span>
-        </div>
+        {toast.title && (
+          <div className="luxury-toast-header">
+            <span className="luxury-toast-badge">
+              {toast.title}
+            </span>
+          </div>
+        )}
         <div className="luxury-toast-message">
           {toast.message}
         </div>

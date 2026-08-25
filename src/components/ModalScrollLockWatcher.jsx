@@ -10,7 +10,7 @@ export default function ModalScrollLockWatcher() {
 
     const checkModals = () => {
       const hasModal = !!document.querySelector(
-        '.admin-modal-overlay, .modal-overlay, [data-modal="true"], [role="dialog"]'
+        '.admin-drawer-overlay, .admin-modal-overlay, .modal-overlay, [data-modal="true"], [role="dialog"]'
       );
 
       if (hasModal === wasOpen) return;

@@ -665,6 +665,7 @@
   transition: all 0.25s ease;
   box-shadow: 0 2px 8px rgba(94, 10, 11, 0.15);
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .buy-now-card-btn:hover {
@@ -701,6 +702,24 @@
   border-color: var(--primary-burgundy);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(94, 10, 11, 0.2);
+}
+
+.add-to-cart-card-btn.added {
+  background: #1e824c !important;
+  color: #ffffff !important;
+  border-color: #1e824c !important;
+  box-shadow: 0 4px 12px rgba(30, 130, 76, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.add-to-cart-card-btn.added .check-added-icon {
+  stroke: #ffffff;
+  animation: popInCheck 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popInCheck {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .add-to-cart-card-btn svg {

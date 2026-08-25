@@ -1,11 +1,12 @@
 /* ==========================================================================
-   LUXURY TOAST & NOTIFICATION SYSTEM - MIRAYA BY GARIMA
+   MINIMAL LUXURY TOAST SYSTEM - MIRAYA BY GARIMA
    ========================================================================== */
 
 .luxury-toast-viewport {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 9999999;
   display: flex;
   flex-direction: column;
@@ -13,101 +14,59 @@
   pointer-events: none;
   max-width: 420px;
   width: calc(100vw - 48px);
+  align-items: center;
 }
 
 .luxury-toast-card {
   pointer-events: auto;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(28, 9, 13, 0.95) 0%, rgba(15, 3, 5, 0.98) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(198, 164, 106, 0.45);
-  border-radius: 12px;
-  padding: 16px 18px 14px 16px;
+  background: var(--bg-cream, #f8f5f0);
+  border: 1px solid rgba(198, 164, 106, 0.4);
+  border-radius: 8px;
+  padding: 16px 20px;
   box-shadow: 
-    0 20px 40px -10px rgba(0, 0, 0, 0.7),
-    0 0 25px rgba(198, 164, 106, 0.15),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(94, 10, 11, 0.05);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  min-width: 320px;
 }
 
 .luxury-toast-card:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 24px 48px -10px rgba(0, 0, 0, 0.8),
-    0 0 35px rgba(198, 164, 106, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.25);
-  border-color: rgba(198, 164, 106, 0.7);
+    0 15px 35px rgba(0, 0, 0, 0.12),
+    0 6px 16px rgba(94, 10, 11, 0.08);
+  border-color: rgba(198, 164, 106, 0.8);
 }
 
-/* Shimmer Highlight Effect */
-.luxury-toast-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(198, 164, 106, 0.08) 50%,
-    transparent 100%
-  );
-  animation: toastShimmer 3.5s infinite;
-  pointer-events: none;
-}
-
-@keyframes toastShimmer {
-  0% { left: -100%; }
-  40%, 100% { left: 200%; }
-}
-
-/* Icon Container */
+/* Icon Styling (Minimal) */
 .luxury-toast-icon-wrap {
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(198, 164, 106, 0.4);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  position: relative;
 }
 
-/* Toast Type Variations */
-.luxury-toast-card.toast-coupon .luxury-toast-icon-wrap,
-.luxury-toast-card.toast-success .luxury-toast-icon-wrap {
-  background: linear-gradient(135deg, #3d1b11 0%, #1a0808 100%);
-  color: #e5c98f;
-  border-color: #c6a46a;
-  box-shadow: 0 0 15px rgba(198, 164, 106, 0.4);
+.toast-success .luxury-toast-icon-wrap,
+.toast-info .luxury-toast-icon-wrap {
+  color: #1e824c; /* Emerald */
 }
 
-.luxury-toast-card.toast-error .luxury-toast-icon-wrap {
-  background: linear-gradient(135deg, #4a0e17 0%, #200408 100%);
-  color: #ff6b6b;
-  border-color: rgba(231, 76, 60, 0.6);
-  box-shadow: 0 0 15px rgba(231, 76, 60, 0.35);
+.toast-error .luxury-toast-icon-wrap {
+  color: #c0392b; /* Crimson */
 }
 
-.luxury-toast-card.toast-warning .luxury-toast-icon-wrap {
-  background: linear-gradient(135deg, #422d08 0%, #1c1304 100%);
-  color: #f39c12;
-  border-color: rgba(243, 156, 18, 0.6);
+.toast-warning .luxury-toast-icon-wrap {
+  color: #d35400; /* Warm Orange */
 }
 
-.luxury-toast-card.toast-info .luxury-toast-icon-wrap {
-  background: linear-gradient(135deg, #0e2942 0%, #05121e 100%);
-  color: #64b5f6;
-  border-color: rgba(100, 181, 246, 0.5);
+.toast-coupon .luxury-toast-icon-wrap {
+  color: var(--gold-accent, #c6a46a);
 }
 
 /* Content Area */
@@ -116,110 +75,70 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .luxury-toast-header {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
 .luxury-toast-badge {
-  font-family: 'Cinzel', 'Playfair Display', serif, system-ui;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #c6a46a;
-  text-transform: uppercase;
+  font-family: var(--font-heading, 'Playfair Display', serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-burgundy, #5e0a0b);
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-
-.luxury-toast-badge .diamond {
-  font-size: 0.65rem;
-  color: #e5c98f;
+  gap: 6px;
 }
 
 .luxury-toast-message {
-  font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
-  font-size: 0.88rem;
+  font-family: var(--font-body, 'Montserrat', sans-serif);
+  font-size: 0.85rem;
   line-height: 1.4;
-  color: #ffffff;
+  color: #555;
   font-weight: 500;
-  word-break: break-word;
 }
 
 /* Close Button */
 .luxury-toast-close {
-  background: transparent;
+  flex-shrink: 0;
+  background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: #aaa;
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  margin-top: -2px;
-  margin-right: -4px;
+  transition: all 0.2s;
+  margin-left: 8px;
 }
 
 .luxury-toast-close:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(94, 10, 11, 0.05);
+  color: var(--primary-burgundy, #5e0a0b);
 }
 
-/* Progress Countdown Bar */
+/* Countdown line */
 .luxury-toast-progress {
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 2.5px;
-  background: linear-gradient(90deg, #9d783e 0%, #c6a46a 50%, #f4e2b8 100%);
-  box-shadow: 0 0 8px rgba(198, 164, 106, 0.6);
-  border-radius: 0 0 12px 12px;
+  height: 3px;
+  background: var(--gold-accent, #c6a46a);
+  opacity: 0.7;
 }
 
-.luxury-toast-card.toast-error .luxury-toast-progress {
-  background: linear-gradient(90deg, #c0392b 0%, #e74c3c 100%);
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
-}
-
-/* Mobile Responsive */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .luxury-toast-viewport {
-    top: 16px;
-    right: 16px;
-    left: 16px;
-    width: auto;
-    max-width: none;
+    bottom: 24px;
+    width: calc(100vw - 32px);
   }
-  
   .luxury-toast-card {
-    padding: 14px 14px 12px 14px;
-  }
-
-  .luxury-toast-message {
-    font-size: 0.84rem;
+    min-width: 0;
+    width: 100%;
   }
 }
-
-@media (max-width: 480px) {
-  .luxury-toast-viewport {
-    top: 12px;
-    right: 12px;
-    left: 12px;
-  }
-
-  .luxury-toast-title {
-    font-size: 0.78rem;
-  }
-
-  .luxury-toast-message {
-    font-size: 0.8rem;
-  }
-}
-

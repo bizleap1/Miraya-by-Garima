@@ -59,25 +59,33 @@ const Navbar = () => {
 
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
     setIsLoggedIn(false);
     setIsAdmin(false);
-    navigate('/');
+    setUser(null);
     setProfileDropdownOpen(false);
     window.dispatchEvent(new Event('loginStateChange'));
+    navigate('/');
   };
 
   useEffect(() => {
     const handleLoginChange = () => {
-      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
-      if (userStr) {
+      const isLogged = Boolean(token && localStorage.getItem('isLoggedIn') === 'true');
+      setIsLoggedIn(isLogged);
+
+      if (isLogged && userStr) {
         try {
           const userObj = JSON.parse(userStr);
           setUser(userObj);
-          setIsAdmin(userObj.email === 'bizleap1@gmail.com' || userObj.role === 'ADMIN' || userObj.role === 'admin');
-        } catch(e) {}
+          setIsAdmin(userObj.email === 'bizleap1@gmail.com' || userObj.role === 'ADMIN' || userObj.role === 'admin' || userObj.role === 'super_admin' || userObj.role === 'store_manager');
+        } catch(e) {
+          setUser(null);
+          setIsAdmin(false);
+        }
       } else {
         setUser(null);
         setIsAdmin(false);
@@ -201,11 +209,6 @@ const Navbar = () => {
           {/* Right Actions */}
           <div className="navbar-right">
             <div className="navbar-actions">
-              {isAdmin && (
-                <Link to="/admin" className="nav-link desktop-only" style={{ color: 'var(--primary-burgundy)', fontWeight: '600' }}>
-                  Admin Panel
-                </Link>
-              )}
               <MotionLink to="/wishlist" className="icon-btn position-relative" aria-label="Wishlist" title="Wishlist" whileHover={{ scale: 1.15, y: -2 }} whileTap={{ scale: 0.95 }}>
                 <Heart size={20} strokeWidth={1.5} />
                 {wishlistCount > 0 && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="nav-badge">{wishlistCount}</motion.span>}
