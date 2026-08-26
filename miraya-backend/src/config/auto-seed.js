@@ -96,35 +96,8 @@ export async function autoSeedIfEmpty() {
       console.log('✅ [AutoSeed] Admin user admin@miraya.com ready.');
     }
 
-    // 3. Check Promotional Coupons
-    const couponCount = await prisma.coupon.count();
-    if (couponCount === 0) {
-      console.log('🌱 [AutoSeed] Seeding default promotional coupons...');
-      const defaultCoupons = [
-        { code: 'MIRAYA10', discount_percent: 10, discount_flat: null, min_order_value: 2000, is_active: true },
-        { code: 'LUXURY500', discount_percent: null, discount_flat: 500, min_order_value: 5000, is_active: true },
-        { code: 'WELCOME10', discount_percent: 10, discount_flat: null, min_order_value: 1000, is_active: true }
-      ];
-      for (const cp of defaultCoupons) {
-        await prisma.coupon.upsert({
-          where: { code: cp.code },
-          update: cp,
-          create: cp
-        });
-      }
-      console.log('✅ [AutoSeed] Promotional coupons seeded successfully.');
-    }
-
-    // 4. Check Customer Accounts
-    const customerUserCount = await prisma.user.count({ where: { role: 'customer' } });
-    if (customerUserCount < 5) {
-      try {
-        const { seedVipCustomers } = await import('../../seedCustomers.js');
-        await seedVipCustomers();
-      } catch (custErr) {
-        console.warn('⚠️ [AutoSeed] Customer seeding skipped:', custErr.message);
-      }
-    }
+    // 3. No dummy coupons or dummy customers are auto-seeded.
+    // Coupons and customers will only be created when actual admin or users add them.
   } catch (err) {
     console.warn('⚠️ [AutoSeed] Auto-seeding check failed:', err.message);
   }

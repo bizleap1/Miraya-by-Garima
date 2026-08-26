@@ -353,7 +353,7 @@ export const productsData = {
     {
       id: "coord-6",
       title: "Red Co-ord Set",
-      price: "₹4,999",
+      price: "DM on WhatsApp to get price",
       category: "coord-sets",
       image: "/products/Co-order Red/1.JPG",
       images: [
@@ -372,7 +372,7 @@ export const productsData = {
     {
       id: "coord-7",
       title: "Orange Co-ord Set",
-      price: "₹4,999",
+      price: "DM on WhatsApp to get price",
       category: "coord-sets",
       image: "/products/Co-order Orange/1.JPG",
       images: [
@@ -391,7 +391,7 @@ export const productsData = {
     {
       id: "coord-8",
       title: "Light Green Co-ord Set",
-      price: "₹4,999",
+      price: "DM on WhatsApp to get price",
       category: "coord-sets",
       image: "/products/Co-order Light Green/1.JPG",
       images: [
@@ -410,7 +410,7 @@ export const productsData = {
     {
       id: "coord-9",
       title: "Mustard Co-ord Set",
-      price: "₹4,999",
+      price: "DM on WhatsApp to get price",
       category: "coord-sets",
       image: "/products/Co-order Mustard/1.JPG",
       images: [

@@ -403,6 +403,9 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                     {(() => {
                       if (product.price === undefined || product.price === null || product.price === '') return '';
                       const str = String(product.price).trim();
+                      if (str.toLowerCase().includes('whatsapp') || str.toLowerCase().includes('dm') || str.toLowerCase().includes('request')) {
+                        return str;
+                      }
                       if (str.startsWith('₹')) return str;
                       const num = typeof product.price === 'number' ? product.price : parseInt(str.replace(/[^\d]/g, ''), 10);
                       if (isNaN(num)) return str;
@@ -432,10 +435,12 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                   )}
                 </div>
 
-                <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
-                  <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
-                  <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
-                </div>
+                {!String(product.price || '').toLowerCase().includes('whatsapp') && (
+                  <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
+                    <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
+                    <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
+                  </div>
+                )}
               </>
             )}
             
@@ -521,6 +526,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                             cursor: isSoldOut ? 'not-allowed' : 'pointer',
                             fontFamily: 'var(--font-body)',
                             fontSize: '0.9rem',
+                            fontWeight: '600',
                             transition: 'all 0.3s ease'
                           }}
                         >
@@ -542,7 +548,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
               </div>
 
               <div style={{display: 'flex', gap: '1.2rem', flexWrap: 'wrap', alignItems: 'stretch', width: '100%'}}>
-                {product.whatsapp_inquiry || isStoreOffline ? (
+                {product.whatsapp_inquiry || isStoreOffline || (product.price && String(product.price).toLowerCase().includes('whatsapp')) ? (
                   <button
                     type="button"
                     onClick={() => setWhatsAppOpen(true)}
@@ -560,7 +566,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                     onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.35)'; }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                    {product.whatsapp_inquiry ? "Ask Price on WhatsApp" : "Order via WhatsApp"}
+                    DM ON WHATSAPP FOR PRICE
                   </button>
                 ) : (sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
                   <button className="inquire-btn-new" disabled style={{background: '#e74c3c', color: 'white', flex: 1, minWidth: '150px', cursor: 'not-allowed', whiteSpace: 'nowrap', margin: 0, fontWeight: 700, letterSpacing: '1px'}}>

@@ -1462,7 +1462,7 @@ const CheckoutPage = () => {
                   <div className="coupon-input-group">
                     <input
                       type="text"
-                      placeholder="Enter promo code (e.g. MIRAYA10)"
+                      placeholder="Enter promo code"
                       value={couponCode}
                       onChange={e => setCouponCode(e.target.value.toUpperCase())}
                       onKeyDown={e => e.key === 'Enter' && handleApplyCoupon(couponCode)}
