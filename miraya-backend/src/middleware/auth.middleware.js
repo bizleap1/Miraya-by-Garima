@@ -96,6 +96,46 @@ export const authMiddleware = async (req, res, next) => {
 };
 
 /**
+ * Optional authentication middleware
+ * Attaches user to req.user if valid token exists, otherwise proceeds without failing.
+ */
+export const optionalAuthMiddleware = async (req, res, next) => {
+  try {
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      return next();
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (_) {
+      return next();
+    }
+
+    if (decoded && decoded.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: { id: true, email: true, name: true, role: true, phone: true },
+      });
+      if (user) {
+        req.user = user;
+      }
+    }
+    next();
+  } catch (_) {
+    next();
+  }
+};
+
+/**
  * Admin middleware — allows admin and super_admin
  * Kept for backward compatibility with existing route files
  */

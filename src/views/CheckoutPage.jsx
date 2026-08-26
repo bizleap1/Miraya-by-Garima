@@ -26,6 +26,7 @@ import {
   HelpCircle,
   Package,
   Building,
+  MessageCircle,
   X
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -56,7 +57,7 @@ const INDIAN_STATES = [
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, clearCart } = useCart();
   const { toast } = useToast();
   const { showLoading, hideLoading } = useLoading();
   const { store_online, online_payments, cod_enabled, new_orders_enabled, whatsapp_number } = useStoreSettings();
@@ -475,11 +476,22 @@ const CheckoutPage = () => {
 
     try {
       if (paymentMethod === 'razorpay') {
+        // Step 1: Load Razorpay Checkout SDK script dynamically
         const loadScript = () => {
           return new Promise((resolve) => {
-            if (window.Razorpay) { resolve(true); return; }
+            if (typeof window !== 'undefined' && window.Razorpay) {
+              resolve(true);
+              return;
+            }
+            const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+            if (existingScript) {
+              existingScript.onload = () => resolve(true);
+              existingScript.onerror = () => resolve(false);
+              return;
+            }
             const script = document.createElement('script');
             script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.async = true;
             script.onload = () => resolve(true);
             script.onerror = () => resolve(false);
             document.body.appendChild(script);
@@ -487,22 +499,93 @@ const CheckoutPage = () => {
         };
 
         const scriptLoaded = await loadScript();
-        if (!scriptLoaded) {
-          toast.warning('Payment gateway initialized in fallback mode.', 'GATEWAY NOTICE');
+        if (!scriptLoaded || typeof window === 'undefined' || !window.Razorpay) {
+          throw new Error('Unable to initialize Razorpay payment modal. Please check your network connection.');
         }
 
+        const token = localStorage.getItem('token');
+
+        // Step 2: Call backend to create Razorpay Order (POST /api/payments/create-order or /api/create-order)
+        const createOrderRes = await fetch(`${API_URL}/api/payments/create-order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
+          },
+          body: JSON.stringify({
+            amount: Math.round(finalTotal * 100), // amount in paise (minimum 100 paise)
+            currency: 'INR',
+            items: orderPayload.items,
+            shippingDetails: orderPayload.shippingDetails,
+            notes: {
+              customer_name: shippingForm.fullName,
+              customer_phone: shippingForm.phone,
+              customer_email: shippingForm.email || ''
+            }
+          })
+        });
+
+        const orderData = await createOrderRes.json();
+        if (!createOrderRes.ok || (!orderData.order_id && !orderData.id)) {
+          throw new Error(orderData.message || orderData.error || 'Failed to initialize payment gateway order');
+        }
+
+        const razorpayOrderId = orderData.order_id || orderData.id;
+        const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TUJwjLBb7chIpr';
+
+        // Step 3: Configure Razorpay Standard Modal options
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TO10SlvSmqJqhX',
-          amount: Math.round(finalTotal * 100),
-          currency: 'INR',
+          key: razorpayKey,
+          amount: orderData.amount || Math.round(finalTotal * 100),
+          currency: orderData.currency || 'INR',
           name: 'Miraya by Garima',
-          description: `Haute Couture Order (${checkoutItems.length} items)`,
+          description: `Haute Couture Order (${checkoutItems.length} ${checkoutItems.length === 1 ? 'item' : 'items'})`,
           image: '/logoR.png',
+          order_id: razorpayOrderId,
           handler: async function (response) {
-            await submitOrderToBackend({
-              ...orderPayload,
-              paymentId: response.razorpay_payment_id
-            });
+            showLoading('Verifying Payment Signature & Confirming Order...');
+            try {
+              // Step 4: Verify HMAC-SHA256 signature on backend
+              const verifyRes = await fetch(`${API_URL}/api/payments/verify`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token && { Authorization: `Bearer ${token}` })
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  shippingDetails: orderPayload.shippingDetails,
+                  orderData: orderPayload
+                })
+              });
+
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || !verifyData.verified) {
+                throw new Error(verifyData.message || 'Payment signature verification failed');
+              }
+
+              // Cleanup on success
+              try {
+                sessionStorage.removeItem('miraya_direct_checkout_item');
+              } catch (_) {}
+
+              if (!useDirectMode) {
+                clearCart();
+              }
+
+              setOrderSuccess(verifyData.order || { id: razorpayOrderId, total: finalTotal, payment_id: response.razorpay_payment_id });
+              window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+              toast.success('Congratulations! Your luxury payment was verified and order is confirmed.', 'PAYMENT SUCCESSFUL');
+
+            } catch (vErr) {
+              console.error('Payment signature verification error:', vErr);
+              toast.error(vErr.message || 'Payment verification failed. Please contact atelier support.', 'VERIFICATION ERROR');
+            } finally {
+              setIsProcessing(false);
+              hideLoading();
+            }
           },
           prefill: {
             name: shippingForm.fullName,
@@ -513,19 +596,38 @@ const CheckoutPage = () => {
             color: '#5e0a0b'
           },
           modal: {
-            ondismiss: function () {
+            ondismiss: async function () {
               setIsProcessing(false);
               hideLoading();
-              toast.info('Payment window was closed.', 'PAYMENT CANCELLED');
+              toast.info('Payment window was closed. Your selection remains saved in your cart.', 'PAYMENT CANCELLED');
+              // Release reservation hold
+              try {
+                await fetch(`${API_URL}/api/payments/release-hold`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(token && { Authorization: `Bearer ${token}` })
+                  },
+                  body: JSON.stringify({ razorpay_order_id: razorpayOrderId })
+                });
+              } catch (_) {}
             }
           }
         };
 
-        if (window.Razorpay) {
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-          return;
-        }
+        const rzp = new window.Razorpay(options);
+
+        // Handle payment failure event
+        rzp.on('payment.failed', function (resp) {
+          setIsProcessing(false);
+          hideLoading();
+          const reason = resp.error?.description || resp.error?.reason || 'Payment was declined or failed';
+          toast.error(`Payment failed: ${reason}`, 'TRANSACTION DECLINED');
+        });
+
+        rzp.open();
+        hideLoading();
+        return;
       }
 
       // COD or Direct Flow
