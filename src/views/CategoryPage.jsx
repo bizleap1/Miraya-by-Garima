@@ -93,7 +93,7 @@ const CategoryPage = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
   const [sizeModalProduct, setSizeModalProduct] = useState(null);
-  const [selectedBuySize, setSelectedBuySize] = useState('M');
+  const [selectedBuySize, setSelectedBuySize] = useState('Free Size (M to XL)');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutDirectItem, setCheckoutDirectItem] = useState(null);
   const [whatsAppModalItem, setWhatsAppModalItem] = useState(null);
@@ -104,7 +104,7 @@ const CategoryPage = () => {
   const handleToggleCartItem = (item) => {
     const inCart = cartItems.some(ci => String(ci.id) === String(item.id) || ci.productId === item.id);
     if (inCart) {
-      const chosenSize = item.sizes && item.sizes.length > 0 ? item.sizes[0] : (item.category === 'drape-sarees' || item.category === 'premium-suit-materials' ? 'Free Size' : 'M');
+      const chosenSize = item.sizes && item.sizes.length > 0 ? item.sizes[0] : 'Free Size (M to XL)';
       removeFromCart(item.id, chosenSize);
       showToast(`Removed from cart`);
       return;
@@ -756,7 +756,7 @@ const CategoryPage = () => {
                 </div>
 
                 <div className="quick-size-grid">
-                  {(sizeModalProduct.sizes && sizeModalProduct.sizes.length > 0 ? sizeModalProduct.sizes : ['XS', 'S', 'M', 'L', 'XL', 'XXL']).map((size) => {
+                  {(sizeModalProduct.sizes && sizeModalProduct.sizes.length > 0 ? sizeModalProduct.sizes : ['Free Size (M to XL)']).map((size) => {
                     let sizeStock = 1;
                     if (sizeModalProduct.size_stock) {
                       try {

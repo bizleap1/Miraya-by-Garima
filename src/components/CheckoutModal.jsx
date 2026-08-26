@@ -91,7 +91,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
                     </h4>
                     
                     <p className="cd-item-meta">
-                      Size: {item.selectedSize || item.size || 'M'}
+                      Size: {item.selectedSize || item.size || 'Free Size (M to XL)'}
                     </p>
                     
                     <div className="cd-item-price" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

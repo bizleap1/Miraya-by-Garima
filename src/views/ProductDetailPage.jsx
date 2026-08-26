@@ -49,7 +49,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
 
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedSize, setSelectedSize] = useState('Free Size (M to XL)');
   const [confirmConfig, setConfirmConfig] = useState(null);
   const [whatsAppOpen, setWhatsAppOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -492,17 +492,22 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span className="qty-label">
                       Size: <span style={{ fontWeight: 600, color: 'var(--primary-burgundy)' }}>{selectedSize}</span>
-                      {sizeStockObj[selectedSize] !== undefined && (
-                        <span style={{ marginLeft: '8px', fontSize: '0.8rem', color: sizeStockObj[selectedSize] > 0 ? '#27ae60' : '#e74c3c', fontWeight: 600 }}>
-                          ({sizeStockObj[selectedSize] > 0 ? `${sizeStockObj[selectedSize]} left in store` : 'Sold Out'})
-                        </span>
-                      )}
                     </span>
-                    <a href="#sizeguide" onClick={(e) => e.preventDefault()} style={{ fontSize: '0.85rem', color: '#cda372', textDecoration: 'underline' }}>Size Guide</a>
+                    <span style={{
+                      background: 'rgba(231, 76, 60, 0.1)',
+                      color: '#c0392b',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      padding: '3px 10px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(192, 57, 43, 0.25)'
+                    }}>
+                      ⚡ Only 1 Left in Stock
+                    </span>
                   </div>
                   <div className="size-options" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {['S', 'M', 'L', 'XL'].map(size => {
-                      const sizeStock = sizeStockObj[size] !== undefined ? sizeStockObj[size] : 1;
+                    {(product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size (M to XL)']).map(size => {
+                      const sizeStock = sizeStockObj[size] !== undefined ? sizeStockObj[size] : (product.stock ?? 1);
                       const isSoldOut = sizeStock <= 0;
 
                       return (
@@ -517,17 +522,18 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                             if (!isSoldOut) setSelectedSize(size);
                           }}
                           style={{
-                            padding: '8px 16px',
-                            border: selectedSize === size ? '1px solid var(--primary-burgundy)' : '1px solid #ddd',
-                            backgroundColor: selectedSize === size ? 'rgba(94, 10, 11, 0.05)' : (isSoldOut ? 'rgba(0,0,0,0.03)' : 'transparent'),
-                            color: isSoldOut ? '#bbb' : (selectedSize === size ? 'var(--primary-burgundy)' : '#555'),
+                            padding: '10px 20px',
+                            border: selectedSize === size ? '1.5px solid var(--primary-burgundy)' : '1px solid #ddd',
+                            backgroundColor: selectedSize === size ? 'rgba(94, 10, 11, 0.06)' : (isSoldOut ? 'rgba(0,0,0,0.03)' : 'white'),
+                            color: isSoldOut ? '#bbb' : (selectedSize === size ? 'var(--primary-burgundy)' : '#333'),
                             textDecoration: isSoldOut ? 'line-through' : 'none',
-                            borderRadius: '4px',
+                            borderRadius: '6px',
                             cursor: isSoldOut ? 'not-allowed' : 'pointer',
                             fontFamily: 'var(--font-body)',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            transition: 'all 0.3s ease'
+                            fontSize: '0.92rem',
+                            fontWeight: '700',
+                            transition: 'all 0.3s ease',
+                            boxShadow: selectedSize === size ? '0 2px 8px rgba(94, 10, 11, 0.15)' : 'none'
                           }}
                         >
                           {size}

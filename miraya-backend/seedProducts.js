@@ -63,8 +63,9 @@ async function main() {
         data: {
           name: item.name,
           price: item.price,
-          stock: item.stock,
-          size_stock: item.size_stock,
+          stock: 1,
+          sizes: ["Free Size (M to XL)"],
+          size_stock: { "Free Size (M to XL)": 1 },
           image_url: item.image_url,
           images: [item.image_url],
           category_id: cat.id,

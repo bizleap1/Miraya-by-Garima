@@ -59,31 +59,45 @@ async function syncAllPrices() {
     const existingProduct = await prisma.product.findFirst({ where: { name: item.name } });
 
     if (existingProduct) {
-      // 1. Update Product price & category
+      // 1. Update Product price, stock, sizes & category
       await prisma.product.update({
         where: { id: existingProduct.id },
         data: {
           price: item.price,
+          stock: 1,
+          sizes: ["Free Size (M to XL)"],
+          size_stock: { "Free Size (M to XL)": 1 },
           category_id: cat.id,
           sub_category: item.sub_category,
         }
       });
 
-      // 2. Update ProductVariant prices
-      await prisma.productVariant.updateMany({
-        where: { product_id: existingProduct.id },
-        data: { price: item.price }
+      // 2. Update ProductVariant
+      await prisma.productVariant.deleteMany({
+        where: { product_id: existingProduct.id }
+      });
+      await prisma.productVariant.create({
+        data: {
+          product_id: existingProduct.id,
+          sku: `MIR-${existingProduct.name.slice(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'X')}-${existingProduct.id}-FS`,
+          size: "Free Size (M to XL)",
+          price: item.price,
+          stock: 1,
+          reserved_stock: 0,
+          is_active: true
+        }
       });
 
-      console.log(`✅ [Updated] ${item.name} -> ₹${item.price} (Product & Variants)`);
+      console.log(`✅ [Updated] ${item.name} -> ₹${item.price} (Stock: 1, Size: Free Size (M to XL))`);
     } else {
       // Create new product if missing
       const newProd = await prisma.product.create({
         data: {
           name: item.name,
           price: item.price,
-          stock: item.stock,
-          size_stock: item.size_stock,
+          stock: 1,
+          sizes: ["Free Size (M to XL)"],
+          size_stock: { "Free Size (M to XL)": 1 },
           image_url: item.image_url,
           images: [item.image_url],
           category_id: cat.id,
@@ -91,20 +105,18 @@ async function syncAllPrices() {
         }
       });
 
-      // Create variants
-      const sizes = Object.keys(item.size_stock || { "Free Size": item.stock });
-      for (const sz of sizes) {
-        await prisma.productVariant.create({
-          data: {
-            product_id: newProd.id,
-            sku: `MIR-${newProd.name.slice(0,3).toUpperCase()}-${newProd.id}-${sz}`,
-            size: sz,
-            price: item.price,
-            stock: item.size_stock[sz] || 1,
-            is_active: true
-          }
-        });
-      }
+      // Create variant
+      await prisma.productVariant.create({
+        data: {
+          product_id: newProd.id,
+          sku: `MIR-${newProd.name.slice(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'X')}-${newProd.id}-FS`,
+          size: "Free Size (M to XL)",
+          price: item.price,
+          stock: 1,
+          reserved_stock: 0,
+          is_active: true
+        }
+      });
       console.log(`✨ [Created] ${item.name} -> ₹${item.price}`);
     }
   }
