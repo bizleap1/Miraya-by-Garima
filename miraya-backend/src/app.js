@@ -37,6 +37,9 @@ import {
 
 const app = express();
 
+// 0. Trust proxy (required for Render, Railway, Vercel — behind reverse proxy)
+app.set('trust proxy', 1);
+
 // 1. Security HTTP Headers & CORS Hardening
 app.use(applySecurityHeaders);
 app.use(corsSecurityOptions);
