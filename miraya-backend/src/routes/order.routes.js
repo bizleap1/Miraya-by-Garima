@@ -6,6 +6,7 @@ import {
   updateOrderStatus,
   cancelOrder,
   getInvoice,
+  resetAllOrdersController,
 } from '../controllers/order.controller.js';
 import { authMiddleware, adminMiddleware } from '../middleware/auth.middleware.js';
 
@@ -22,5 +23,7 @@ router.get('/:id/invoice', getInvoice);
 // Admin endpoints
 router.get('/all', adminMiddleware, getAllOrders);
 router.put('/:id/status', adminMiddleware, updateOrderStatus);
+router.post('/reset-all', adminMiddleware, resetAllOrdersController);
 
 export default router;
+

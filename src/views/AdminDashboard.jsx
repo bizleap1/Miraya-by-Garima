@@ -721,27 +721,37 @@ export default function AdminDashboard() {
       const pendingVal = ordersList.filter(o => o.status === 'pending' || o.status === 'processing' || o.status === 'cancellation_requested').length;
       const lowStockVal = resStats?.lowStockVariants ?? prodsList.filter(p => (p.stock || 0) <= (p.low_stock_alert || 2)).length;
 
-      // Generate Sales Trend for last 7 days
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        const dayLabel = days[d.getDay()];
-        const dateStr = d.toISOString().slice(0, 10);
-        const dayTotal = ordersList
-          .filter(o => o.created_at && String(o.created_at).slice(0, 10) === dateStr && o.status !== 'cancelled')
-          .reduce((sum, o) => sum + Number(o.total || 0), 0);
-        return { label: dayLabel, value: dayTotal };
-      });
+      // Generate Sales Trend for last 7 days from live backend stats or orders
+      let last7Days = [];
+      if (resStats?.last7DaysSales && Array.isArray(resStats.last7DaysSales)) {
+        last7Days = resStats.last7DaysSales.map(d => ({
+          label: d.label,
+          value: d.totalSales || 0,
+        }));
+      } else {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        last7Days = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          const dayLabel = days[d.getDay()];
+          const dateStr = d.toISOString().slice(0, 10);
+          const dayTotal = ordersList
+            .filter(o => o.created_at && String(o.created_at).slice(0, 10) === dateStr && o.status !== 'cancelled')
+            .reduce((sum, o) => sum + Number(o.total || 0), 0);
+          return { label: dayLabel, value: dayTotal };
+        });
+      }
 
-      // Top Products
-      const topProds = prodsList.slice(0, 5).map(p => ({
-        id: p.id,
-        name: p.name || p.title,
-        price: p.price,
-        image: p.image_url || p.image || p.images?.[0] || '/products/Lehenga-Pink Blush/1.JPG',
-        sold: p.sold || Math.floor(Math.random() * 10) + 2
-      }));
+      // Top Products — Authoritative live sales data only (no mock data)
+      const topProds = (resStats?.topProducts && Array.isArray(resStats.topProducts) && resStats.topProducts.length > 0)
+        ? resStats.topProducts.map(p => ({
+            id: p.id,
+            name: p.name || p.title,
+            price: p.price,
+            image: p.image_url || p.image || p.images?.[0] || '/products/Lehenga-Pink Blush/1.JPG',
+            sold: p.unitsSold || 0
+          }))
+        : [];
 
       // Low Stock Products
       const lowStockProds = prodsList

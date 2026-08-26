@@ -356,3 +356,28 @@ export const getInvoice = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error generating invoice', error: error.message });
   }
 };
+
+/**
+ * Super Admin / Admin endpoint to wipe all test orders, sales, payments and reset metrics to 0
+ */
+export const resetAllOrdersController = async (req, res) => {
+  try {
+    const { resetCustomers = false } = req.body || {};
+    const { resetAllOrdersAndSales } = await import('../scripts/resetOrders.js');
+    const result = await resetAllOrdersAndSales({ resetCustomers });
+
+    res.json({
+      success: true,
+      message: 'All test orders, sales, payments, and revenue metrics successfully reset to 0.',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Reset orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset test orders and revenue metrics',
+      error: error.message,
+    });
+  }
+};
+

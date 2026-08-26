@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
   Download, Search, Eye, X, RefreshCw, ShoppingBag,
-  MapPin, Phone, Mail, User, AlertCircle, FileText, Printer
+  MapPin, Phone, Mail, User, AlertCircle, FileText, Printer, Trash2
 } from 'lucide-react';
+import ConfirmModal from '../ConfirmModal';
 import { exportOrdersPDF } from '../../utils/pdfExportHelper';
 import { getProductImage } from '../../utils/imageHelper';
 
@@ -43,6 +44,52 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [invoiceModalOrder, setInvoiceModalOrder] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [resetting, setResetting] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState(null);
+
+  const handleResetAllOrders = async () => {
+    setResetting(true);
+    try {
+      const activeToken = token || localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/orders/reset-all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken && { Authorization: `Bearer ${activeToken}` })
+        },
+        body: JSON.stringify({ resetCustomers: false })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        try {
+          localStorage.removeItem('miraya_orders');
+          localStorage.removeItem('admin_read_notifications');
+        } catch (_) {}
+
+        if (onRefresh) onRefresh();
+
+        setConfirmConfig({
+          title: 'Orders Reset to 0',
+          message: 'All test orders, payments, and sales metrics have been successfully reset to 0.',
+          subMessage: 'Live store is ready for real customer purchases.',
+          confirmText: 'Done',
+          isAlert: true,
+          isSuccess: true,
+          onConfirm: () => {
+            if (onRefresh) onRefresh();
+          }
+        });
+      } else {
+        alert(data.message || 'Failed to reset test orders.');
+      }
+    } catch (e) {
+      console.error('Reset error:', e);
+      alert('Network error while resetting orders.');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const pendingCancellationCount = orders.filter(o => o.status === 'cancellation_requested').length;
 
@@ -199,6 +246,28 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
             title="Export Orders to Excel/CSV spreadsheet"
           >
             <Download size={14} /> CSV
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            style={{ borderColor: '#b51624', color: '#b51624', fontWeight: 600 }}
+            onClick={() => {
+              setConfirmConfig({
+                title: 'Reset All Orders & Revenue to 0?',
+                message: 'Are you sure you want to delete all test orders, payments, and POS sales? Total revenue and order counters will be reset to 0.',
+                subMessage: 'Products, catalog stock, and admin credentials will NOT be touched.',
+                confirmText: 'Yes, Reset All to 0',
+                cancelText: 'Cancel',
+                danger: true,
+                onConfirm: handleResetAllOrders,
+              });
+            }}
+            disabled={resetting}
+            title="Wipe all testing orders and reset revenue to 0"
+          >
+            {resetting ? <RefreshCw size={14} className="spin" /> : <Trash2 size={14} />}
+            {resetting ? 'Resetting...' : 'Reset Orders (0)'}
           </button>
 
           {pendingCancellationCount > 0 && (
@@ -738,6 +807,13 @@ export default function AdminOrdersSection({ orders = [], token, API_BASE_URL, o
           </div>
         );
       })()}
+
+      {confirmConfig && (
+        <ConfirmModal
+          config={confirmConfig}
+          onClose={() => setConfirmConfig(null)}
+        />
+      )}
     </div>
   );
 }

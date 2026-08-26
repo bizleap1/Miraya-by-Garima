@@ -3,9 +3,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Globe, CreditCard, Truck, ShoppingBag, MessageCircle,
   Megaphone, Save, RefreshCw, CheckCircle, AlertTriangle,
-  Power, Wifi, WifiOff, Bell, Phone, Mail, MapPin, Share2, Star
+  Power, Wifi, WifiOff, Bell, Phone, Mail, MapPin, Share2, Star, Trash2
 } from "lucide-react";
 import API_URL from "../../config";
+import ConfirmModal from "../ConfirmModal";
 import { useStoreSettings } from "../../context/StoreSettingsContext";
 import "./AdminStoreSettingsSection.css";
 
@@ -15,6 +16,50 @@ export default function AdminStoreSettingsSection() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
+  const [resetting, setResetting] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState(null);
+
+  const handleResetAllOrders = async () => {
+    setResetting(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("miraya_admin_token") || localStorage.getItem("miraya_token");
+      const res = await fetch(`${API_URL}/api/orders/reset-all`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ resetCustomers: false }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        try {
+          localStorage.removeItem('miraya_orders');
+          localStorage.removeItem('admin_read_notifications');
+        } catch (_) {}
+
+        setConfirmConfig({
+          title: 'Database Reset Complete',
+          message: 'All test orders, POS sales, payments, and revenue metrics have been reset to 0.',
+          subMessage: 'Live store is clean and ready for real customer sales.',
+          confirmText: 'Great, Reload Data',
+          isAlert: true,
+          isSuccess: true,
+          onConfirm: () => {
+            window.location.reload();
+          }
+        });
+      } else {
+        setError(data.message || 'Failed to reset orders.');
+      }
+    } catch (e) {
+      setError('Network error while resetting orders.');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -299,6 +344,52 @@ export default function AdminStoreSettingsSection() {
         </p>
       </div>
 
+      {/* Data Management & Testing Reset */}
+      <div className="store-settings-card" style={{ borderColor: '#e0b8b8', background: '#fff9f9' }}>
+        <div className="settings-card-header">
+          <Trash2 size={20} color="#b51624" />
+          <h3 style={{ color: '#b51624' }}>Testing Data Reset &amp; Zero Metrics</h3>
+        </div>
+        <p className="settings-field-hint" style={{ color: '#555', marginBottom: '14px' }}>
+          Wipe all test online orders, POS counter sales, payments, cancellation requests, and reset total revenue, today sales, and order counters back to 0. <strong>Catalog products, categories, coupons, and admin accounts will be safely preserved.</strong>
+        </p>
+        <button
+          type="button"
+          className="btn"
+          style={{
+            background: '#b51624',
+            color: '#fff',
+            border: 'none',
+            padding: '10px 18px',
+            borderRadius: '6px',
+            fontWeight: '600',
+            fontSize: '13px',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          onClick={() => {
+            setConfirmConfig({
+              title: 'Reset All Test Orders & Revenue to 0?',
+              message: 'Are you sure you want to completely wipe all test orders, POS sales, payments, and return requests? Total revenue, order count, and sales trends will be reset to 0 for a fresh live launch.',
+              subMessage: 'Your products, inventory catalog, categories, coupons, and admin accounts will remain completely safe.',
+              confirmText: 'Yes, Reset All to 0',
+              cancelText: 'Cancel',
+              danger: true,
+              onConfirm: handleResetAllOrders,
+            });
+          }}
+          disabled={resetting}
+        >
+          {resetting ? (
+            <><RefreshCw size={16} className="spin" /> Resetting Database...</>
+          ) : (
+            <><Trash2 size={16} /> Reset All Test Orders &amp; Revenue to 0</>
+          )}
+        </button>
+      </div>
+
       {/* Save Button */}
       <div className="store-settings-footer">
         {error && <div className="settings-error"><AlertTriangle size={16} />{error}</div>}
@@ -315,6 +406,13 @@ export default function AdminStoreSettingsSection() {
           )}
         </button>
       </div>
+
+      {confirmConfig && (
+        <ConfirmModal
+          config={confirmConfig}
+          onClose={() => setConfirmConfig(null)}
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma generate && prisma db push",
+    "reset:orders": "node src/scripts/resetOrders.js",
     "test:phase1:db": "node tests/phase1.db.integration.test.js",
     "test:phase2": "node --test tests/phase2.test.js",
     "test:phase2:db": "node tests/phase2.db.integration.test.js"
