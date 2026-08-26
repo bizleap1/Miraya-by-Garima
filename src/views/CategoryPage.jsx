@@ -53,6 +53,7 @@ const CategoryPage = () => {
   
   const displayTitle = category === 'all'
     ? 'All Collections'
+    : category === 'dresses' ? 'Haute Couture Dresses'
     : category === 'coord-sets' ? 'Co-ord Sets' 
     : category === 'indo-western' ? 'Indo Western'
     : category === 'drape-sarees' ? 'Drape Sarees'
@@ -69,11 +70,13 @@ const CategoryPage = () => {
 
     if (category === 'all') {
       data = allItems;
+    } else if (category === 'dresses') {
+      data = productsData['dresses'] || [];
     } else if (category === 'lehenga') {
       data = allItems.filter(p => (p.title || '').toLowerCase().includes('lehenga'));
       if (data.length === 0) data = productsData['indo-western'] || [];
     } else if (category === 'festive-edit') {
-      data = allItems.filter(p => (p.title || '').toLowerCase().includes('suit') || (p.title || '').toLowerCase().includes('lehenga') || (p.title || '').toLowerCase().includes('saree'));
+      data = allItems.filter(p => (p.title || '').toLowerCase().includes('suit') || (p.title || '').toLowerCase().includes('lehenga') || (p.title || '').toLowerCase().includes('saree') || (p.title || '').toLowerCase().includes('dress'));
       if (data.length === 0) data = allItems;
     } else if (category === 'kurtis') {
       data = productsData['coord-sets'] || [];
@@ -279,6 +282,7 @@ const CategoryPage = () => {
 
   const formatCategoryName = (cat) => {
     const c = normalizeCat(cat);
+    if (c === 'dresses') return 'Dresses';
     if (c === 'coord-sets') return 'Co-ord Sets';
     if (c === 'indo-western') return 'Indo Western';
     if (c === 'drape-sarees') return 'Drape Sarees';

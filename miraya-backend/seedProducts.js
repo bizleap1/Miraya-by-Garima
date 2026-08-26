@@ -27,7 +27,24 @@ const products = [
   { name: "Red Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 13, size_stock: { S: 3, M: 4, L: 3, XL: 3 }, image_url: "/products/Co-order Red/1.JPG" },
   { name: "Orange Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/products/Co-order Orange/1.JPG" },
   { name: "Light Green Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 14, size_stock: { S: 4, M: 4, L: 3, XL: 3 }, image_url: "/products/Co-order Light Green/1.JPG" },
-  { name: "Mustard Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 11, size_stock: { S: 3, M: 3, L: 3, XL: 2 }, image_url: "/products/Co-order Mustard/1.JPG" }
+  { name: "Mustard Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 11, size_stock: { S: 3, M: 3, L: 3, XL: 2 }, image_url: "/products/Co-order Mustard/1.JPG" },
+  // Dresses (Haute Couture)
+  { name: "Haute Couture Dress 1", price: 9311, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/1.png" },
+  { name: "Haute Couture Dress 2", price: 10791, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/2.png" },
+  { name: "Haute Couture Dress 3", price: 16191, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/3.png" },
+  { name: "Haute Couture Dress 4", price: 17731, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/4.png" },
+  { name: "Haute Couture Dress 5", price: 10791, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/5.png" },
+  { name: "Haute Couture Dress 6", price: 19531, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/6.png" },
+  { name: "Haute Couture Dress 7", price: 7561, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/7.png" },
+  { name: "Haute Couture Dress 8", price: 11511, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/8.png" },
+  { name: "Haute Couture Dress 9", price: 16731, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/9.png" },
+  { name: "Haute Couture Dress 10", price: 12591, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/10.png" },
+  { name: "Haute Couture Dress 11", price: 23131, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/11.png" },
+  { name: "Haute Couture Dress 12", price: 16551, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/12.png" },
+  { name: "Haute Couture Dress 13", price: 21591, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/13.png" },
+  { name: "Haute Couture Dress 14", price: 8991, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/14.png" },
+  { name: "Haute Couture Dress 15", price: 16191, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/15.png" },
+  { name: "Haute Couture Dress 16", price: 17991, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/16.png" }
 ];
 
 async function main() {
