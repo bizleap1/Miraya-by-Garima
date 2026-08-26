@@ -14,11 +14,11 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'REGISTERED' | 'BUYERS'
+  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'ONLINE' | 'REGISTERED' | 'BUYERS'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
-  const fetchCustomers = async () => {
-    setLoading(true);
+  const fetchCustomers = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await fetch(`${API_BASE_URL}/api/customers`, { headers });
@@ -27,14 +27,20 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
     } catch (e) {
       console.error('Error fetching customers:', e);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCustomers();
+    fetchCustomers(false);
+    // Real-time auto-polling every 8 seconds for live logins and active shoppers
+    const interval = setInterval(() => {
+      fetchCustomers(true);
+    }, 8000);
+    return () => clearInterval(interval);
   }, []);
 
+  const onlineCount = customers.filter(c => c.is_online).length;
   const registeredCount = customers.filter(c => c.type === 'REGISTERED' || c.type === 'ADMIN').length;
   const buyersCount = customers.filter(c => (c.total_orders ?? c.totalOrders ?? 0) > 0).length;
   const totalRevenue = customers.reduce((sum, c) => sum + Number(c.total_spend ?? c.totalSpend ?? 0), 0);
@@ -49,6 +55,9 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
 
     if (!matchesSearch) return false;
 
+    if (filterType === 'ONLINE') {
+      return Boolean(c.is_online);
+    }
     if (filterType === 'REGISTERED') {
       return c.type === 'REGISTERED' || c.type === 'ADMIN';
     }
@@ -199,6 +208,14 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
             All Accounts ({customers.length})
           </button>
           <button
+            className={`btn ${filterType === 'ONLINE' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ fontSize: '12px', minHeight: '34px', padding: '0 12px', borderColor: filterType === 'ONLINE' ? '#16a34a' : 'rgba(34, 197, 94, 0.4)', color: filterType === 'ONLINE' ? '#fff' : '#15803d', background: filterType === 'ONLINE' ? '#16a34a' : 'rgba(34, 197, 94, 0.08)' }}
+            onClick={() => setFilterType('ONLINE')}
+          >
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: filterType === 'ONLINE' ? '#fff' : '#22c55e', display: 'inline-block', marginRight: '6px' }} />
+            🟢 Online Now ({onlineCount})
+          </button>
+          <button
             className={`btn ${filterType === 'REGISTERED' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ fontSize: '12px', minHeight: '34px', padding: '0 12px' }}
             onClick={() => setFilterType('REGISTERED')}
@@ -221,10 +238,11 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
           <table className="admin-table">
             <thead>
               <tr>
+                <th>Live Status</th>
                 <th>Customer / Account</th>
                 <th>Email Address</th>
                 <th>Phone Number</th>
-                <th>Joined On</th>
+                <th>Last Active &amp; Login</th>
                 <th>Total Orders</th>
                 <th>Total Spend</th>
                 <th style={{ textAlign: 'right' }}>Action</th>
@@ -238,6 +256,28 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
 
                 return (
                   <tr key={c.id}>
+                    <td>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        background: c.is_online ? 'rgba(34, 197, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                        color: c.is_online ? '#15803d' : '#64748b'
+                      }}>
+                        <span style={{
+                          width: '7px',
+                          height: '7px',
+                          borderRadius: '50%',
+                          background: c.is_online ? '#22c55e' : '#94a3b8',
+                          boxShadow: c.is_online ? '0 0 6px #22c55e' : 'none'
+                        }} />
+                        {c.is_online ? 'Active Now' : 'Offline'}
+                      </span>
+                    </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div className="avatar" style={{
@@ -284,14 +324,20 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
                         <span style={{ color: 'var(--miraya-muted)' }}>—</span>
                       )}
                     </td>
-                    <td style={{ color: 'var(--miraya-muted)', fontSize: '12.5px', whiteSpace: 'nowrap' }}>
-                      {joinedDate ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <Calendar size={12} />
-                          {new Date(joinedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
+                    <td style={{ color: 'var(--miraya-text)', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                      {c.last_active_at ? (
+                        <div>
+                          <strong style={{ color: c.is_online ? '#15803d' : '#555', display: 'block' }}>
+                            {c.is_online ? 'Active right now' : `Last active ${new Date(c.last_active_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`}
+                          </strong>
+                          <span style={{ fontSize: '11px', color: 'var(--miraya-muted)' }}>
+                            {c.last_login ? `Signed in ${new Date(c.last_login).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}` : `Joined ${new Date(joinedDate || Date.now()).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`}
+                          </span>
+                        </div>
                       ) : (
-                        '—'
+                        <span style={{ color: 'var(--miraya-muted)' }}>
+                          {joinedDate ? `Joined ${new Date(joinedDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}` : '—'}
+                        </span>
                       )}
                     </td>
                     <td>
@@ -393,6 +439,41 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', color: '#444' }}>
                         <Calendar size={14} style={{ color: 'var(--miraya-burgundy)' }} />
                         {new Date(selectedCustomer.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <strong style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Real-Time Live Status:</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        background: selectedCustomer.is_online ? 'rgba(34, 197, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                        color: selectedCustomer.is_online ? '#15803d' : '#64748b'
+                      }}>
+                        <span style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: selectedCustomer.is_online ? '#22c55e' : '#94a3b8',
+                          boxShadow: selectedCustomer.is_online ? '0 0 6px #22c55e' : 'none'
+                        }} />
+                        {selectedCustomer.is_online ? 'Active right now' : 'Currently Offline'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedCustomer.last_login && (
+                    <div>
+                      <strong style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Latest Authentication / Login:</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', color: '#333', fontSize: '13px' }}>
+                        📅 {new Date(selectedCustomer.last_login).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                       </div>
                     </div>
                   )}

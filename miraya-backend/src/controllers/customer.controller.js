@@ -55,11 +55,17 @@ export const getUnifiedCustomers = async (req, res) => {
     const registeredEmailMap = new Map();
     const customerProfiles = [];
 
+    const activeThresholdMs = 5 * 60 * 1000; // 5 minutes
+    const nowMs = Date.now();
+
     // Map Registered Users
     for (const u of registeredUsers) {
       const validOrders = u.orders.filter(o => o.status !== 'cancelled');
       const onlineSpend = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
       const sortedDates = validOrders.map(o => new Date(o.created_at).getTime()).sort((a, b) => b - a);
+      const isOnline = Boolean(
+        u.is_online || (u.last_active_at && (nowMs - new Date(u.last_active_at).getTime()) <= activeThresholdMs)
+      );
 
       const profile = {
         id: `USR-${u.id}`,
@@ -68,7 +74,7 @@ export const getUnifiedCustomers = async (req, res) => {
         email: u.email || 'N/A',
         phone: u.phone || 'N/A',
         role: u.role || 'customer',
-        type: u.role === 'admin' ? 'ADMIN' : 'REGISTERED',
+        type: ['admin', 'super_admin'].includes(u.role) ? 'ADMIN' : 'REGISTERED',
         addresses: u.addresses || [],
         online_orders_count: validOrders.length,
         online_spend: onlineSpend,
@@ -77,6 +83,9 @@ export const getUnifiedCustomers = async (req, res) => {
         total_orders: validOrders.length,
         total_spend: onlineSpend,
         last_purchase_date: sortedDates.length > 0 ? new Date(sortedDates[0]) : null,
+        last_login: u.last_login || null,
+        last_active_at: u.last_active_at || null,
+        is_online: isOnline,
         created_at: u.created_at,
       };
 

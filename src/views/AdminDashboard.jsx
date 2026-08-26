@@ -36,6 +36,9 @@ import {
   ArrowRight,
   SlidersHorizontal,
   Percent,
+  Activity,
+  UserCheck,
+  Radio,
 } from "lucide-react";
 
 import API_URL from "../config";
@@ -477,6 +480,8 @@ export default function AdminDashboard() {
     orders: null,
     pendingOrders: null,
     lowStock: null,
+    onlineUsersCount: 0,
+    recentLogins: [],
     salesTrend: [],
     topProducts: [],
     recentOrders: [],
@@ -771,6 +776,8 @@ export default function AdminDashboard() {
         orders: ordersVal,
         pendingOrders: pendingVal,
         lowStock: lowStockVal,
+        onlineUsersCount: resStats?.onlineUsersCount ?? 0,
+        recentLogins: resStats?.recentLogins || [],
         salesTrend: last7Days,
         topProducts: topProds,
         recentOrders: ordersList,
@@ -786,10 +793,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadDashboard(false);
-    // Auto-poll every 30 seconds for real-time order notifications
+    // Real-time live polling every 8 seconds for new logins, active users & orders
     const pollTimer = setInterval(() => {
       loadDashboard(true);
-    }, 30000);
+    }, 8000);
     return () => clearInterval(pollTimer);
   }, []);
 
@@ -1000,6 +1007,37 @@ export default function AdminDashboard() {
           </div>
 
           <div className="topbar-right">
+            {/* LIVE ONLINE SHOPPERS BADGE */}
+            <div
+              className="live-shoppers-pill"
+              onClick={() => setActiveTab("customers")}
+              title="Real-Time Shopper Monitoring (Live)"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "7px",
+                padding: "6px 14px",
+                background: "rgba(34, 197, 94, 0.1)",
+                border: "1px solid rgba(34, 197, 94, 0.3)",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#15803d",
+                cursor: "pointer",
+              }}
+            >
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#22c55e",
+                  boxShadow: "0 0 8px #22c55e",
+                }}
+              />
+              <span>{dashboard.onlineUsersCount ?? 0} Online Now</span>
+            </div>
+
             <div className="notification-wrapper">
               <button
                 className="icon-notification"
@@ -1104,7 +1142,7 @@ export default function AdminDashboard() {
           {activeTab === "dashboard" && (
             <>
               {/* STAT CARDS */}
-              <div className="stats-grid">
+              <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
                 <StatCard
                   icon={IndianRupee}
                   title="Total Revenue"
@@ -1117,6 +1155,13 @@ export default function AdminDashboard() {
                   title="Total Orders"
                   value={display(dashboard.orders)}
                   helper={!error ? "All customer orders" : ""}
+                />
+
+                <StatCard
+                  icon={Activity}
+                  title="Active Shoppers"
+                  value={display(dashboard.onlineUsersCount ?? 0)}
+                  helper="🟢 Live Online Now"
                 />
 
                 <StatCard
@@ -1342,6 +1387,114 @@ export default function AdminDashboard() {
                         </strong>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* REAL-TIME ACTIVE USERS & LOGIN STREAM */}
+              <div className="dashboard-grid" style={{ marginTop: '24px' }}>
+                <div className="panel" style={{ gridColumn: '1 / -1' }}>
+                  <div className="panel-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px #22c55e' }} />
+                      <div>
+                        <h3 style={{ margin: 0 }}>Real-Time Logged-In Shoppers &amp; Active Users</h3>
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--miraya-muted)' }}>
+                          Live website visits, accounts, and real-time login events updated dynamically
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span className="status-badge status-success" style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16a34a' }} />
+                        {dashboard.onlineUsersCount || 0} Online Now
+                      </span>
+                      <button onClick={() => setActiveTab("customers")} style={{ fontSize: '12px', background: 'none', border: 'none', color: '#5e0a0b', fontWeight: 600, cursor: 'pointer' }}>
+                        View All Accounts →
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="table-scroll">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Live Status</th>
+                          <th>Customer / User</th>
+                          <th>Email Address</th>
+                          <th>Account Type</th>
+                          <th>Last Active (Live)</th>
+                          <th>Last Login Timestamp</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(dashboard.recentLogins || []).length === 0 && (
+                          <tr>
+                            <td colSpan="6" className="empty-table">
+                              {loading ? "Syncing real-time logins..." : "No recent login activity yet."}
+                            </td>
+                          </tr>
+                        )}
+                        {(dashboard.recentLogins || []).map((u) => {
+                          const isOnline = Boolean(
+                            u.is_online || (u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) <= 5 * 60 * 1000)
+                          );
+                          const isAdminRole = ['admin', 'super_admin', 'store_manager'].includes(u.role);
+                          return (
+                            <tr key={u.id}>
+                              <td>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '4px 10px',
+                                  borderRadius: '12px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  background: isOnline ? 'rgba(34, 197, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                                  color: isOnline ? '#15803d' : '#64748b'
+                                }}>
+                                  <span style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    background: isOnline ? '#22c55e' : '#94a3b8',
+                                    boxShadow: isOnline ? '0 0 6px #22c55e' : 'none'
+                                  }} />
+                                  {isOnline ? 'Active Now' : 'Offline'}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div className="avatar" style={{
+                                    width: '30px',
+                                    height: '30px',
+                                    fontSize: '11px',
+                                    background: isAdminRole ? '#800020' : '#2e7d32'
+                                  }}>
+                                    {(u.name || u.email || 'U').slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <strong>{u.name || 'Shopper'}</strong>
+                                </div>
+                              </td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{u.email}</td>
+                              <td>
+                                <StatusBadge type={isAdminRole ? 'primary' : 'info'}>
+                                  {isAdminRole ? (u.role?.toUpperCase() || 'ADMIN') : 'CUSTOMER'}
+                                </StatusBadge>
+                              </td>
+                              <td style={{ fontSize: '12px', color: isOnline ? '#15803d' : '#666', fontWeight: isOnline ? 600 : 400 }}>
+                                {u.last_active_at ? new Date(u.last_active_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+                              </td>
+                              <td style={{ fontSize: '12px', color: '#555' }}>
+                                {u.last_login ? new Date(u.last_login).toLocaleString('en-IN') : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>

@@ -18,6 +18,9 @@ model User {
   role               String              @default("customer") // "customer" | "cashier" | "inventory_staff" | "store_manager" | "admin" | "super_admin"
   reset_otp          String?
   reset_otp_expiry   DateTime?
+  last_login         DateTime?
+  last_active_at     DateTime?
+  is_online          Boolean             @default(false)
   created_at         DateTime            @default(now())
   orders             Order[]
   cartItems          CartItem[]
@@ -30,6 +33,8 @@ model User {
 
   @@index([role])
   @@index([email])
+  @@index([last_login])
+  @@index([last_active_at])
 }
 
 // ─── CATEGORY ────────────────────────────────────────────────────────────────

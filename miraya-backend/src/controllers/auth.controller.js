@@ -26,6 +26,9 @@ export const register = async (req, res) => {
         phone,
         password_hash,
         role: 'customer',
+        last_login: new Date(),
+        last_active_at: new Date(),
+        is_online: true,
       },
     });
 
@@ -36,6 +39,20 @@ export const register = async (req, res) => {
     );
 
     sendWelcomeEmail(user.email, user.name);
+
+    // Record login/registration event in audit log
+    try {
+      await prisma.adminAuditLog.create({
+        data: {
+          actor_id: user.id,
+          actor_email: user.email,
+          action: 'user.registered',
+          entity: 'User',
+          entity_id: String(user.id),
+          metadata: { name: user.name, role: user.role, method: 'password' },
+        },
+      });
+    } catch (_) {}
 
     res.status(201).json({
       message: 'Registration successful',
@@ -64,6 +81,30 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    const now = new Date();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        last_login: now,
+        last_active_at: now,
+        is_online: true,
+      },
+    });
+
+    // Record live login event in audit log
+    try {
+      await prisma.adminAuditLog.create({
+        data: {
+          actor_id: user.id,
+          actor_email: user.email,
+          action: 'user.login',
+          entity: 'User',
+          entity_id: String(user.id),
+          metadata: { name: user.name, role: user.role, method: 'password' },
+        },
+      });
+    } catch (_) {}
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -271,10 +312,31 @@ export const verifyLoginOtp = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired OTP code' });
     }
 
+    const now = new Date();
     await prisma.user.update({
       where: { id: user.id },
-      data: { reset_otp: null, reset_otp_expiry: null }
+      data: {
+        reset_otp: null,
+        reset_otp_expiry: null,
+        last_login: now,
+        last_active_at: now,
+        is_online: true,
+      },
     });
+
+    // Record live login event in audit log
+    try {
+      await prisma.adminAuditLog.create({
+        data: {
+          actor_id: user.id,
+          actor_email: user.email,
+          action: 'user.login_otp',
+          entity: 'User',
+          entity_id: String(user.id),
+          metadata: { name: user.name, role: user.role, method: 'otp' },
+        },
+      });
+    } catch (_) {}
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -341,23 +403,155 @@ export const verifyRegisterOtp = async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, 10);
     const fullName = `${firstName || record.firstName || ''} ${lastName || record.lastName || ''}`.trim();
+    const now = new Date();
 
     const user = await prisma.user.create({
       data: {
         name: fullName,
         email: emailKey,
         password_hash,
-        role: 'customer'
+        role: 'customer',
+        last_login: now,
+        last_active_at: now,
+        is_online: true,
       }
     });
 
     registrationOtpStore.delete(emailKey);
     sendWelcomeEmail(user.email, user.name);
 
+    // Record registration audit log
+    try {
+      await prisma.adminAuditLog.create({
+        data: {
+          actor_id: user.id,
+          actor_email: user.email,
+          action: 'user.registered_otp',
+          entity: 'User',
+          entity_id: String(user.id),
+          metadata: { name: user.name, role: user.role, method: 'otp' },
+        },
+      });
+    } catch (_) {}
+
     res.status(201).json({
       message: 'Account created successfully! Redirecting to Sign In...'
     });
   } catch (error) {
     res.status(500).json({ message: 'Error creating account', error: error.message });
+  }
+};
+
+/**
+ * User Heartbeat / Activity Ping — updates last_active_at and is_online in real time
+ */
+export const heartbeat = async (req, res) => {
+  try {
+    if (req.user?.id) {
+      const now = new Date();
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { last_active_at: now, is_online: true },
+      });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(200).json({ success: false }); // Graceful
+  }
+};
+
+/**
+ * User Logout — sets is_online to false and logs event
+ */
+export const logout = async (req, res) => {
+  try {
+    if (req.user?.id) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { is_online: false, last_active_at: new Date() },
+      });
+
+      try {
+        await prisma.adminAuditLog.create({
+          data: {
+            actor_id: req.user.id,
+            actor_email: req.user.email,
+            action: 'user.logout',
+            entity: 'User',
+            entity_id: String(req.user.id),
+            metadata: { name: req.user.name, role: req.user.role },
+          },
+        });
+      } catch (_) {}
+    }
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    res.json({ success: true });
+  }
+};
+
+/**
+ * Real-Time Active Users & Live Login Audit Log (Admin Only)
+ */
+export const getRealtimeLogins = async (req, res) => {
+  try {
+    const activeThreshold = new Date(Date.now() - 5 * 60 * 1000); // Active in last 5 minutes
+
+    // 1. Fetch currently online & recent users
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        last_login: true,
+        last_active_at: true,
+        is_online: true,
+        created_at: true,
+      },
+      orderBy: { last_active_at: 'desc' },
+      take: 50,
+    });
+
+    const activeUsers = users.map((u) => {
+      const isOnline = Boolean(
+        u.is_online || (u.last_active_at && new Date(u.last_active_at) >= activeThreshold)
+      );
+      return {
+        ...u,
+        is_online: isOnline,
+        status: isOnline ? 'ONLINE' : 'OFFLINE',
+      };
+    });
+
+    const onlineCount = activeUsers.filter((u) => u.is_online).length;
+
+    // 2. Fetch live login events from AdminAuditLog
+    const recentLoginLogs = await prisma.adminAuditLog.findMany({
+      where: {
+        action: {
+          in: ['user.login', 'user.login_otp', 'user.registered', 'user.registered_otp', 'user.logout'],
+        },
+      },
+      orderBy: { created_at: 'desc' },
+      take: 20,
+      include: {
+        actor: {
+          select: { name: true, email: true, role: true },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      onlineCount,
+      totalUsers: users.length,
+      users: activeUsers,
+      recentLogs: recentLoginLogs,
+    });
+  } catch (error) {
+    console.error('getRealtimeLogins error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching real-time login data', error: error.message });
   }
 };

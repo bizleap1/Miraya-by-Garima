@@ -31,6 +31,8 @@ export const getAdminStats = async (req, res) => {
       sevenDaysSales,
       topSaleItems,
       topOrderItems,
+      liveOnlineUsers,
+      recentUserLogins,
     ] = await Promise.all([
       // Today's online orders
       prisma.order.findMany({
@@ -100,6 +102,23 @@ export const getAdminStats = async (req, res) => {
         _sum: { quantity: true },
         orderBy: { _sum: { quantity: 'desc' } },
         take: 5,
+      }),
+      // Live Online Users (Active in last 5 minutes)
+      prisma.user.findMany({
+        where: {
+          OR: [
+            { is_online: true },
+            { last_active_at: { gte: new Date(Date.now() - 5 * 60 * 1000) } },
+          ],
+        },
+        select: { id: true, name: true, email: true, role: true, last_login: true, last_active_at: true, is_online: true },
+      }),
+      // Recent User Logins & Registrations
+      prisma.user.findMany({
+        where: { last_login: { not: null } },
+        orderBy: { last_login: 'desc' },
+        take: 8,
+        select: { id: true, name: true, email: true, role: true, last_login: true, last_active_at: true, is_online: true },
       }),
     ]);
 
@@ -210,6 +229,9 @@ export const getAdminStats = async (req, res) => {
       categoryBreakdown,
       recentOrders: recentOnlineOrders,
       recentPosSales,
+      onlineUsersCount: liveOnlineUsers.length,
+      onlineUsers: liveOnlineUsers,
+      recentLogins: recentUserLogins,
     });
   } catch (error) {
     console.error('Stats controller error:', error);

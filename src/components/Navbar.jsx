@@ -6,6 +6,7 @@ import { Menu, X, ChevronDown, User, ShoppingCart, ShoppingBag, Heart, Settings,
 import { useLenis } from 'lenis/react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import API_URL from '../config';
 import CheckoutModal from './CheckoutModal';
 import './Navbar.css';
 
@@ -26,6 +27,28 @@ const Navbar = () => {
 
   const { wishlistCount } = useWishlist();
   const { cartCount } = useCart();
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        fetch(`${API_URL}/api/auth/logout`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    setUser(null);
+    setProfileDropdownOpen(false);
+    window.dispatchEvent(new Event('loginStateChange'));
+    navigate('/');
+  };
 
   // Lock background scroll when mobile menu is open
   useEffect(() => {
@@ -57,19 +80,6 @@ const Navbar = () => {
     };
   }, [mobileMenuOpen, lenis]);
 
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
-    setIsAdmin(false);
-    setUser(null);
-    setProfileDropdownOpen(false);
-    window.dispatchEvent(new Event('loginStateChange'));
-    navigate('/');
-  };
-
   useEffect(() => {
     const handleLoginChange = () => {
       const token = localStorage.getItem('token');
@@ -99,11 +109,32 @@ const Navbar = () => {
     return () => window.removeEventListener('loginStateChange', handleLoginChange);
   }, []);
 
+  // Real-time Heartbeat: Send periodic activity ping while user is active on the website
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const pingHeartbeat = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        fetch(`${API_URL}/api/auth/heartbeat`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => {});
+      }
+    };
+
+    // Send immediate ping on load/route change
+    pingHeartbeat();
+
+    // Periodic heartbeat every 45 seconds
+    const interval = setInterval(pingHeartbeat, 45000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn, location]);
+
   const fetchNotifications = async () => {
     if (!isLoggedIn) return;
     try {
       const token = localStorage.getItem('token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const res = await fetch(`${API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });

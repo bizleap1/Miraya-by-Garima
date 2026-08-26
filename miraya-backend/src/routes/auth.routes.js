@@ -12,6 +12,9 @@ import {
   verifyLoginOtp,
   sendRegisterOtp,
   verifyRegisterOtp,
+  heartbeat,
+  logout,
+  getRealtimeLogins,
 } from '../controllers/auth.controller.js';
 import { authMiddleware, authorizeRoles } from '../middleware/auth.middleware.js';
 import { authLimiter, otpLimiter } from '../middleware/rateLimiter.middleware.js';
@@ -33,6 +36,11 @@ router.get('/me', authMiddleware, getMe);
 router.get('/profile', authMiddleware, getMe);
 router.put('/update-profile', authMiddleware, updateProfile);
 router.put('/profile', authMiddleware, updateProfile);
+router.post('/heartbeat', authMiddleware, heartbeat);
+router.post('/logout', authMiddleware, logout);
+
+// ─── REAL-TIME ADMIN MONITORING ──────────────────────────────────────────────
+router.get('/realtime-logins', authMiddleware, authorizeRoles('admin', 'super_admin', 'store_manager'), getRealtimeLogins);
 
 // ─── ADMIN ROLE MANAGEMENT ───────────────────────────────────────────────────
 // make-admin: kept for backward compat, restricted to admin/super_admin
@@ -42,3 +50,4 @@ router.post('/make-admin', authMiddleware, authorizeRoles('admin'), makeAdmin);
 router.post('/set-role', authMiddleware, authorizeRoles('super_admin'), setUserRole);
 
 export default router;
+
