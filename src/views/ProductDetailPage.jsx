@@ -398,48 +398,76 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
               </div>
             ) : (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', margin: '0.5rem 0 0.35rem' }}>
-                  <div className="product-detail-price" style={{ fontSize: '1.85rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-burgundy)', fontWeight: 700 }}>
-                    {(() => {
-                      if (product.price === undefined || product.price === null || product.price === '') return '';
-                      const str = String(product.price).trim();
-                      if (str.toLowerCase().includes('whatsapp') || str.toLowerCase().includes('dm') || str.toLowerCase().includes('request')) {
-                        return str;
-                      }
-                      if (str.startsWith('₹')) return str;
-                      const num = typeof product.price === 'number' ? product.price : parseInt(str.replace(/[^\d]/g, ''), 10);
-                      if (isNaN(num)) return str;
-                      return `₹${num.toLocaleString('en-IN')}`;
-                    })()}
+                {product.whatsapp_inquiry || (product.price && String(product.price).toLowerCase().includes('whatsapp')) ? (
+                  <div style={{ margin: '0.6rem 0 1.2rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setWhatsAppOpen(true)}
+                      style={{
+                        background: '#25D366',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '12px 24px',
+                        fontSize: '0.95rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(37, 211, 102, 0.35)',
+                        fontFamily: 'var(--font-body)',
+                        transition: 'transform 0.2s, box-shadow 0.2s'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.5)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 211, 102, 0.35)'; }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                      DM ON WHATSAPP FOR PRICE
+                    </button>
                   </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', margin: '0.5rem 0 0.35rem' }}>
+                      <div className="product-detail-price" style={{ fontSize: '1.85rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-burgundy)', fontWeight: 700 }}>
+                        {(() => {
+                          if (product.price === undefined || product.price === null || product.price === '') return '';
+                          const str = String(product.price).trim();
+                          if (str.startsWith('₹')) return str;
+                          const num = typeof product.price === 'number' ? product.price : parseInt(str.replace(/[^\d]/g, ''), 10);
+                          if (isNaN(num)) return str;
+                          return `₹${num.toLocaleString('en-IN')}`;
+                        })()}
+                      </div>
 
-                  {product.mrp_price && Number(product.mrp_price) > Number(product.price) && (
-                    <del style={{ fontSize: '1.25rem', color: '#999', textDecoration: 'line-through', fontWeight: 500 }}>
-                      ₹{Number(product.mrp_price).toLocaleString('en-IN')}
-                    </del>
-                  )}
+                      {product.mrp_price && Number(product.mrp_price) > Number(product.price) && (
+                        <del style={{ fontSize: '1.25rem', color: '#999', textDecoration: 'line-through', fontWeight: 500 }}>
+                          ₹{Number(product.mrp_price).toLocaleString('en-IN')}
+                        </del>
+                      )}
 
-                  {(product.is_on_sale || (product.mrp_price && Number(product.mrp_price) > Number(product.price)) || product.discount_percent) && (
-                    <span style={{
-                      background: 'linear-gradient(135deg, #27ae60, #1e824c)',
-                      color: 'white',
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.5px',
-                      boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)'
-                    }}>
-                      {product.promo_label || (product.discount_percent ? `${product.discount_percent}% OFF` : 'SPECIAL SALE')}
-                    </span>
-                  )}
-                </div>
+                      {(product.is_on_sale || (product.mrp_price && Number(product.mrp_price) > Number(product.price)) || product.discount_percent) && (
+                        <span style={{
+                          background: 'linear-gradient(135deg, #27ae60, #1e824c)',
+                          color: 'white',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)'
+                        }}>
+                          {product.promo_label || (product.discount_percent ? `${product.discount_percent}% OFF` : 'SPECIAL SALE')}
+                        </span>
+                      )}
+                    </div>
 
-                {!String(product.price || '').toLowerCase().includes('whatsapp') && (
-                  <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
-                    <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
-                    <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
-                  </div>
+                    <div className="product-tax-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#555', background: 'rgba(198, 164, 106, 0.12)', border: '1px solid rgba(198, 164, 106, 0.35)', padding: '3px 12px', borderRadius: '20px', marginBottom: '1.2rem', fontWeight: 600 }}>
+                      <span>⚖️ Inclusive of 18% GST (CGST 9% + SGST 9%)</span>
+                      <span style={{ color: '#1e824c', fontWeight: 700 }}>• Tax Invoice Included</span>
+                    </div>
+                  </>
                 )}
               </>
             )}
