@@ -643,15 +643,15 @@ export const productsData = {
   ]
 };
 
-// Helper function to get all flat products
+// Helper function to get all flat products (in exact database seed order)
 export const getAllProducts = () => {
   return [
-    ...productsData['dresses'],
     ...productsData['indo-western'],
     ...productsData['drape-sarees'],
     ...productsData['designer-suits'],
     ...productsData['premium-suit-materials'],
-    ...productsData['coord-sets']
+    ...productsData['coord-sets'],
+    ...productsData['dresses']
   ];
 };
 
@@ -662,44 +662,55 @@ export const getProductById = (uniqueId, category) => {
   const lowerId = rawId.toLowerCase();
   const cleanCat = category ? String(category).toLowerCase().trim() : null;
 
-  // 1. Direct ID match (e.g. "iw-1", "ds-1", "coord-1")
+  // 1. Direct ID match (e.g. "iw-1", "ds-1", "coord-1", "dress-1")
   let found = allProducts.find(p => String(p.id).toLowerCase() === lowerId);
   if (found) return found;
 
-  // 2. Composite ID match (e.g., "indo-western-iw-1")
+  // 2. Numeric ID match (e.g. "1", "2", "23" from backend database primary key)
+  const numId = parseInt(rawId, 10);
+  if (!isNaN(numId) && String(numId) === rawId) {
+    if (cleanCat && productsData[cleanCat]) {
+      const catList = productsData[cleanCat];
+      if (numId >= 1 && numId <= catList.length) {
+        return catList[numId - 1];
+      }
+    }
+    if (numId >= 1 && numId <= allProducts.length) {
+      return allProducts[numId - 1];
+    }
+  }
+
+  // 3. Composite ID match (e.g., "indo-western-iw-1" or "dresses-dress-1")
   found = allProducts.find(p => `${String(p.category).toLowerCase()}-${String(p.id).toLowerCase()}` === lowerId);
   if (found) return found;
 
-  // 3. Suffix match (e.g. "indo-western-iw-1" ends with "-iw-1" or "iw-1")
-  found = allProducts.find(p => {
-    const pId = String(p.id).toLowerCase();
-    return lowerId.endsWith(`-${pId}`) || lowerId.endsWith(pId) || pId.endsWith(lowerId);
-  });
-  if (found) return found;
-
-  // 4. Normalized category composite
-  found = allProducts.find(p => {
-    const normP = String(p.category).toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normId = lowerId.replace(/[^a-z0-9]/g, '');
-    return normId.includes(normP) && normId.includes(String(p.id).toLowerCase().replace(/[^a-z0-9]/g, ''));
-  });
-  if (found) return found;
-
-  // 5. Category-scoped search if category provided
-  if (cleanCat) {
-    const normCat = cleanCat.replace(/[^a-z0-9]/g, '');
-    const filtered = allProducts.filter(p => {
-      const pNorm = String(p.category).toLowerCase().replace(/[^a-z0-9]/g, '');
-      return pNorm.includes(normCat) || normCat.includes(pNorm);
-    });
-    found = filtered.find(p => {
+  // 4. Category-scoped search if category provided
+  if (cleanCat && productsData[cleanCat]) {
+    const catList = productsData[cleanCat];
+    // Suffix match within category
+    found = catList.find(p => {
       const pId = String(p.id).toLowerCase();
-      return lowerId.includes(pId) || pId.includes(lowerId);
+      return lowerId.endsWith(`-${pId}`) || lowerId.endsWith(pId) || pId.endsWith(`-${lowerId}`) || pId === lowerId;
+    });
+    if (found) return found;
+
+    // Title / slug match within category
+    found = catList.find(p => {
+      if (!p.title) return false;
+      const titleSlug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const idSlug = lowerId.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      return p.title.toLowerCase() === lowerId || titleSlug === idSlug;
     });
     if (found) return found;
   }
 
-  // 6. Title or slug match
+  // 5. Global suffix / title / slug match across all products
+  found = allProducts.find(p => {
+    const pId = String(p.id).toLowerCase();
+    return lowerId.endsWith(`-${pId}`) || lowerId.endsWith(pId);
+  });
+  if (found) return found;
+
   found = allProducts.find(p => {
     if (!p.title) return false;
     const titleSlug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

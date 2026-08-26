@@ -1,6 +1,8 @@
 import { productsData, getProductById as getStaticProductById } from '../data/products';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 
+  process.env.NEXT_PUBLIC_BACKEND_URL || 
+  (process.env.NODE_ENV === 'production' ? 'https://miraya-by-garima.onrender.com' : 'http://localhost:5000');
 
 function formatApiProduct(data, categoryParam) {
   let images = Array.isArray(data.images) && data.images.length > 0 ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
@@ -16,17 +18,23 @@ function formatApiProduct(data, categoryParam) {
     title: data.name || data.title || 'Haute Couture Garment',
     price: typeof data.price === 'number' ? `₹${data.price.toLocaleString('en-IN')}` : data.price,
     rawPrice: typeof data.price === 'number' ? data.price : parseFloat(String(data.price).replace(/[^0-9.]/g, '') || 0),
+    mrp_price: data.mrp_price,
+    is_on_sale: data.is_on_sale,
+    discount_percent: data.discount_percent,
+    promo_label: data.promo_label,
+    whatsapp_inquiry: data.whatsapp_inquiry,
     category: data.category?.slug || data.category?.name || data.category || categoryParam || 'indo-western',
     description: data.description || 'Handcrafted Haute Couture ensemble designed with artisanal precision by Miraya by Garima Nagpur.',
     image: primary,
     images: images,
-    sizes: data.sizes?.length ? data.sizes : ['S', 'M', 'L', 'XL'],
+    sizes: data.sizes?.length ? data.sizes : ['Free Size (M to XL)'],
+    size_stock: data.size_stock,
     fabric: data.fabric || 'Pure Silk, Georgette & Organza Blend',
     color: data.color || 'Artisanal Palette',
     wash_care: data.wash_care || 'Professional Dry Clean Only',
     craftsmanship: data.craftsmanship || 'Handcrafted Zari, Sequins & Thread Embroidery',
     inStock: (data.stock ?? 1) > 0,
-    stock: data.stock ?? 10,
+    stock: data.stock ?? 1,
   };
 }
 
@@ -37,19 +45,26 @@ export async function getProductById(id, categoryParam) {
   if (!id) return null;
   const cleanId = String(id).trim();
 
-  // 1. Try fetching from Backend API
-  try {
-    const res = await fetch(`${API_BASE}/api/products/${cleanId}`, {
-      next: { revalidate: 60 }, // ISR cache revalidation every 60 seconds
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && (data.id || data.name || data.title)) {
-        return formatApiProduct(data, categoryParam);
+  // 1. Try fetching from Backend API (with Render production fallback)
+  const apiUrls = [
+    API_BASE,
+    'https://miraya-by-garima.onrender.com'
+  ].filter((url, idx, arr) => url && arr.indexOf(url) === idx);
+
+  for (const baseUrl of apiUrls) {
+    try {
+      const res = await fetch(`${baseUrl}/api/products/${cleanId}`, {
+        next: { revalidate: 30 }, // ISR cache revalidation every 30 seconds
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && (data.id || data.name || data.title)) {
+          return formatApiProduct(data, categoryParam);
+        }
       }
+    } catch (e) {
+      // Try next URL
     }
-  } catch (e) {
-    // API is offline or unreachable - fallback to static
   }
 
   // 1b. If cleanId contains category prefix (e.g. "indo-western-iw-1"), try stripped ID on backend
