@@ -5,7 +5,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === 'production' ? 'https://miraya-by-garima.onrender.com' : 'http://localhost:5000');
 
 function formatApiProduct(data, categoryParam) {
-  let images = Array.isArray(data.images) && data.images.length > 0 ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
+  let images = data.images;
+  if (typeof images === 'string') {
+    try { images = JSON.parse(images); } catch (_) { images = [images]; }
+  }
+  if (!Array.isArray(images) || images.length === 0) {
+    images = [data.image_url || data.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
+  }
   const primary = data.image_url || data.image || images[0];
   if (primary && primary.includes('/products/') && (primary.endsWith('/1.JPG') || primary.endsWith('/1.jpg')) && images.length === 1) {
     const basePath = primary.substring(0, primary.lastIndexOf('/'));

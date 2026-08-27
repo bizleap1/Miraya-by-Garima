@@ -256,10 +256,20 @@ const CategoryPage = () => {
       }
     };
     fetchProducts();
+    const interval = setInterval(fetchProducts, 12000);
+    const onFocus = () => fetchProducts();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
 
     if (!location.state?.filters) {
       setSelectedCategories([]);
     }
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
   }, [category, location.state]);
 
   useLayoutEffect(() => {

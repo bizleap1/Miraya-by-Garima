@@ -83,6 +83,11 @@ export default function AdminPOSSection({ token, API_BASE_URL, onRefresh }) {
 
   useEffect(() => {
     fetchPosData();
+    // Live polling every 10 seconds for real-time inventory & sales sync
+    const pollTimer = setInterval(() => {
+      fetchPosData();
+    }, 10000);
+    return () => clearInterval(pollTimer);
   }, []);
 
   // Barcode Scanner Form Submit

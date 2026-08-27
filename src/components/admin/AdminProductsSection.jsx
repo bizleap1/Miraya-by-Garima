@@ -73,7 +73,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
     mrp: '',
     color: 'Default',
     image_url: '',
-    is_active: true
+    is_active: true,
+    whatsapp_inquiry: false
   });
 
   const [selectedSizes, setSelectedSizes] = useState(['S', 'M', 'L', 'XL', 'XXL']);
@@ -111,7 +112,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
       mrp: '',
       color: 'Default',
       image_url: '',
-      is_active: true
+      is_active: true,
+      whatsapp_inquiry: false
     });
     setSelectedSizes(['S', 'M', 'L', 'XL', 'XXL']);
     setSizeStock({ S: 5, M: 5, L: 5, XL: 2, XXL: 0 });
@@ -174,7 +176,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
       mrp: p.mrp ? String(p.mrp) : (p.price ? String(Math.round(Number(p.price) * 1.2)) : ''),
       color: firstVariant?.color || p.color || 'Default',
       image_url: p.image_url || '',
-      is_active: p.is_active !== false && p.status !== 'inactive'
+      is_active: p.is_active !== false && p.status !== 'inactive',
+      whatsapp_inquiry: p.whatsapp_inquiry === true || (p.price && String(p.price).toLowerCase().includes('whatsapp'))
     });
 
     setSelectedSizes(COMMON_SIZES);
@@ -287,8 +290,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
       return;
     }
 
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      setFormError('Please enter a valid selling price.');
+    if (!formData.whatsapp_inquiry && (!formData.price || parseFloat(formData.price) <= 0)) {
+      setFormError('Please enter a valid selling price or enable WhatsApp Inquiry.');
       return;
     }
 
@@ -323,13 +326,14 @@ export default function AdminProductsSection({ products = [], categories = [], t
         const fd = new FormData();
         fd.append('name', formData.name.trim());
         fd.append('description', formData.description ? formData.description.trim() : '');
-        fd.append('price', String(formData.price));
+        fd.append('price', String(formData.price || 0));
         if (formData.mrp) fd.append('mrp', String(formData.mrp));
         fd.append('stock', String(totalStock));
         fd.append('category_id', formData.category_id ? String(formData.category_id) : '');
         fd.append('color', formData.color ? formData.color.trim() : 'Default');
         fd.append('sizes', JSON.stringify(selectedSizes));
         fd.append('size_stock', JSON.stringify(finalSizeStock));
+        fd.append('whatsapp_inquiry', String(Boolean(formData.whatsapp_inquiry)));
 
         const existingUrls = [];
         sortedGallery.forEach((g) => {
@@ -356,7 +360,7 @@ export default function AdminProductsSection({ products = [], categories = [], t
         const payload = {
           name: formData.name.trim(),
           description: formData.description ? formData.description.trim() : '',
-          price: parseFloat(formData.price),
+          price: parseFloat(formData.price || 0),
           mrp: formData.mrp ? parseFloat(formData.mrp) : undefined,
           stock: totalStock,
           size_stock: finalSizeStock,
@@ -364,7 +368,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
           color: formData.color ? formData.color.trim() : 'Default',
           image_url: mainImage,
           images: imageUrlList.length > 0 ? imageUrlList : (mainImage ? [mainImage] : []),
-          category_id: formData.category_id ? parseInt(formData.category_id, 10) : null
+          category_id: formData.category_id ? parseInt(formData.category_id, 10) : null,
+          whatsapp_inquiry: Boolean(formData.whatsapp_inquiry)
         };
 
         res = await fetch(url, {
@@ -540,7 +545,13 @@ export default function AdminProductsSection({ products = [], categories = [], t
 
                     {/* Selling Price */}
                     <td style={{ fontWeight: '700', color: 'var(--miraya-text)' }}>
-                      {formatINR(p.price)}
+                      {p.whatsapp_inquiry || (p.price && String(p.price).toLowerCase().includes('whatsapp')) ? (
+                        <span style={{ fontSize: '11px', color: '#1a7a42', background: '#e8f5e9', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          💬 WhatsApp
+                        </span>
+                      ) : (
+                        formatINR(p.price)
+                      )}
                     </td>
 
                     {/* Size-wise stock matrix */}
@@ -710,16 +721,48 @@ export default function AdminProductsSection({ products = [], categories = [], t
                   </div>
                 </div>
 
+                {/* PRICE OPTIONS & QUICK OUT-OF-STOCK TOGGLES */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px', background: 'var(--miraya-bg)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--miraya-border)' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#1b7837' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.whatsapp_inquiry}
+                      onChange={(e) => setFormData({ ...formData, whatsapp_inquiry: e.target.checked })}
+                      style={{ width: '16px', height: '16px', accentColor: '#25D366', cursor: 'pointer' }}
+                    />
+                    <span>💬 DM on WhatsApp for Price (Price on Request)</span>
+                  </label>
+
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#c0392b' }}>
+                    <input
+                      type="checkbox"
+                      checked={COMMON_SIZES.every(sz => Number(sizeStock[sz] || 0) === 0)}
+                      onChange={(e) => {
+                        const isOos = e.target.checked;
+                        const updated = {};
+                        COMMON_SIZES.forEach(sz => {
+                          updated[sz] = isOos ? 0 : 5;
+                        });
+                        setSizeStock(updated);
+                      }}
+                      style={{ width: '16px', height: '16px', accentColor: '#e74c3c', cursor: 'pointer' }}
+                    />
+                    <span>🚫 Out of Stock (0 Inventory)</span>
+                  </label>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>Selling Price (₹) *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
+                      Selling Price (₹) {formData.whatsapp_inquiry ? <span style={{ color: '#25D366', fontSize: '11px', fontWeight: '700' }}>(DM for Price Active)</span> : '*'}
+                    </label>
                     <input
                       type="number"
                       className="admin-input"
-                      placeholder="e.g. 4999"
+                      placeholder={formData.whatsapp_inquiry ? "Price on Request" : "e.g. 4999"}
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
+                      required={!formData.whatsapp_inquiry}
                     />
                   </div>
 

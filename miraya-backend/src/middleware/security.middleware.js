@@ -43,7 +43,7 @@ export const applySecurityHeaders = (req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com data:; " +
     "img-src 'self' data: blob: https: http:; " +
-    "connect-src 'self' http://localhost:* http://127.0.0.1:* https://api.razorpay.com https://checkout.razorpay.com; " +
+    "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.mirayabygarima.com https://mirayabygarima.com https://*.onrender.com https://*.vercel.app https://res.cloudinary.com https://api.razorpay.com https://checkout.razorpay.com; " +
     "frame-src https://api.razorpay.com https://checkout.razorpay.com;"
   );
 
@@ -117,12 +117,18 @@ const ALLOWED_ORIGINS = [
   'https://mirayabygarima.com',
 ];
 
+// Also allow Vercel preview/deploy domains and Render backend
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/.*\.vercel\.app$/,
+  /^https:\/\/.*\.onrender\.com$/,
+];
+
 export const corsSecurityOptions = cors({
   origin: (origin, callback) => {
     // Allow non-browser requests (Postman, curl, internal cluster calls)
     if (!origin) return callback(null, true);
 
-    if (ALLOWED_ORIGINS.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) {
+    if (ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGIN_PATTERNS.some(re => re.test(origin)) || /^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) {
       return callback(null, true);
     }
 

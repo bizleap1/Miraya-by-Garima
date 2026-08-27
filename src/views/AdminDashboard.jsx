@@ -792,8 +792,8 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    loadDashboard(false);
-    // Real-time live polling every 8 seconds for new logins, active users & orders
+    // Initial load is handled by the auth-check useEffect above (line 662).
+    // This effect only starts the live polling interval.
     const pollTimer = setInterval(() => {
       loadDashboard(true);
     }, 8000);

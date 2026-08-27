@@ -24,27 +24,27 @@ const catalogProducts = [
   { name: "Golden-Black Co-ord Set", price: 24831, category: "Co-ord Sets", sub_category: "Co-ord", stock: 14, size_stock: { S: 3, M: 4, L: 4, XL: 3 }, image_url: "/products/Co-order Golden-Black/1.JPG" },
   { name: "Dark Green Co-ord Set", price: 21331, category: "Co-ord Sets", sub_category: "Co-ord", stock: 12, size_stock: { S: 3, M: 3, L: 3, XL: 3 }, image_url: "/products/Co-order Dark Green/1.JPG" },
   { name: "White Co-ord Set", price: 23131, category: "Co-ord Sets", sub_category: "Co-ord", stock: 15, size_stock: { S: 4, M: 4, L: 4, XL: 3 }, image_url: "/products/Co-order White/1.JPG" },
-  { name: "Red Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 13, size_stock: { S: 3, M: 4, L: 3, XL: 3 }, image_url: "/products/Co-order Red/1.JPG" },
-  { name: "Orange Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/products/Co-order Orange/1.JPG" },
-  { name: "Light Green Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 14, size_stock: { S: 4, M: 4, L: 3, XL: 3 }, image_url: "/products/Co-order Light Green/1.JPG" },
-  { name: "Mustard Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 11, size_stock: { S: 3, M: 3, L: 3, XL: 2 }, image_url: "/products/Co-order Mustard/1.JPG" },
+  { name: "Red Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 0, size_stock: { "Free Size (M to XL)": 0 }, image_url: "/products/Co-order Red/1.JPG", whatsapp_inquiry: true },
+  { name: "Orange Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 0, size_stock: { "Free Size (M to XL)": 0 }, image_url: "/products/Co-order Orange/1.JPG", whatsapp_inquiry: true },
+  { name: "Light Green Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 0, size_stock: { "Free Size (M to XL)": 0 }, image_url: "/products/Co-order Light Green/1.JPG", whatsapp_inquiry: true },
+  { name: "Mustard Co-ord Set", price: 4999, category: "Co-ord Sets", sub_category: "Co-ord", stock: 0, size_stock: { "Free Size (M to XL)": 0 }, image_url: "/products/Co-order Mustard/1.JPG", whatsapp_inquiry: true },
   // Dresses (Haute Couture)
-  { name: "Haute Couture Dress 1", price: 9311, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/1.png" },
-  { name: "Haute Couture Dress 2", price: 10791, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/2.png" },
-  { name: "Haute Couture Dress 3", price: 16191, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/3.png" },
-  { name: "Haute Couture Dress 4", price: 17731, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/4.png" },
-  { name: "Haute Couture Dress 5", price: 10791, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/5.png" },
-  { name: "Haute Couture Dress 6", price: 19531, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/6.png" },
-  { name: "Haute Couture Dress 7", price: 7561, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/7.png" },
-  { name: "Haute Couture Dress 8", price: 11511, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/8.png" },
-  { name: "Haute Couture Dress 9", price: 16731, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/9.png" },
-  { name: "Haute Couture Dress 10", price: 12591, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/10.png" },
-  { name: "Haute Couture Dress 11", price: 23131, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/11.png" },
-  { name: "Haute Couture Dress 12", price: 16551, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/12.png" },
-  { name: "Haute Couture Dress 13", price: 21591, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/13.png" },
-  { name: "Haute Couture Dress 14", price: 8991, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/14.png" },
-  { name: "Haute Couture Dress 15", price: 16191, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/15.png" },
-  { name: "Haute Couture Dress 16", price: 17991, category: "Dresses", sub_category: "Dress", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/16.png" }
+  { name: "Rose Gold Fringe Crop Top & Draped Skirt Set", price: 9311, category: "Dresses", sub_category: "Co-ord Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/1.png" },
+  { name: "Noir Black Embellished Halter Tunic & Palazzo Set", price: 10791, category: "Dresses", sub_category: "Tunic & Palazzo", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/2.png" },
+  { name: "Obsidian Black Cut-Out Back Halter Evening Gown", price: 16191, category: "Dresses", sub_category: "Evening Gown", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/3.png" },
+  { name: "Powder Blue Pre-Draped Saree Gown with Embroidered Belt", price: 17731, category: "Dresses", sub_category: "Drape Saree Gown", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/4.png" },
+  { name: "Scarlet Red Embroidered Vest Jacket & Palazzo Set", price: 10791, category: "Dresses", sub_category: "Jacket Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/5.png" },
+  { name: "Ivory Pearl Silk Paisley Tunic & Flared Sharara Set", price: 19531, category: "Dresses", sub_category: "Sharara Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/6.png" },
+  { name: "Royal Plum Crinkle Chiffon Cape Kurta & Palazzo Set", price: 7561, category: "Dresses", sub_category: "Cape Kurta Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/7.png" },
+  { name: "Noir Black Hand-Embroidered Halter Draped Column Gown", price: 11511, category: "Dresses", sub_category: "Evening Gown", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/8.png" },
+  { name: "Onyx Black Hand-Embroidered Motif Blazer & Trouser Pantsuit", price: 16731, category: "Dresses", sub_category: "Pantsuit", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/9.png" },
+  { name: "Wine Red Asymmetrical Embroidered Collar Kurta & Palazzo Set", price: 12591, category: "Dresses", sub_category: "Kurta Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/10.png" },
+  { name: "Crimson Red Angrakha Pleated Anarkali Gown with Choker Dupatta", price: 23131, category: "Dresses", sub_category: "Anarkali Gown", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/11.png" },
+  { name: "Rani Pink Zari Embroidered Peplum Sharara Set with Sheer Cape", price: 16551, category: "Dresses", sub_category: "Sharara Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/12.png" },
+  { name: "Noir Black Pre-Draped Pleated Saree with Embroidered Sweetheart Blouse", price: 21591, category: "Dresses", sub_category: "Drape Saree", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/13.png" },
+  { name: "Ruby Red Criss-Cross Neck Embroidered Tunic & Palazzo Set", price: 8991, category: "Dresses", sub_category: "Tunic & Palazzo", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/14.png" },
+  { name: "Burgundy Draped Skirt & Crop Top Set with Embroidered Shrug", price: 16191, category: "Dresses", sub_category: "Skirt & Shrug Set", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/15.png" },
+  { name: "Champagne Bronze Metallic Pleated Lehenga Set with Draped Pallu", price: 17991, category: "Dresses", sub_category: "Drape Lehenga", stock: 10, size_stock: { S: 2, M: 3, L: 3, XL: 2 }, image_url: "/dresses/16.png" }
 ];
 
 async function syncAllPrices() {
@@ -58,15 +58,19 @@ async function syncAllPrices() {
 
     const existingProduct = await prisma.product.findFirst({ where: { name: item.name } });
 
+    const itemStock = item.stock !== undefined ? item.stock : 1;
+    const itemSizeStock = item.size_stock || { "Free Size (M to XL)": itemStock };
+
     if (existingProduct) {
       // 1. Update Product price, stock, sizes & category
       await prisma.product.update({
         where: { id: existingProduct.id },
         data: {
           price: item.price,
-          stock: 1,
+          stock: itemStock,
           sizes: ["Free Size (M to XL)"],
-          size_stock: { "Free Size (M to XL)": 1 },
+          size_stock: itemSizeStock,
+          whatsapp_inquiry: item.whatsapp_inquiry || false,
           category_id: cat.id,
           sub_category: item.sub_category,
         }
@@ -82,22 +86,23 @@ async function syncAllPrices() {
           sku: `MIR-${existingProduct.name.slice(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'X')}-${existingProduct.id}-FS`,
           size: "Free Size (M to XL)",
           price: item.price,
-          stock: 1,
+          stock: itemStock,
           reserved_stock: 0,
-          is_active: true
+          is_active: itemStock > 0
         }
       });
 
-      console.log(`✅ [Updated] ${item.name} -> ₹${item.price} (Stock: 1, Size: Free Size (M to XL))`);
+      console.log(`✅ [Updated] ${item.name} -> ₹${item.price} (Stock: ${itemStock}, WhatsApp: ${item.whatsapp_inquiry ? 'YES' : 'NO'})`);
     } else {
       // Create new product if missing
       const newProd = await prisma.product.create({
         data: {
           name: item.name,
           price: item.price,
-          stock: 1,
+          stock: itemStock,
           sizes: ["Free Size (M to XL)"],
-          size_stock: { "Free Size (M to XL)": 1 },
+          size_stock: itemSizeStock,
+          whatsapp_inquiry: item.whatsapp_inquiry || false,
           image_url: item.image_url,
           images: [item.image_url],
           category_id: cat.id,
@@ -112,16 +117,17 @@ async function syncAllPrices() {
           sku: `MIR-${newProd.name.slice(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'X')}-${newProd.id}-FS`,
           size: "Free Size (M to XL)",
           price: item.price,
-          stock: 1,
+          stock: itemStock,
           reserved_stock: 0,
-          is_active: true
+          is_active: itemStock > 0
         }
       });
-      console.log(`✨ [Created] ${item.name} -> ₹${item.price}`);
+      console.log(`✨ [Created] ${item.name} (Stock: ${itemStock})`);
     }
   }
 
   console.log('🎉 ALL BACKEND PRICES SUCCESSFULLY SYNCED IN DATABASE!');
+  await prisma.$disconnect();
 }
 
 syncAllPrices()

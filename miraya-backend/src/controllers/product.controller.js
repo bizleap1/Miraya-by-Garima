@@ -56,16 +56,78 @@ export const getProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await prisma.product.findUnique({
-      where: { id: parseInt(id, 10) },
-      include: {
-        category: true,
-        variants: {
-          orderBy: { size: 'asc' },
+    const cleanId = String(id || '').trim();
+
+    let product = null;
+    const numId = parseInt(cleanId, 10);
+
+    // 1. If cleanId is purely numeric, find by primary key
+    if (!isNaN(numId) && String(numId) === cleanId) {
+      product = await prisma.product.findUnique({
+        where: { id: numId },
+        include: {
+          category: true,
+          variants: {
+            orderBy: { size: 'asc' },
+          },
+          reviews: { include: { user: { select: { name: true } } } },
         },
-        reviews: { include: { user: { select: { name: true } } } },
-      },
-    });
+      });
+    }
+
+    // 2. If not found, map catalog IDs (e.g. "iw-1", "ds-2", "coord-3", "dress-5")
+    if (!product) {
+      const catalogIdMap = {
+        'iw-1': 1, 'iw-2': 2, 'iw-3': 3, 'iw-4': 4,
+        'ds-1': 5, 'ds-2': 6, 'ds-3': 7,
+        'suit-1': 8, 'suit-2': 9, 'suit-3': 10, 'suit-4': 11,
+        'psm-1': 12, 'psm-2': 13,
+        'coord-1': 14, 'coord-2': 15, 'coord-3': 16, 'coord-4': 17,
+        'coord-5': 18, 'coord-6': 19, 'coord-7': 20, 'coord-8': 21, 'coord-9': 22,
+        'dress-1': 23, 'dress-2': 24, 'dress-3': 25, 'dress-4': 26,
+        'dress-5': 27, 'dress-6': 28, 'dress-7': 29, 'dress-8': 30,
+        'dress-9': 31, 'dress-10': 32, 'dress-11': 33, 'dress-12': 34,
+        'dress-13': 35, 'dress-14': 36, 'dress-15': 37, 'dress-16': 38,
+      };
+
+      const lowerId = cleanId.toLowerCase();
+      const matchedCatalogKey = Object.keys(catalogIdMap).find(k => lowerId === k || lowerId.endsWith(`-${k}`));
+
+      if (matchedCatalogKey) {
+        const mappedDbId = catalogIdMap[matchedCatalogKey];
+        product = await prisma.product.findUnique({
+          where: { id: mappedDbId },
+          include: {
+            category: true,
+            variants: {
+              orderBy: { size: 'asc' },
+            },
+            reviews: { include: { user: { select: { name: true } } } },
+          },
+        });
+      }
+    }
+
+    // 3. If still not found, search by name, image_url, or variant SKU
+    if (!product) {
+      const cleanName = cleanId.replace(/[-_]+/g, ' ').trim();
+      product = await prisma.product.findFirst({
+        where: {
+          OR: [
+            { name: { contains: cleanName, mode: 'insensitive' } },
+            { image_url: { contains: cleanId, mode: 'insensitive' } },
+            { variants: { some: { sku: { contains: cleanId, mode: 'insensitive' } } } }
+          ]
+        },
+        include: {
+          category: true,
+          variants: {
+            orderBy: { size: 'asc' },
+          },
+          reviews: { include: { user: { select: { name: true } } } },
+        },
+      });
+    }
 
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
@@ -136,6 +198,7 @@ export const createProduct = async (req, res) => {
           sub_category,
           sizes: targetSizes,
           size_stock: parsedSizeStock,
+          whatsapp_inquiry: req.body.whatsapp_inquiry === 'true' || req.body.whatsapp_inquiry === true || false,
         },
       });
 
@@ -229,6 +292,9 @@ export const updateProduct = async (req, res) => {
     if (price) data.price = parseFloat(price);
     if (category_id) data.category_id = parseInt(category_id, 10);
     if (sub_category) data.sub_category = sub_category;
+    if (req.body.whatsapp_inquiry !== undefined) {
+      data.whatsapp_inquiry = req.body.whatsapp_inquiry === 'true' || req.body.whatsapp_inquiry === true;
+    }
 
     if (req.files && req.files.length > 0) {
       const uploaded = req.files.map((file) => {

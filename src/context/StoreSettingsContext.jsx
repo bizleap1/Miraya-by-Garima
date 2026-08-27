@@ -53,16 +53,20 @@ export function StoreSettingsProvider({ children }) {
 
   useEffect(() => {
     fetchSettings();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchSettings, 30000);
+    // Refresh every 10 seconds
+    const interval = setInterval(fetchSettings, 10000);
     const handleStorageOrEvent = () => fetchSettings();
     window.addEventListener("storeSettingsChange", handleStorageOrEvent);
     window.addEventListener("storage", handleStorageOrEvent);
+    window.addEventListener("focus", handleStorageOrEvent);
+    document.addEventListener("visibilitychange", handleStorageOrEvent);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("storeSettingsChange", handleStorageOrEvent);
       window.removeEventListener("storage", handleStorageOrEvent);
+      window.removeEventListener("focus", handleStorageOrEvent);
+      document.removeEventListener("visibilitychange", handleStorageOrEvent);
     };
   }, [fetchSettings]);
 

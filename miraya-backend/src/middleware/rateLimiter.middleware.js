@@ -62,11 +62,12 @@ export const paymentLimiter = rateLimit({
 
 /**
  * General API rate limiter
- * 200 requests per 15 minutes per IP (Skipped in dev)
+ * 600 requests per 15 minutes per IP (Skipped in dev)
+ * Higher limit to accommodate admin dashboard live polling (8s intervals across multiple sections)
  */
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 600,
   skip: () => isDev,
   message: {
     success: false,

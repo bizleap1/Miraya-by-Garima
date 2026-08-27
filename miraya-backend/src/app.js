@@ -67,7 +67,22 @@ app.use(
   })
 );
 
-// Health Check Endpoint
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    service: 'Miraya by Garima - Backend API',
+    status: 'online',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      products: '/api/products',
+      categories: '/api/categories',
+    },
+    message: 'Miraya backend server is running smoothly.',
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Miraya Backend API', timestamp: new Date().toISOString() });
 });

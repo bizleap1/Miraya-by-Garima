@@ -66,14 +66,21 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
 
   const [product, setProduct] = useState(() => {
     if (initialProduct) {
+      let initImgs = initialProduct.images;
+      if (typeof initImgs === 'string') {
+        try { initImgs = JSON.parse(initImgs); } catch (_) { initImgs = [initImgs]; }
+      }
+      if (!Array.isArray(initImgs) || initImgs.length === 0) {
+        initImgs = [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG'];
+      }
       return {
         ...initialProduct,
         id: initialProduct.id,
         title: initialProduct.name || initialProduct.title || 'Outfit',
         price: initialProduct.price,
         category: initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category,
-        image: initialProduct.image_url || initialProduct.image || (initialProduct.images && initialProduct.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
-        images: initialProduct.images?.length ? initialProduct.images : [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG']
+        image: initialProduct.image_url || initialProduct.image || initImgs[0],
+        images: initImgs
       };
     }
     return null;
@@ -107,17 +114,23 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
 
   useEffect(() => {
     if (initialProduct) {
+      let initImgs = initialProduct.images;
+      if (typeof initImgs === 'string') {
+        try { initImgs = JSON.parse(initImgs); } catch (_) { initImgs = [initImgs]; }
+      }
+      if (!Array.isArray(initImgs) || initImgs.length === 0) {
+        initImgs = [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG'];
+      }
       setProduct({
         ...initialProduct,
         id: initialProduct.id,
         title: initialProduct.name || initialProduct.title || 'Outfit',
         price: initialProduct.price,
         category: initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category,
-        image: initialProduct.image_url || initialProduct.image || (initialProduct.images && initialProduct.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
-        images: initialProduct.images?.length ? initialProduct.images : [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG']
+        image: initialProduct.image_url || initialProduct.image || initImgs[0],
+        images: initImgs
       });
       setLoading(false);
-      return;
     }
 
     const fetchProduct = async () => {
@@ -131,14 +144,21 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
         const res = await fetch(`${API_URL}/api/products/${id}`);
         if (res.ok) {
           const data = await res.json();
+          let apiImgs = data.images;
+          if (typeof apiImgs === 'string') {
+            try { apiImgs = JSON.parse(apiImgs); } catch (_) { apiImgs = [apiImgs]; }
+          }
+          if (!Array.isArray(apiImgs) || apiImgs.length === 0) {
+            apiImgs = [data.image_url || data.image || '/products/Lehenga-Pink Blush/1.JPG'];
+          }
           setProduct({
             ...data,
             id: data.id,
             title: data.name || data.title || 'Outfit',
             price: data.price,
             category: data.category?.slug || data.category?.name || data.category || category,
-            image: data.image_url || data.image || (data.images && data.images[0]) || '/products/Lehenga-Pink Blush/1.JPG',
-            images: data.images?.length ? data.images : [data.image_url || data.image || '/products/Lehenga-Pink Blush/1.JPG']
+            image: data.image_url || data.image || apiImgs[0],
+            images: apiImgs
           });
           fetched = true;
         }
@@ -146,7 +166,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
         // Silently fall back to local dataset
       }
 
-      if (!fetched) {
+      if (!fetched && !initialProduct) {
         try {
           const { getProductById } = await import('../data/products');
           const localProd = getProductById(id, category);
@@ -582,7 +602,11 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
               </div>
 
               <div style={{display: 'flex', gap: '1.2rem', flexWrap: 'wrap', alignItems: 'stretch', width: '100%'}}>
-                {product.whatsapp_inquiry || isStoreOffline || (product.price && String(product.price).toLowerCase().includes('whatsapp')) ? (
+                {(sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
+                  <button className="inquire-btn-new" disabled style={{background: '#e74c3c', color: 'white', flex: 1, minWidth: '150px', cursor: 'not-allowed', whiteSpace: 'nowrap', margin: 0, fontWeight: 700, letterSpacing: '1px'}}>
+                    OUT OF STOCK {selectedSize ? `(${selectedSize})` : ''}
+                  </button>
+                ) : product.whatsapp_inquiry || isStoreOffline || (product.price && String(product.price).toLowerCase().includes('whatsapp')) ? (
                   <button
                     type="button"
                     onClick={() => setWhatsAppOpen(true)}
@@ -601,10 +625,6 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
                     DM ON WHATSAPP FOR PRICE
-                  </button>
-                ) : (sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
-                  <button className="inquire-btn-new" disabled style={{background: '#e74c3c', color: 'white', flex: 1, minWidth: '150px', cursor: 'not-allowed', whiteSpace: 'nowrap', margin: 0, fontWeight: 700, letterSpacing: '1px'}}>
-                    OUT OF STOCK ({selectedSize})
                   </button>
                 ) : (
                   <>

@@ -40,8 +40,8 @@ export default function AdminInventorySection({ token, API_BASE_URL }) {
   const [updateError, setUpdateError] = useState('');
 
   // Fetch live inventory
-  const fetchInventory = async () => {
-    setLoading(true);
+  const fetchInventory = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     setError(null);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -51,17 +51,20 @@ export default function AdminInventorySection({ token, API_BASE_URL }) {
       if (data.success) {
         setVariants(data.variants || []);
       } else {
-        setError(data.message || 'Error loading inventory.');
+        if (!isSilent) setError(data.message || 'Error loading inventory.');
       }
     } catch (err) {
-      setError('Network error while loading inventory.');
+      if (!isSilent) setError('Network error while loading inventory.');
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInventory();
+    fetchInventory(false);
+    // Real-time live inventory polling
+    const interval = setInterval(() => fetchInventory(true), 8000);
+    return () => clearInterval(interval);
   }, []);
 
   // Group variants into unique products with their size-wise inventory
