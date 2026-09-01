@@ -677,6 +677,13 @@ export const getProductById = (uniqueId, category) => {
   // 2. Numeric ID match (e.g. "1", "2", "23" from backend database primary key)
   const numId = parseInt(rawId, 10);
   if (!isNaN(numId) && String(numId) === rawId) {
+    // Special handling for backend dress IDs 26 to 41
+    if (numId >= 26 && numId <= 41 && productsData['dresses']) {
+      const dressIdx = numId - 26;
+      if (productsData['dresses'][dressIdx]) {
+        return productsData['dresses'][dressIdx];
+      }
+    }
     if (cleanCat && productsData[cleanCat]) {
       const catList = productsData[cleanCat];
       if (numId >= 1 && numId <= catList.length) {
@@ -688,11 +695,20 @@ export const getProductById = (uniqueId, category) => {
     }
   }
 
-  // 3. Composite ID match (e.g., "indo-western-iw-1" or "dresses-dress-1")
+  // 3. Haute Couture Dress name match (e.g., "haute-couture-dress-16" or "Haute Couture Dress 16")
+  const dressNumMatch = lowerId.match(/haute[- ]couture[- ]dress[- ]*(\d+)/i);
+  if (dressNumMatch && dressNumMatch[1]) {
+    const dIdx = parseInt(dressNumMatch[1], 10) - 1;
+    if (productsData['dresses'] && productsData['dresses'][dIdx]) {
+      return productsData['dresses'][dIdx];
+    }
+  }
+
+  // 4. Composite ID match (e.g., "indo-western-iw-1" or "dresses-dress-1")
   found = allProducts.find(p => `${String(p.category).toLowerCase()}-${String(p.id).toLowerCase()}` === lowerId);
   if (found) return found;
 
-  // 4. Category-scoped search if category provided
+  // 5. Category-scoped search if category provided
   if (cleanCat && productsData[cleanCat]) {
     const catList = productsData[cleanCat];
     // Suffix match within category
@@ -712,7 +728,7 @@ export const getProductById = (uniqueId, category) => {
     if (found) return found;
   }
 
-  // 5. Global suffix / title / slug match across all products
+  // 6. Global suffix / title / slug match across all products
   found = allProducts.find(p => {
     const pId = String(p.id).toLowerCase();
     return lowerId.endsWith(`-${pId}`) || lowerId.endsWith(pId);

@@ -195,10 +195,28 @@ const CategoryPage = () => {
 
           // Match with local product details for rich metadata fallback
           const allLocal = getAllProducts();
-          const localMatch = allLocal.find(p => 
+          let localMatch = allLocal.find(p => 
             String(p.id).toLowerCase() === String(item.id).toLowerCase() || 
             (p.title && item.name && p.title.toLowerCase().trim() === item.name.toLowerCase().trim())
-          ) || {};
+          );
+
+          // Handle Haute Couture Dress 1-16 matching to rich local catalog
+          if (!localMatch && item.name) {
+            const dressMatch = String(item.name).match(/Haute Couture Dress\s*(\d+)/i);
+            if (dressMatch && dressMatch[1]) {
+              const dressIndex = parseInt(dressMatch[1], 10) - 1;
+              if (productsData['dresses'] && productsData['dresses'][dressIndex]) {
+                localMatch = productsData['dresses'][dressIndex];
+              }
+            }
+          }
+          if (!localMatch && (catSlug === 'dresses' || item.category_id === 6) && typeof item.id === 'number' && item.id >= 26 && item.id <= 41) {
+            const dressIndex = item.id - 26;
+            if (productsData['dresses'] && productsData['dresses'][dressIndex]) {
+              localMatch = productsData['dresses'][dressIndex];
+            }
+          }
+          localMatch = localMatch || {};
 
           let sizesList = [];
           if (Array.isArray(item.sizes) && item.sizes.length > 0) {
@@ -211,11 +229,16 @@ const CategoryPage = () => {
             sizesList = ['S', 'M', 'L', 'XL'];
           }
 
+          const rawImg = localMatch.image || item.image_url || item.image;
+          const resolvedMainImg = getProductImage(rawImg);
+          const rawImgs = localMatch.images?.length ? localMatch.images : (item.images?.length ? item.images : [rawImg]);
+          const resolvedImgs = rawImgs.map(img => getProductImage(img));
+
           return {
             ...localMatch,
             ...item,
             id: item.id,
-            title: item.name || item.title || localMatch.title,
+            title: localMatch.title || item.name || item.title,
             category: catSlug,
             price: `₹${numPrice.toLocaleString('en-IN')}`,
             rawPrice: numPrice,
@@ -224,8 +247,8 @@ const CategoryPage = () => {
             wash_care: item.wash_care || localMatch.wash_care || 'Professional Dry Clean Only. Do not flat iron on embellishments',
             craftsmanship: item.craftsmanship || localMatch.craftsmanship || 'Handcrafted Details & Designer Tailoring',
             sizes: sizesList,
-            image: item.image_url || item.image || localMatch.image,
-            images: item.images?.length ? item.images : (localMatch.images || [item.image_url || item.image || localMatch.image])
+            image: resolvedMainImg,
+            images: resolvedImgs
           };
         });
         
@@ -239,7 +262,7 @@ const CategoryPage = () => {
           setSamples(fallback.map(item => ({ ...item, id: item.id })));
         }
       } catch (err) {
-        console.error("Failed to fetch category products", err);
+        // Graceful fallback to rich local catalog on network/backend retry
         let data = [];
         if (category === 'all') {
           Object.values(productsData).forEach(arr => {

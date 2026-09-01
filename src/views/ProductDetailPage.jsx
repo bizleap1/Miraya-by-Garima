@@ -144,21 +144,29 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
         const res = await fetch(`${API_URL}/api/products/${id}`);
         if (res.ok) {
           const data = await res.json();
+          const { getProductById } = await import('../data/products');
+          const localMatch = getProductById(data.id, data.category?.name || data.category || category) || {};
+
           let apiImgs = data.images;
           if (typeof apiImgs === 'string') {
             try { apiImgs = JSON.parse(apiImgs); } catch (_) { apiImgs = [apiImgs]; }
           }
           if (!Array.isArray(apiImgs) || apiImgs.length === 0) {
-            apiImgs = [data.image_url || data.image || '/products/Lehenga-Pink Blush/1.JPG'];
+            apiImgs = [data.image_url || data.image || localMatch.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
           }
+
+          const resolvedMainImg = getProductImage(localMatch.image || data.image_url || data.image || apiImgs[0]);
+          const resolvedImgs = (localMatch.images?.length ? localMatch.images : apiImgs).map(img => getProductImage(img));
+
           setProduct({
+            ...localMatch,
             ...data,
             id: data.id,
-            title: data.name || data.title || 'Outfit',
+            title: localMatch.title || data.name || data.title || 'Outfit',
             price: data.price,
             category: data.category?.slug || data.category?.name || data.category || category,
-            image: data.image_url || data.image || apiImgs[0],
-            images: apiImgs
+            image: resolvedMainImg,
+            images: resolvedImgs
           });
           fetched = true;
         }
@@ -174,7 +182,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             setProduct(localProd);
           }
         } catch (e) {
-          console.error("Local fallback error:", e);
+          // Silent local fallback
         }
       }
       setLoading(false);
