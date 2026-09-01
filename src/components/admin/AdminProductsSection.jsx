@@ -15,16 +15,10 @@ const formatINR = (amount) => {
   }).format(amount || 0);
 };
 
-const getImgUrl = (raw, apiBase = 'http://localhost:5000') => {
-  if (!raw) return '/products/Lehenga-Pink%20Blush/1.JPG';
-  const str = String(raw).trim();
-  if (str.startsWith('data:') || str.startsWith('http://') || str.startsWith('https://')) return str;
-  if (str.startsWith('/uploads')) return `${apiBase}${str}`;
-  try {
-    return encodeURI(str);
-  } catch (_) {
-    return str;
-  }
+import { getProductImage } from '../../utils/imageHelper';
+
+const getImgUrl = (raw) => {
+  return getProductImage(raw);
 };
 
 const COMMON_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
