@@ -1,27 +1,98 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useStoreSettings } from '../context/StoreSettingsContext';
+import API_URL from '../config';
 import './WhatsAppButton.css';
 
 const WhatsAppButton = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const location = useLocation();
+  const { whatsapp_number } = useStoreSettings();
+  const targetNumber = (whatsapp_number || '919271218156').replace(/[^0-9]/g, '');
 
-  // Phone number without '+' or spaces (e.g., 91 for India + 10 digit number)
-  const phoneNumber = '919271218156'; 
   const defaultMessage = encodeURIComponent('Hi Miraya! I need some help with custom outfits.');
+  const [waLink, setWaLink] = useState(`https://wa.me/${targetNumber}?text=${defaultMessage}`);
 
   useEffect(() => {
-    // Show button after a small delay to not distract on immediate load
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const cleanNumber = (whatsapp_number || '919271218156').replace(/[^0-9]/g, '');
+    const isProductPage = location.pathname.startsWith('/product/');
+
+    if (!isProductPage) {
+      setWaLink(`https://wa.me/${cleanNumber}?text=${defaultMessage}`);
+      return;
+    }
+
+    const parts = location.pathname.replace(/^\/product\/?/, '').split('/').filter(Boolean);
+    const productId = parts.length >= 1 ? decodeURIComponent(parts[parts.length - 1]) : null;
+    const category = parts.length >= 2 ? decodeURIComponent(parts[0]) : '';
+
+    if (!productId) {
+      setWaLink(`https://wa.me/${cleanNumber}?text=${defaultMessage}`);
+      return;
+    }
+
+    let cancelled = false;
+    const buildProductWaMessage = async () => {
+      let product = null;
+      try {
+        const res = await fetch(`${API_URL}/api/products/${productId}`);
+        if (res.ok) {
+          product = await res.json();
+        }
+      } catch (_) {}
+
+      if (!product) {
+        try {
+          const { getProductById } = await import('../data/products');
+          product = getProductById(productId, category);
+        } catch (_) {}
+      }
+
+      if (cancelled) return;
+
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mirayabygarima.com';
+      const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+      const productName = product?.title || product?.name || 'Outfit';
+      const categoryName = product?.category?.name || product?.category || category || 'Haute Couture';
+      const priceFormatted = product?.price ? `₹${typeof product.price === 'number' ? product.price.toLocaleString('en-IN') : product.price}` : '';
+      const rawImg = product?.image || product?.image_url || (product?.images && product.images[0]) || '';
+      const fullImgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${origin}${rawImg}`) : '';
+
+      let text = `👑 *PRODUCT INQUIRY — MIRAYA BY GARIMA*\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      text += `Hello! I am interested in this outfit and would like to get more details:\n\n`;
+      text += `👗 *Garment Name:* ${productName}\n`;
+      if (categoryName) text += `🏷️ *Category:* ${categoryName}\n`;
+      if (priceFormatted) text += `💰 *Price:* ${priceFormatted}\n`;
+      if (product?.fabric) text += `🧵 *Fabric:* ${product.fabric}\n`;
+      if (product?.color) text += `🎨 *Color:* ${product.color}\n`;
+      if (fullImgUrl) text += `🖼️ *Product Image:* ${fullImgUrl}\n`;
+      if (currentUrl) text += `🔗 *Product Link:* ${currentUrl}\n\n`;
+      text += `Please share details regarding availability, custom tailoring, and delivery timeline. Thank you! 🙏`;
+
+      setWaLink(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(text)}`);
+    };
+
+    buildProductWaMessage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, whatsapp_number]);
+
   if (!isVisible) return null;
 
   return (
     <a 
-      href={`https://wa.me/${phoneNumber}?text=${defaultMessage}`} 
+      href={waLink} 
       target="_blank" 
       rel="noopener noreferrer"
       className="whatsapp-float-btn animate-bounce-in"

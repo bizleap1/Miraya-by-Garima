@@ -18,15 +18,22 @@ export default function WhatsAppOrderModal({ isOpen, onClose, product, selectedS
   const rawImg = product?.image || product?.image_url || (product?.images && product.images[0]) || "";
   const fullImgUrl = rawImg ? (rawImg.startsWith("http") ? rawImg : `${origin}${rawImg}`) : "";
 
+  const prodCategorySlug = product?.category?.slug || product?.category || "all";
+  const productLink = origin && product?.id ? `${origin}/product/${prodCategorySlug}/${product.id}` : "";
+
   const message = encodeURIComponent(
-    `👑 *NEW OUTFIT INQUIRY — MIRAYA BY GARIMA ATELIER*\n` +
+    `👑 *PRODUCT INQUIRY — MIRAYA BY GARIMA*\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `👗 *Garment:* ${productName}\n` +
+    `Hello! I am interested in this outfit and would like to get more details:\n\n` +
+    `👗 *Garment Name:* ${productName}\n` +
     `🏷️ *Category:* ${categoryName}\n` +
-    `📏 *Selected Size:* ${size}\n` +
     (price ? `💰 *Price:* ${price}\n` : "") +
-    (fullImgUrl ? `🖼️ *Outfit Image:* ${fullImgUrl}\n` : "") +
-    `\nPlease share availability and ordering details. 🙏`
+    (size ? `📏 *Size:* ${size}\n` : "") +
+    (product?.fabric ? `🧵 *Fabric:* ${product.fabric}\n` : "") +
+    (product?.color ? `🎨 *Color:* ${product.color}\n` : "") +
+    (fullImgUrl ? `🖼️ *Product Image:* ${fullImgUrl}\n` : "") +
+    (productLink ? `🔗 *Product Link:* ${productLink}\n\n` : "\n") +
+    `Please share details regarding availability, custom tailoring, and delivery timeline. Thank you! 🙏`
   );
 
   const waUrl = `https://wa.me/${(whatsapp_number || "+919271218156").replace(/[^0-9]/g, "")}?text=${message}`;

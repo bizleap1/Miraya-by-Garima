@@ -64,7 +64,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   const { cartItems, addToCart: contextAddToCart, removeFromCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
-  const { store_online, new_orders_enabled } = useStoreSettings();
+  const { store_online, new_orders_enabled, whatsapp_number } = useStoreSettings();
 
   const isStoreOffline = !store_online || !new_orders_enabled;
 
@@ -274,6 +274,36 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     }
 
     navigate('/checkout', { state: { directProduct: directItem } });
+  };
+
+  const handleWhatsAppDetailsInquiry = () => {
+    if (!product) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mirayabygarima.com';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const productName = product?.title || product?.name || 'Outfit';
+    const categoryName = product?.category?.name || product?.category || 'Haute Couture';
+    const priceFormatted = product?.price ? `₹${typeof product.price === 'number' ? product.price.toLocaleString('en-IN') : product.price}` : '';
+    const size = selectedSize || 'Free Size';
+    const rawImg = product?.image || product?.image_url || (product?.images && product.images[0]) || '';
+    const fullImgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${origin}${rawImg}`) : '';
+
+    let text = `👑 *PRODUCT INQUIRY — MIRAYA BY GARIMA*\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    text += `Hello! I am interested in this outfit and would like to get more details:\n\n`;
+    text += `👗 *Garment Name:* ${productName}\n`;
+    if (categoryName) text += `🏷️ *Category:* ${categoryName}\n`;
+    if (priceFormatted) text += `💰 *Price:* ${priceFormatted}\n`;
+    if (size) text += `📏 *Size:* ${size}\n`;
+    if (quantity > 1) text += `🔢 *Quantity:* ${quantity}\n`;
+    if (product?.fabric) text += `🧵 *Fabric:* ${product.fabric}\n`;
+    if (product?.color) text += `🎨 *Color:* ${product.color}\n`;
+    if (fullImgUrl) text += `🖼️ *Product Image:* ${fullImgUrl}\n`;
+    if (currentUrl) text += `🔗 *Product Link:* ${currentUrl}\n\n`;
+    text += `Please share more details regarding availability, custom tailoring, and delivery timeline. Thank you! 🙏`;
+
+    const cleanNum = (whatsapp_number || '+919271218156').replace(/[^0-9]/g, '');
+    const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -595,20 +625,25 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             </div>
             
             <div className="purchase-actions" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '3rem', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <div className="size-selector" style={{ flex: '1', minWidth: '220px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span className="qty-label">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                <div className="size-selector" style={{ width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px 12px', marginBottom: '10px' }}>
+                    <span className="qty-label" style={{ margin: 0 }}>
                       Size: <span style={{ fontWeight: 600, color: 'var(--primary-burgundy)' }}>{selectedSize}</span>
                     </span>
                     <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                       background: 'rgba(231, 76, 60, 0.1)',
                       color: '#c0392b',
                       fontSize: '0.8rem',
                       fontWeight: 700,
-                      padding: '3px 10px',
+                      padding: '4px 10px',
                       borderRadius: '12px',
-                      border: '1px solid rgba(192, 57, 43, 0.25)'
+                      border: '1px solid rgba(192, 57, 43, 0.25)',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}>
                       ⚡ Only 1 Left in Stock
                     </span>
@@ -661,108 +696,142 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                 </div>
               </div>
 
-              <div style={{display: 'flex', gap: '1.2rem', flexWrap: 'wrap', alignItems: 'stretch', width: '100%'}}>
-                {(sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
-                  <button className="inquire-btn-new" disabled style={{background: '#e74c3c', color: 'white', flex: 1, minWidth: '150px', cursor: 'not-allowed', whiteSpace: 'nowrap', margin: 0, fontWeight: 700, letterSpacing: '1px'}}>
-                    OUT OF STOCK {selectedSize ? `(${selectedSize})` : ''}
-                  </button>
-                ) : product.whatsapp_inquiry || isStoreOffline || (product.price && String(product.price).toLowerCase().includes('whatsapp')) ? (
-                  <button
-                    type="button"
-                    onClick={() => setWhatsAppOpen(true)}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                      background: 'linear-gradient(135deg, #25D366, #1aab55)',
-                      color: 'white', border: 'none', borderRadius: '6px',
-                      padding: '14px 28px', fontSize: '0.95rem',
-                      fontFamily: 'var(--font-body)', fontWeight: 700,
-                      letterSpacing: '0.5px', flex: 1, minWidth: '200px',
-                      cursor: 'pointer', boxShadow: '0 4px 16px rgba(37,211,102,0.35)',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(37,211,102,0.5)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.35)'; }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                    DM ON WHATSAPP FOR PRICE
-                  </button>
-                ) : (
-                  <>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem', width: '100%'}}>
+                <div style={{display: 'flex', gap: '1.2rem', flexWrap: 'wrap', alignItems: 'stretch', width: '100%'}}>
+                  {(sizeStockObj[selectedSize] !== undefined && sizeStockObj[selectedSize] <= 0) || (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ? (
+                    <button className="inquire-btn-new" disabled style={{background: '#e74c3c', color: 'white', flex: 1, minWidth: '150px', cursor: 'not-allowed', whiteSpace: 'nowrap', margin: 0, fontWeight: 700, letterSpacing: '1px'}}>
+                      OUT OF STOCK {selectedSize ? `(${selectedSize})` : ''}
+                    </button>
+                  ) : product.whatsapp_inquiry || isStoreOffline || (product.price && String(product.price).toLowerCase().includes('whatsapp')) ? (
                     <button
                       type="button"
-                      className="inquire-btn-new"
-                      onClick={handleCartButtonClick}
-                      onMouseEnter={() => setIsCartHovered(true)}
-                      onMouseLeave={() => setIsCartHovered(false)}
+                      onClick={() => setWhatsAppOpen(true)}
                       style={{
-                        background: isItemInCart 
-                          ? (isCartHovered ? '#c0392b' : '#F5EFE6') 
-                          : 'var(--primary-burgundy)',
-                        color: isItemInCart 
-                          ? (isCartHovered ? '#ffffff' : 'var(--primary-burgundy, #5e0a0b)') 
-                          : 'white',
-                        border: isItemInCart
-                          ? (isCartHovered ? '1.5px solid #c0392b' : '1.5px solid #c6a46a')
-                          : '1.5px solid var(--primary-burgundy)',
-                        fontWeight: 700,
-                        flex: 1,
-                        minWidth: '160px',
-                        whiteSpace: 'nowrap',
-                        margin: 0,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'all 0.25s ease',
-                        cursor: 'pointer',
-                        boxShadow: isItemInCart 
-                          ? (isCartHovered ? '0 4px 15px rgba(192, 57, 43, 0.35)' : '0 2px 8px rgba(198, 164, 106, 0.25)') 
-                          : 'none'
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                        background: 'linear-gradient(135deg, #25D366, #1aab55)',
+                        color: 'white', border: 'none', borderRadius: '6px',
+                        padding: '14px 28px', fontSize: '0.95rem',
+                        fontFamily: 'var(--font-body)', fontWeight: 700,
+                        letterSpacing: '0.5px', flex: 1, minWidth: '200px',
+                        cursor: 'pointer', boxShadow: '0 4px 16px rgba(37,211,102,0.35)',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
                       }}
-                      title={isItemInCart ? (isCartHovered ? "Click to remove from cart" : "In your shopping bag") : "Add to shopping bag"}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(37,211,102,0.5)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.35)'; }}
                     >
-                      {isItemInCart ? (
-                        isCartHovered ? (
-                          <>
-                            <Trash2 size={16} /> REMOVE
-                          </>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                      DM ON WHATSAPP FOR PRICE
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="inquire-btn-new"
+                        onClick={handleCartButtonClick}
+                        onMouseEnter={() => setIsCartHovered(true)}
+                        onMouseLeave={() => setIsCartHovered(false)}
+                        style={{
+                          background: isItemInCart 
+                            ? (isCartHovered ? '#c0392b' : '#F5EFE6') 
+                            : 'var(--primary-burgundy)',
+                          color: isItemInCart 
+                            ? (isCartHovered ? '#ffffff' : 'var(--primary-burgundy, #5e0a0b)') 
+                            : 'white',
+                          border: isItemInCart
+                            ? (isCartHovered ? '1.5px solid #c0392b' : '1.5px solid #c6a46a')
+                            : '1.5px solid var(--primary-burgundy)',
+                          fontWeight: 700,
+                          flex: 1,
+                          minWidth: '160px',
+                          whiteSpace: 'nowrap',
+                          margin: 0,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          transition: 'all 0.25s ease',
+                          cursor: 'pointer',
+                          boxShadow: isItemInCart 
+                            ? (isCartHovered ? '0 4px 15px rgba(192, 57, 43, 0.35)' : '0 2px 8px rgba(198, 164, 106, 0.25)') 
+                            : 'none'
+                        }}
+                        title={isItemInCart ? (isCartHovered ? "Click to remove from cart" : "In your shopping bag") : "Add to shopping bag"}
+                      >
+                        {isItemInCart ? (
+                          isCartHovered ? (
+                            <>
+                              <Trash2 size={16} /> REMOVE
+                            </>
+                          ) : (
+                            <>
+                              <Check size={16} /> ADDED TO CART
+                            </>
+                          )
                         ) : (
                           <>
-                            <Check size={16} /> ADDED TO CART
+                            <ShoppingBag size={16} /> ADD TO CART
                           </>
-                        )
-                      ) : (
-                        <>
-                          <ShoppingBag size={16} /> ADD TO CART
-                        </>
-                      )}
-                    </button>
-                    <button className="inquire-btn-new" onClick={buyNow} style={{background: '#8a1f1f', color: 'white', flex: 1, minWidth: '150px', whiteSpace: 'nowrap', margin: 0}}>
-                      BUY NOW
-                    </button>
-                  </>
-                )}
-                
-                <button 
-                  className="wishlist-icon-btn" 
-                  onClick={() => toggleWishlist({
-                    id: `${product.category || category}-${product.id}`,
-                    name: product.title,
-                    price: product.price,
-                    image: product.image
-                  })}
+                        )}
+                      </button>
+                      <button className="inquire-btn-new" onClick={buyNow} style={{background: '#8a1f1f', color: 'white', flex: 1, minWidth: '150px', whiteSpace: 'nowrap', margin: 0}}>
+                        BUY NOW
+                      </button>
+                    </>
+                  )}
+                  
+                  <button 
+                    className="wishlist-icon-btn" 
+                    onClick={() => toggleWishlist({
+                      id: `${product.category || category}-${product.id}`,
+                      name: product.title,
+                      price: product.price,
+                      image: product.image
+                    })}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', 
+                      background: 'transparent', border: '1px solid rgba(198, 164, 106, 0.5)', borderRadius: '4px',
+                      width: '52px', padding: '0', transition: 'all 0.2s', flexShrink: 0
+                    }}
+                    title={isInWishlist(`${product.category || category}-${product.id}`) ? "Remove from Wishlist" : "Add to Wishlist"}
+                  >
+                    <Heart 
+                      size={22} 
+                      fill={isInWishlist(`${product.category || category}-${product.id}`) ? "var(--primary-burgundy)" : "none"} 
+                      color={isInWishlist(`${product.category || category}-${product.id}`) ? "var(--primary-burgundy)" : "#C6A46A"} 
+                    /> 
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleWhatsAppDetailsInquiry}
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', 
-                    background: 'transparent', border: '1px solid rgba(198, 164, 106, 0.5)', borderRadius: '4px',
-                    width: '52px', padding: '0', transition: 'all 0.2s', flexShrink: 0
+                    width: '100%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '0.9rem 1.5rem',
+                    fontSize: '0.9rem',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 700,
+                    letterSpacing: '0.05em',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(37,211,102,0.3)',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                   }}
-                  title={isInWishlist(`${product.category || category}-${product.id}`) ? "Remove from Wishlist" : "Add to Wishlist"}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,211,102,0.45)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,211,102,0.3)'; }}
+                  title="Get complete product details on WhatsApp"
                 >
-                  <Heart 
-                    size={22} 
-                    fill={isInWishlist(`${product.category || category}-${product.id}`) ? "var(--primary-burgundy)" : "none"} 
-                    color={isInWishlist(`${product.category || category}-${product.id}`) ? "var(--primary-burgundy)" : "#C6A46A"} 
-                  /> 
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0, display: 'block' }}>
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                  </svg>
+                  <span>GET MORE DETAILS ON WHATSAPP</span>
                 </button>
               </div>
             </div>

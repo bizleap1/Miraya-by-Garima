@@ -411,6 +411,60 @@
   transform: translateY(-2px);
 }
 
+/* WhatsApp Details Hover Expand Button - Zero Flicker */
+.whatsapp-details-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0;
+  width: 52px;
+  height: 52px;
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  margin: 0;
+  gap: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s ease, gap 0.35s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.whatsapp-details-btn:hover {
+  width: 175px;
+  padding: 0 1.1rem;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+  transform: translateY(-2px);
+}
+
+.whatsapp-details-btn * {
+  pointer-events: none;
+}
+
+.whatsapp-details-btn .wp-btn-text {
+  max-width: 0;
+  opacity: 0;
+  transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  display: inline-block;
+  pointer-events: none;
+}
+
+.whatsapp-details-btn:hover .wp-btn-text {
+  max-width: 140px;
+  opacity: 1;
+}
+
 /* Trust Badges */
 .trust-badges {
   display: flex;
