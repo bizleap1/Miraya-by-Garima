@@ -1,4 +1,11 @@
 import prisma from '../prisma/client.js';
+import {
+  emitProductCreated,
+  emitProductUpdated,
+  emitProductDeleted,
+  emitInventoryUpdated,
+} from '../services/realtime.service.js';
+
 
 export const getProducts = async (req, res) => {
   try {
@@ -264,7 +271,16 @@ export const createProduct = async (req, res) => {
       return updatedProduct;
     });
 
+    // Realtime broadcast after DB commit
+    emitProductCreated(result);
+    if (result.variants && Array.isArray(result.variants)) {
+      result.variants.forEach(v => {
+        emitInventoryUpdated({ variantId: v.id, productId: v.product_id, stock: v.stock, reserved_stock: v.reserved_stock || 0 });
+      });
+    }
+
     res.status(201).json({ success: true, message: 'Product and authoritative variants created successfully', product: result });
+
   } catch (error) {
     console.error('Create product error:', error);
     res.status(500).json({ success: false, message: 'Error creating product', error: error.message });
@@ -380,6 +396,14 @@ export const updateProduct = async (req, res) => {
       return product;
     });
 
+    // Realtime broadcast after DB commit
+    emitProductUpdated(updated);
+    if (updated.variants && Array.isArray(updated.variants)) {
+      updated.variants.forEach(v => {
+        emitInventoryUpdated({ variantId: v.id, productId: v.product_id, stock: v.stock, reserved_stock: v.reserved_stock || 0 });
+      });
+    }
+
     res.json({ success: true, message: 'Product updated successfully', product: updated });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error updating product', error: error.message });
@@ -391,27 +415,39 @@ export const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const productId = parseInt(id, 10);
 
+    // Check if product is referenced in historical orders or exchanges
+    const [orderItemCount, exchangeCount] = await Promise.all([
+      prisma.orderItem.count({ where: { product_id: productId } }),
+      prisma.returnRequest.count({ where: { product_id: productId } }),
+    ]);
+
+    // If product has historical orders/exchanges, soft-archive (is_active = false) to protect order history
+    if (orderItemCount > 0 || exchangeCount > 0) {
+      await prisma.$transaction(async (tx) => {
+        await tx.productVariant.updateMany({
+          where: { product_id: productId },
+          data: { is_active: false },
+        });
+
+
+      });
+
+      emitProductUpdated({ id: productId, is_active: false });
+
+      return res.json({
+        success: true,
+        archived: true,
+        message: 'Product is referenced in historical sales records and was safely archived (deactivated) to protect order history.',
+      });
+    }
+
+    // Unreferenced product — safe hard delete
     await prisma.$transaction(async (tx) => {
-      // 1. Delete Wishlist items
       await tx.wishlist?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      // 2. Delete Cart items
       await tx.cartItem?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      // 3. Delete Stock notifications & Reviews
       await tx.stockNotification?.deleteMany({ where: { product_id: productId } }).catch(() => {});
       await tx.review?.deleteMany({ where: { product_id: productId } }).catch(() => {});
 
-      // 4. Delete Return requests referencing this product
-      await tx.returnRequest?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      // 5. Delete OrderItems referencing this product
-      await tx.orderItem?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      // 6. Delete SaleItems referencing this product
-      await tx.saleItem?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      // 7. Find variants and clean movements/purchase items
       const variants = await tx.productVariant.findMany({
         where: { product_id: productId },
         select: { id: true },
@@ -419,20 +455,22 @@ export const deleteProduct = async (req, res) => {
       const variantIds = variants.map((v) => v.id);
 
       if (variantIds.length > 0) {
-        await tx.purchaseItem?.deleteMany({ where: { variant_id: { in: variantIds } } }).catch(() => {});
         await tx.inventoryMovement?.deleteMany({ where: { variant_id: { in: variantIds } } }).catch(() => {});
         await tx.productVariant.deleteMany({ where: { product_id: productId } });
       }
 
       await tx.inventoryMovement?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      // 8. Delete the product
       await tx.product.delete({ where: { id: productId } });
     });
 
-    res.json({ success: true, message: 'Product and all associated records deleted successfully' });
+    // Realtime broadcast after DB commit
+    emitProductDeleted(productId);
+
+    res.json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Delete product error:', error);
-    res.status(500).json({ success: false, message: 'Error deleting product: ' + error.message, error: error.message });
+    res.status(500).json({ success: false, message: 'Error processing product deletion: ' + error.message, error: error.message });
   }
 };
+
+

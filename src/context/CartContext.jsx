@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import API_URL from '../config';
 import { getProductImage } from '../utils/imageHelper';
 import { useLoading } from './LoadingContext';
+import { useSocket } from './SocketContext';
+
 
 const CartContext = createContext();
 
@@ -58,11 +60,61 @@ export const CartProvider = ({ children }) => {
       }
     };
 
-    fetchCart();
-
     window.addEventListener('loginStateChange', fetchCart);
     return () => window.removeEventListener('loginStateChange', fetchCart);
   }, []);
+
+  const { socket } = useSocket();
+
+
+  // Socket.IO Real-time inventory and price sync for Cart
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleInventoryUpdated = (data) => {
+      if (!data || !data.productId) return;
+      setCartItems((prev) => {
+        let changed = false;
+        const nextCart = prev.map((item) => {
+          if (String(item.id) === String(data.productId) || String(item.productId) === String(data.productId)) {
+            const avail = data.available_stock !== undefined ? data.available_stock : Math.max(0, (data.stock || 0) - (data.reserved_stock || 0));
+            if (item.qty > avail) {
+              changed = true;
+              return { ...item, qty: Math.max(0, avail), stockNotice: `Stock updated. Only ${avail} unit(s) currently available.` };
+            }
+          }
+          return item;
+        });
+        return changed ? nextCart : prev;
+      });
+    };
+
+    const handleProductUpdated = (data) => {
+      if (!data || !data.productId) return;
+      setCartItems((prev) => {
+        let changed = false;
+        const nextCart = prev.map((item) => {
+          if (String(item.id) === String(data.productId) || String(item.productId) === String(data.productId)) {
+            if (data.price !== undefined && item.price !== data.price) {
+              changed = true;
+              return { ...item, price: data.price, mrp_price: data.mrp_price || item.mrp_price, priceNotice: 'Price updated by atelier.' };
+            }
+          }
+          return item;
+        });
+        return changed ? nextCart : prev;
+      });
+    };
+
+    socket.on('inventory.updated', handleInventoryUpdated);
+    socket.on('product.updated', handleProductUpdated);
+
+    return () => {
+      socket.off('inventory.updated', handleInventoryUpdated);
+      socket.off('product.updated', handleProductUpdated);
+    };
+  }, [socket]);
+
 
   const addToCart = async (product, size, qty = 1) => {
     if (!product) return;

@@ -1,7 +1,8 @@
 'use client';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
-import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2, Check, Trash2, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2, Check, Trash2, ShoppingBag, RotateCcw } from 'lucide-react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import API_URL from '../config';
 import { getProductImage, getProductGallery } from '../utils/imageHelper';
@@ -12,7 +13,10 @@ import { useToast } from '../context/ToastContext';
 import CheckoutModal from '../components/CheckoutModal';
 import WhatsAppOrderModal from '../components/WhatsAppOrderModal';
 import { useStoreSettings } from '../context/StoreSettingsContext';
+import { useSocket } from '../context/SocketContext';
 import SEO from '../components/SEO';
+
+import ProductReviewsSection from '../components/ProductReviewsSection';
 import './ProductDetailPage.css';
 
 const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
@@ -190,6 +194,46 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     fetchProduct();
   }, [category, id, initialProduct]);
 
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket || !product?.id) return;
+
+    const handleRealtimeUpdate = (data) => {
+      if (data && String(data.productId) === String(product.id)) {
+        if (data.price !== undefined) {
+          setProduct(prev => prev ? { ...prev, price: data.price, mrp_price: data.mrp_price || prev.mrp_price } : prev);
+        }
+        // Refetch full product details safely
+        fetch(`${API_URL}/api/products/${product.id}`)
+          .then(r => r.json())
+          .then(resData => {
+            if (resData && (resData.id || resData.product?.id)) {
+              const fresh = resData.product || resData;
+              setProduct(prev => ({
+                ...prev,
+                ...fresh,
+                title: fresh.name || fresh.title || prev.title,
+                price: fresh.price,
+                stock: fresh.stock,
+                variants: fresh.variants || prev.variants
+              }));
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    socket.on('product.updated', handleRealtimeUpdate);
+    socket.on('inventory.updated', handleRealtimeUpdate);
+
+    return () => {
+      socket.off('product.updated', handleRealtimeUpdate);
+      socket.off('inventory.updated', handleRealtimeUpdate);
+    };
+  }, [socket, product?.id]);
+
+
   const buyNow = () => {
     if (!product) return;
     const rawPrice = product.price;
@@ -266,7 +310,15 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   };
 
   const handleIncrease = () => {
-    setQuantity(quantity + 1);
+    const currentMaxStock = (selectedSize && sizeStockObj[selectedSize] !== undefined)
+      ? Number(sizeStockObj[selectedSize])
+      : Number(product?.stock ?? 1);
+    
+    if (quantity < currentMaxStock) {
+      setQuantity(quantity + 1);
+    } else {
+      toast.warning(`Maximum available stock reached (${currentMaxStock} unit${currentMaxStock > 1 ? 's' : ''} in stock for size ${selectedSize || 'selected'}).`, 'STOCK LIMIT');
+    }
   };
 
   const galleryImages = getProductGallery(product);
@@ -736,11 +788,20 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
                 <Truck size={16} color="#C6A46A" />
                 <span>Pan India Shipping</span>
               </div>
+              <div className="badge">
+                <RotateCcw size={16} color="#C6A46A" />
+                <span>7-Day Size Exchange</span>
+              </div>
             </div>
+
 
           </div>
         </div>
       </div>
+
+      {/* Verified Customer Photo Reviews & Real Brides Section */}
+      <ProductReviewsSection product={product} />
+
       <CheckoutModal
         isOpen={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}

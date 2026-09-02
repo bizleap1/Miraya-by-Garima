@@ -96,7 +96,6 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/stock-notifications', stockNotificationRoutes);

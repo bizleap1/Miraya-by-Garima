@@ -149,6 +149,8 @@ export const reserveInventoryAtomic = async ({
   items,
   user_id,
   razorpay_order_id,
+  coupon_code = null,
+  total_amount_override = null,
   ttlMinutes = 15,
 }) => {
   // 1. Clean up any expired reservations first
@@ -236,7 +238,7 @@ export const reserveInventoryAtomic = async ({
     });
   }
 
-  // Calculate expiration time (TTL)
+  const finalTotalAmount = total_amount_override !== null ? Number(total_amount_override) : calculatedTotal;
   const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
 
   // Save Reservation record in database
@@ -245,14 +247,27 @@ export const reserveInventoryAtomic = async ({
       user_id: user_id ? parseInt(user_id, 10) : null,
       razorpay_order_id,
       items: resolvedItems,
-      total_amount: calculatedTotal,
+      total_amount: finalTotalAmount,
       status: 'ACTIVE',
       expires_at: expiresAt,
     },
   });
 
-  return { reservation, resolvedItems, calculatedTotal, expiresAt };
+  if (coupon_code) {
+    try {
+      await tx.$executeRawUnsafe(
+        'UPDATE "InventoryReservation" SET coupon_code = $1 WHERE id = $2',
+        String(coupon_code).toUpperCase(),
+        reservation.id
+      );
+      reservation.coupon_code = String(coupon_code).toUpperCase();
+    } catch (_) {}
+  }
+
+  return { reservation, resolvedItems, calculatedTotal, finalTotalAmount, expiresAt };
+
 };
+
 
 /**
  * 2. CONFIRM: Atomically convert a reservation into a finalized order.
@@ -385,6 +400,31 @@ export const confirmReservationAtomic = async ({
       where: { id: reservation.id },
       data: { status: 'CONFIRMED' },
     });
+
+    let resCouponCode = reservation.coupon_code;
+    if (!resCouponCode) {
+      try {
+        const rows = await tx.$queryRawUnsafe(
+          'SELECT coupon_code FROM "InventoryReservation" WHERE id = $1',
+          reservation.id
+        );
+        if (rows && rows[0] && rows[0].coupon_code) {
+          resCouponCode = rows[0].coupon_code;
+        }
+      } catch (_) {}
+    }
+
+    if (resCouponCode) {
+      try {
+        await tx.$executeRawUnsafe(
+          'UPDATE "Coupon" SET used_count = used_count + 1 WHERE UPPER("code") = UPPER($1)',
+          String(resCouponCode).toUpperCase()
+        );
+        console.log(`[Coupon] Incremented used_count for coupon: ${resCouponCode}`);
+      } catch (cErr) {
+        console.warn('[Coupon] Failed to increment used_count:', cErr.message);
+      }
+    }
 
     if (targetUserId) {
       await tx.cartItem.deleteMany({ where: { user_id: targetUserId } });
@@ -622,7 +662,7 @@ export const deductInventoryAtomic = async ({
       });
     }
 
-    // Fallback 1: Match by product title/name if ID did not match DB primary key
+    // Fallback: Match by product title/name if ID did not match DB primary key
     const searchTitle = (item.title || item.name || item.product_name || '').trim();
     if (!product && searchTitle) {
       product = await tx.product.findFirst({
@@ -631,34 +671,8 @@ export const deductInventoryAtomic = async ({
       });
     }
 
-    // Fallback 2: Select first product from database
     if (!product) {
-      product = await tx.product.findFirst({
-        include: { variants: true },
-      });
-    }
-
-    // Fallback 3: Auto-create product record in database
-    if (!product) {
-      const fallbackPrice = typeof item.price === 'number'
-        ? item.price
-        : parseInt(String(item.price || 4999).replace(/[^\d]/g, ''), 10) || 4999;
-      const fallbackName = searchTitle || `Haute Couture Outfit #${targetProductId || 101}`;
-      const fallbackImg = item.image || item.image_url || '/products/Lehenga-Pink Blush/1.JPG';
-
-      product = await tx.product.create({
-        data: {
-          name: fallbackName,
-          description: 'Bespoke Miraya Luxury Garment',
-          price: fallbackPrice,
-          stock: 50,
-          image_url: fallbackImg,
-          images: [fallbackImg],
-          sizes: ['S', 'M', 'L', 'XL'],
-          size_stock: { S: 10, M: 20, L: 10, XL: 10 }
-        },
-        include: { variants: true }
-      });
+      throw new AppError(`Product not found for item "${searchTitle || targetProductId || 'unknown'}".`, 404, 'PRODUCT_NOT_FOUND');
     }
 
     const requestedQty = parseInt(item.quantity || 1, 10);
@@ -680,21 +694,7 @@ export const deductInventoryAtomic = async ({
     }
 
     if (!variant) {
-      // Auto-create initial default variant for this product if none existed yet
-      const safeSize = requestedSize || 'Free Size';
-      const safeSku = `MIR-${product.name.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')}-${product.id}-${safeSize.replace(/\s+/g, '')}-${Date.now().toString().slice(-4)}`;
-      variant = await tx.productVariant.create({
-        data: {
-          product_id: product.id,
-          sku: safeSku,
-          size: safeSize,
-          color: 'Default',
-          price: product.price,
-          stock: 10,
-          reserved_stock: 0,
-          is_active: true
-        }
-      });
+      throw new AppError(`Product variant for "${product.name}" (Size: ${requestedSize || 'N/A'}) was not found.`, 404, 'VARIANT_NOT_FOUND');
     }
 
     if (!variant.is_active) {

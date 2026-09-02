@@ -320,7 +320,16 @@ const CheckoutPage = () => {
         setCouponCode(code);
         toast.coupon(`Privilege Applied! Saved ${formatINR(data.discountAmount)}`, 'CODE APPLIED');
       } else {
-        const msg = data.error || data.message || 'Invalid or expired coupon code.';
+        let msg = data.message || data.error || 'Invalid or expired coupon code.';
+        if (data.code === 'COUPON_LIMIT_REACHED') {
+          msg = 'This coupon has reached its usage limit.';
+        } else if (data.code === 'COUPON_EXPIRED') {
+          msg = 'This coupon has expired.';
+        } else if (data.code === 'COUPON_INACTIVE') {
+          msg = 'This coupon is currently unavailable.';
+        } else if (data.code === 'COUPON_MIN_ORDER_NOT_MET') {
+          msg = data.message || 'Minimum order requirement not met for this coupon.';
+        }
         setCouponError(msg);
         toast.error(msg, 'COUPON ERROR');
       }

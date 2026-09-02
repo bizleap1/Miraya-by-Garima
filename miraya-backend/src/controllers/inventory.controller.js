@@ -8,6 +8,8 @@
 import prisma from '../prisma/client.js';
 import { adjustStockManually, generateBarcodeForVariant, getInventoryMovements } from '../services/inventory.service.js';
 import { logAdminAction } from '../services/audit.service.js';
+import { emitInventoryUpdated } from '../services/realtime.service.js';
+
 
 /**
  * Get paginated variant-level inventory with comprehensive filtering and sorting
@@ -185,11 +187,23 @@ export const adjustVariantStock = async (req, res) => {
       actor_email: actorEmail,
     });
 
+    // Realtime broadcast after DB commit
+    if (result) {
+      emitInventoryUpdated({
+        variantId: result.variant_id || variant_id,
+        productId: result.product_id || product_id,
+        stock: result.stockAfter !== undefined ? result.stockAfter : result.variant?.stock,
+        reserved_stock: result.reservedStock || result.variant?.reserved_stock || 0,
+      });
+    }
+
     res.json({
       success: true,
       message: `Stock adjusted successfully (${result.stockBefore} -> ${result.stockAfter})`,
       result,
     });
+
+
   } catch (error) {
     const statusCode = error.statusCode || 500;
     res.status(statusCode).json({ success: false, code: error.code || 'ADJUST_ERROR', message: error.message });

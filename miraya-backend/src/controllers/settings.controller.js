@@ -1,9 +1,12 @@
 import prisma from '../prisma/client.js';
+import { emitStoreSettingsUpdated } from '../services/realtime.service.js';
+
 
 // Get or auto-create default store settings
 export async function getSettings(req, res) {
   try {
-    let settings = await prisma.storeSettings.findFirst();
+    let settings = await prisma.storeSettings.findFirst({ orderBy: { id: 'asc' } });
+
 
     if (!settings) {
       settings = await prisma.storeSettings.create({
@@ -15,6 +18,8 @@ export async function getSettings(req, res) {
           whatsapp_number: '+919271218156',
           announcement_text: null,
           announcement_active: false,
+          exchange_enabled: true,
+          exchange_window_days: 7,
         },
       });
     }
@@ -43,9 +48,12 @@ export async function updateSettings(req, res) {
       google_review_url,
       announcement_text,
       announcement_active,
+      exchange_enabled,
+      exchange_window_days,
     } = req.body;
 
-    let settings = await prisma.storeSettings.findFirst();
+    let settings = await prisma.storeSettings.findFirst({ orderBy: { id: 'asc' } });
+
 
     if (!settings) {
       settings = await prisma.storeSettings.create({
@@ -63,6 +71,8 @@ export async function updateSettings(req, res) {
           google_review_url: google_review_url ?? 'https://g.page/r/miraya-nagpur',
           announcement_text: announcement_text ?? null,
           announcement_active: announcement_active ?? false,
+          exchange_enabled: exchange_enabled ?? true,
+          exchange_window_days: exchange_window_days ? parseInt(exchange_window_days, 10) : 7,
         },
       });
     } else {
@@ -82,9 +92,12 @@ export async function updateSettings(req, res) {
           ...(google_review_url !== undefined && { google_review_url }),
           ...(announcement_text !== undefined && { announcement_text }),
           ...(announcement_active !== undefined && { announcement_active }),
+          ...(exchange_enabled !== undefined && { exchange_enabled }),
+          ...(exchange_window_days !== undefined && { exchange_window_days: parseInt(exchange_window_days, 10) || 7 }),
         },
       });
     }
+
 
     try {
       await prisma.adminAuditLog.create({
@@ -99,9 +112,14 @@ export async function updateSettings(req, res) {
       });
     } catch (_) {}
 
+    // Realtime broadcast after DB commit
+    emitStoreSettingsUpdated(settings);
+
     res.json({ success: true, settings });
+
   } catch (error) {
     console.error('[Settings] updateSettings error:', error);
-    res.status(500).json({ error: 'Failed to update settings' });
+    res.status(500).json({ error: 'Failed to update settings', message: error.message });
   }
 }
+

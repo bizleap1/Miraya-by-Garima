@@ -7,7 +7,9 @@ import {
 } from '../utils/email.service.js';
 import { generateInvoicePDF } from '../utils/pdfGenerator.js';
 import { deductInventoryAtomic, restoreInventoryAtomic } from '../services/inventory.service.js';
+import { emitOrderCreated, emitOrderUpdated, emitInventoryUpdated } from '../services/realtime.service.js';
 import crypto from 'crypto';
+
 
 /**
  * Create order with server-side price calculation and atomic inventory deduction.
@@ -151,9 +153,31 @@ export const createOrder = async (req, res) => {
         .catch(err => console.error(`[Order Email Failed]`, err));
     }
 
+    // Realtime broadcast after DB commit
+    emitOrderCreated(order);
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach(it => {
+        if (it.variant) {
+          emitInventoryUpdated({
+            variantId: it.variant_id,
+            productId: it.product_id,
+            stock: it.variant.stock,
+            reserved_stock: it.variant.reserved_stock || 0
+          });
+        }
+      });
+    }
+
+    const enrichOrderData = (ord) => ({
+      ...ord,
+      total: Number(ord.total || 0),
+    });
+
     const formattedOrder = enrichOrderData(order);
 
     res.status(201).json({ success: true, message: 'Order created successfully', order: formattedOrder });
+
+
   } catch (error) {
     console.error('Order creation error:', error);
     const statusCode = error.statusCode || 500;
@@ -238,6 +262,29 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
+    const curStatus = (existingOrder.status || '').toLowerCase();
+    const tgtStatus = (status || '').toLowerCase();
+
+    // Delivered is a terminal status — cannot be cancelled or moved backward to processing/shipped
+    if (curStatus === 'delivered' && ['cancelled', 'processing', 'shipped', 'cancellation_requested'].includes(tgtStatus)) {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_TRANSITION',
+        message: `Order #${existingOrder.id} has already been delivered and cannot be changed to '${status}'.`,
+      });
+    }
+
+    // Cancelled is a terminal status — cannot be moved out of cancelled
+    if (curStatus === 'cancelled' && tgtStatus !== 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_TRANSITION',
+        message: `Order #${existingOrder.id} is cancelled and cannot be reactivated.`,
+      });
+    }
+
+
+
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
         where: { id: existingOrder.id },
@@ -268,6 +315,9 @@ export const updateOrderStatus = async (req, res) => {
         sendOrderStatusUpdateEmail(existingOrder.user.email, existingOrder.id, status);
       }
     }
+
+    // Realtime broadcast after DB commit
+    emitOrderUpdated(updatedOrder);
 
     res.json({ success: true, message: 'Order status updated and inventory synced', order: updatedOrder });
   } catch (error) {
@@ -304,7 +354,11 @@ export const cancelOrder = async (req, res) => {
 
     sendCancellationRequestEmail(req.user.email, order.id, cancel_reason || 'Customer requested cancellation');
 
+    // Realtime broadcast after DB commit
+    emitOrderUpdated(updated);
+
     res.json({ success: true, message: 'Cancellation request submitted to Admin', order: updated });
+
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error submitting cancellation request', error: error.message });
   }

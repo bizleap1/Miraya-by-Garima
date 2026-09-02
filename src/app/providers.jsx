@@ -159,18 +159,23 @@ function AppLayoutInner({ children }) {
   );
 }
 
+import { SocketProvider } from '../context/SocketContext';
+
 export default function Providers({ children }) {
   return (
-    <StoreSettingsProvider>
-      <LoadingProvider>
-        <ToastProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <AppLayoutInner>{children}</AppLayoutInner>
-            </WishlistProvider>
-          </CartProvider>
-        </ToastProvider>
-      </LoadingProvider>
-    </StoreSettingsProvider>
+    <SocketProvider>
+      <StoreSettingsProvider>
+        <LoadingProvider>
+          <ToastProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <AppLayoutInner>{children}</AppLayoutInner>
+              </WishlistProvider>
+            </CartProvider>
+          </ToastProvider>
+        </LoadingProvider>
+      </StoreSettingsProvider>
+    </SocketProvider>
   );
 }
+

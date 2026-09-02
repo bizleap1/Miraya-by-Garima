@@ -3,6 +3,8 @@ import app from './src/app.js';
 import { ensureDatabaseRunning } from './src/config/db-bootstrap.js';
 import { autoSeedIfEmpty } from './src/config/auto-seed.js';
 
+import { initRealtimeService } from './src/services/realtime.service.js';
+
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -15,6 +17,11 @@ async function startServer() {
     console.log(`🚀 Miraya Backend Server is running on port ${PORT}`);
     console.log(`📡 Health Check: http://localhost:${PORT}/health`);
   });
+
+  // Attach Socket.IO Realtime Engine
+  initRealtimeService(server);
+  console.log('⚡ [Realtime] Socket.IO Realtime Engine attached to HTTP server.');
+
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

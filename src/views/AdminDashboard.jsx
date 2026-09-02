@@ -39,12 +39,14 @@ import {
   Activity,
   UserCheck,
   Radio,
+  Star,
 } from "lucide-react";
 
 import API_URL from "../config";
 import AdminProductsSection from "../components/admin/AdminProductsSection";
 import AdminInventorySection from "../components/admin/AdminInventorySection";
 import AdminOrdersSection from "../components/admin/AdminOrdersSection";
+import AdminReviewsSection from "../components/admin/AdminReviewsSection";
 import AdminReturnsSection from "../components/admin/AdminReturnsSection";
 import AdminCustomersSection from "../components/admin/AdminCustomersSection";
 import AdminCategoriesSection from "../components/admin/AdminCategoriesSection";
@@ -53,7 +55,9 @@ import AdminCancellationsSection from "../components/admin/AdminCancellationsSec
 import AdminStoreSettingsSection from "../components/admin/AdminStoreSettingsSection";
 import AdminPromotionsSection from "../components/admin/AdminPromotionsSection";
 import { exportStoreAuditPDF } from "../utils/pdfExportHelper";
+import { useSocket } from "../context/SocketContext";
 import "./AdminDashboard.css";
+
 
 const API = API_URL || "http://localhost:5000";
 
@@ -62,13 +66,15 @@ const menuItems = [
   { id: "products", label: "Products", icon: Package },
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "orders", label: "Orders", icon: ShoppingBag },
-  { id: "cancellations", label: "Cancellation Requests", icon: RotateCcw },
+  { id: "exchanges", label: "Exchanges", icon: RefreshCw },
   { id: "customers", label: "Customers", icon: Users },
   { id: "categories", label: "Categories", icon: Layers3 },
   { id: "coupons", label: "Coupons", icon: Tag },
-  { id: "promotions", label: "Promotions & Pricing", icon: Percent },
+  { id: "reviews", label: "Reviews", icon: Star },
   { id: "settings", label: "Store Settings", icon: SlidersHorizontal },
 ];
+
+
 
 const money = (value = 0) =>
   new Intl.NumberFormat("en-IN", {
@@ -598,8 +604,9 @@ export default function AdminDashboard() {
   // Single Unified Admin Authentication State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminAuthChecking, setAdminAuthChecking] = useState(true);
-  const [adminEmail, setAdminEmail] = useState("admin@mirayaofficial.in");
-  const [adminPassword, setAdminPassword] = useState("adminpassword");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminLoginLoading, setAdminLoginLoading] = useState(false);
   const [adminLoginError, setAdminLoginError] = useState("");
@@ -808,9 +815,40 @@ export default function AdminDashboard() {
     return formatter ? formatter(value) : value;
   };
 
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket || !isAdminLoggedIn) return;
+
+    const handleRealtimeSync = (data) => {
+      loadDashboard(true);
+    };
+
+    socket.on('order.created', handleRealtimeSync);
+    socket.on('order.updated', handleRealtimeSync);
+    socket.on('inventory.updated', handleRealtimeSync);
+    socket.on('product.created', handleRealtimeSync);
+    socket.on('product.updated', handleRealtimeSync);
+    socket.on('product.deleted', handleRealtimeSync);
+    socket.on('exchange.created', handleRealtimeSync);
+    socket.on('exchange.updated', handleRealtimeSync);
+
+    return () => {
+      socket.off('order.created', handleRealtimeSync);
+      socket.off('order.updated', handleRealtimeSync);
+      socket.off('inventory.updated', handleRealtimeSync);
+      socket.off('product.created', handleRealtimeSync);
+      socket.off('product.updated', handleRealtimeSync);
+      socket.off('product.deleted', handleRealtimeSync);
+      socket.off('exchange.created', handleRealtimeSync);
+      socket.off('exchange.updated', handleRealtimeSync);
+    };
+  }, [socket, isAdminLoggedIn]);
+
   const exportPDF = () => {
     exportStoreAuditPDF({ dashboard, orders, products });
   };
+
 
   if (adminAuthChecking) {
     return (
@@ -852,7 +890,7 @@ export default function AdminDashboard() {
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@mirayaofficial.in"
+                  placeholder="admin@mirayabygarima.com"
                   required
                   autoComplete="username"
                 />
@@ -867,7 +905,8 @@ export default function AdminDashboard() {
                   type={showAdminPassword ? "text" : "password"}
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="adminpassword"
+                  placeholder="••••••••••••"
+
                   required
                   autoComplete="current-password"
                 />
@@ -1528,6 +1567,14 @@ export default function AdminDashboard() {
             />
           )}
 
+          {activeTab === "reviews" && (
+            <AdminReviewsSection
+              token={token}
+              API_BASE_URL={API}
+              products={products}
+            />
+          )}
+
           {activeTab === "cancellations" && (
             <AdminCancellationsSection
               orders={orders}
@@ -1536,6 +1583,14 @@ export default function AdminDashboard() {
               onRefresh={loadDashboard}
             />
           )}
+
+          {activeTab === "exchanges" && (
+            <AdminReturnsSection
+              token={token}
+              API_BASE_URL={API}
+            />
+          )}
+
 
           {activeTab === "customers" && (
             <AdminCustomersSection

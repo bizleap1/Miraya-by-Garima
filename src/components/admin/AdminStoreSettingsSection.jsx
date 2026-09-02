@@ -344,6 +344,39 @@ export default function AdminStoreSettingsSection() {
         </p>
       </div>
 
+      {/* Exchange Requests Configuration */}
+      <div className="store-settings-card">
+        <div className="settings-card-header">
+          <RefreshCw size={20} color="#c6a46a" />
+          <h3>EXCHANGE REQUESTS</h3>
+          <button
+            className={`store-toggle ml-auto ${settings.exchange_enabled ? "toggle-on" : "toggle-off"}`}
+            onClick={() => handleToggle("exchange_enabled")}
+            style={{ transform: "scale(0.8)" }}
+          >
+            <span className="toggle-knob" />
+          </button>
+        </div>
+        <div style={{ marginTop: "12px" }}>
+          <label className="settings-field-label">Exchange Window (Days after Delivery)</label>
+          <input
+            type="number"
+            min="1"
+            max="60"
+            className="settings-input"
+            style={{ maxWidth: "200px" }}
+            value={settings.exchange_window_days !== undefined ? settings.exchange_window_days : 7}
+            onChange={(e) => handleChange("exchange_window_days", parseInt(e.target.value, 10) || 7)}
+          />
+          <p className="settings-field-hint">
+            {settings.exchange_enabled
+              ? `✅ Customers can request size/color exchanges within ${settings.exchange_window_days || 7} days of delivery.`
+              : "⛔ Exchange Requests are currently OFF — customers cannot request exchanges."}
+          </p>
+        </div>
+      </div>
+
+
       {/* Data Management & Testing Reset */}
       <div className="store-settings-card" style={{ borderColor: '#e0b8b8', background: '#fff9f9' }}>
         <div className="settings-card-header">

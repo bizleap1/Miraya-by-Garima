@@ -18,38 +18,80 @@ export const getCart = async (req, res) => {
 export const addToCart = async (req, res) => {
   try {
     const rawProductId = req.body.product_id || req.body.productId;
-    const { quantity = 1, size, variant_id } = req.body;
+    const { quantity, size, variant_id } = req.body;
+
+    const qty = parseInt(quantity !== undefined ? quantity : 1, 10);
+    if (isNaN(qty) || qty <= 0) {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_QUANTITY',
+        message: 'Quantity must be at least 1.',
+      });
+    }
 
     const pid = parseInt(rawProductId, 10);
-    const qty = parseInt(quantity, 10) || 1;
+    if (isNaN(pid)) {
+      return res.status(400).json({ success: false, code: 'INVALID_PRODUCT_ID', message: 'Valid product_id is required.' });
+    }
 
     let targetVariantId = variant_id ? parseInt(variant_id, 10) : null;
+    let targetVariant = null;
 
-    // Resolve variant if not explicitly provided
-    if (!targetVariantId && size) {
-      const variant = await prisma.productVariant.findFirst({
+    if (targetVariantId) {
+      targetVariant = await prisma.productVariant.findUnique({ where: { id: targetVariantId } });
+    }
+
+    if (!targetVariant && size) {
+      targetVariant = await prisma.productVariant.findFirst({
         where: {
           product_id: pid,
           size: { equals: size, mode: 'insensitive' },
         },
       });
-      if (variant) targetVariantId = variant.id;
     }
+
+    if (!targetVariant) {
+      targetVariant = await prisma.productVariant.findFirst({
+        where: { product_id: pid, is_active: true },
+      });
+    }
+
+    if (!targetVariant) {
+      return res.status(404).json({
+        success: false,
+        code: 'VARIANT_NOT_FOUND',
+        message: 'Product variant is not available or inactive.',
+      });
+    }
+
+    targetVariantId = targetVariant.id;
+    const availableStock = Math.max(0, targetVariant.stock - targetVariant.reserved_stock);
 
     const existing = await prisma.cartItem.findFirst({
       where: {
         user_id: req.user.id,
         product_id: pid,
-        size: size || null,
+        size: size || targetVariant.size || null,
       },
     });
+
+    const totalRequestedQty = existing ? existing.quantity + qty : qty;
+
+    if (totalRequestedQty > availableStock) {
+      return res.status(409).json({
+        success: false,
+        code: 'OUT_OF_STOCK',
+        message: `Insufficient stock available for "${targetVariant.sku || 'selected size'}". Available: ${availableStock}, Requested total: ${totalRequestedQty}`,
+        availableStock,
+      });
+    }
 
     if (existing) {
       const updated = await prisma.cartItem.update({
         where: { id: existing.id },
         data: {
-          quantity: existing.quantity + qty,
-          ...(targetVariantId ? { variant_id: targetVariantId } : {}),
+          quantity: totalRequestedQty,
+          variant_id: targetVariantId,
         },
         include: { product: true, variant: true },
       });
@@ -62,7 +104,7 @@ export const addToCart = async (req, res) => {
         product_id: pid,
         variant_id: targetVariantId,
         quantity: qty,
-        size: size || null,
+        size: size || targetVariant.size || null,
       },
       include: { product: true, variant: true },
     });
@@ -78,15 +120,27 @@ export const updateCartItem = async (req, res) => {
     const { id } = req.params;
     const { quantity, size } = req.body;
 
+    if (quantity !== undefined) {
+      const parsedQty = parseInt(quantity, 10);
+      if (isNaN(parsedQty) || parsedQty <= 0) {
+        return res.status(400).json({
+          success: false,
+          code: 'INVALID_QUANTITY',
+          message: 'Quantity must be at least 1.',
+        });
+      }
+    }
+
     const existing = await prisma.cartItem.findFirst({
       where: { id: parseInt(id, 10), user_id: req.user.id },
+      include: { variant: true },
     });
 
     if (!existing) {
       return res.status(403).json({ success: false, message: 'Forbidden: You do not have permission to modify this cart item.' });
     }
 
-    let targetVariantId = existing.variant_id;
+    let targetVariant = existing.variant;
     if (size && size !== existing.size) {
       const v = await prisma.productVariant.findFirst({
         where: {
@@ -94,14 +148,28 @@ export const updateCartItem = async (req, res) => {
           size: { equals: size, mode: 'insensitive' },
         },
       });
-      if (v) targetVariantId = v.id;
+      if (v) targetVariant = v;
+    }
+
+    const newQty = quantity !== undefined ? parseInt(quantity, 10) : existing.quantity;
+
+    if (targetVariant) {
+      const availableStock = Math.max(0, targetVariant.stock - targetVariant.reserved_stock);
+      if (newQty > availableStock) {
+        return res.status(409).json({
+          success: false,
+          code: 'OUT_OF_STOCK',
+          message: `Insufficient stock available. Available: ${availableStock}, Requested: ${newQty}`,
+          availableStock,
+        });
+      }
     }
 
     const updated = await prisma.cartItem.update({
       where: { id: existing.id },
       data: {
-        ...(quantity !== undefined && { quantity: Math.max(1, parseInt(quantity, 10)) }),
-        ...(size !== undefined && { size, variant_id: targetVariantId }),
+        quantity: newQty,
+        ...(size !== undefined && { size, variant_id: targetVariant ? targetVariant.id : existing.variant_id }),
       },
       include: { product: true, variant: true },
     });
@@ -111,6 +179,7 @@ export const updateCartItem = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error updating cart item', error: error.message });
   }
 };
+
 
 export const removeCartItem = async (req, res) => {
   try {

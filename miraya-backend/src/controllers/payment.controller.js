@@ -40,25 +40,25 @@ export const createRazorpayOrder = async (req, res) => {
     const userId = req.user?.id || null;
     const userEmail = req.user?.email || req.body?.email || req.body?.shippingDetails?.email || 'guest@mirayabygarima.com';
     const {
-      amount: directAmount,
       currency = 'INR',
       receipt: customReceipt,
       items: directItems,
+      couponCode: requestCouponCode,
+      coupon: fallbackCouponCode,
       shippingDetails,
       notes = {}
     } = req.body;
 
-    let itemsToProcess = [];
+    const couponCode = (requestCouponCode || fallbackCouponCode || '').trim();
 
+    let itemsToProcess = [];
     if (Array.isArray(directItems) && directItems.length > 0) {
       itemsToProcess = directItems;
     } else if (userId) {
-      // Pull items from user's persistent cart if no direct items passed
       const cartItems = await prisma.cartItem.findMany({
         where: { user_id: userId },
         include: { product: true, variant: true },
       });
-
       if (cartItems.length > 0) {
         itemsToProcess = cartItems.map(ci => ({
           product_id: ci.product_id,
@@ -69,49 +69,125 @@ export const createRazorpayOrder = async (req, res) => {
       }
     }
 
-    // Determine amount in paise
-    let amountInPaise = 0;
-
-    if (directAmount !== undefined && directAmount !== null) {
-      const numAmount = Number(directAmount);
-      if (isNaN(numAmount) || numAmount < 100) {
-        return res.status(400).json({
-          success: false,
-          code: 'INVALID_AMOUNT',
-          message: 'Amount must be at least 100 paise (₹1.00)',
-        });
-      }
-      amountInPaise = Math.round(numAmount);
-    } else if (itemsToProcess.length > 0) {
-      // Compute total from items
-      let provisionalAmount = 0;
-      for (const it of itemsToProcess) {
-        const pid = parseInt(it.product_id || it.productId || it.id, 10);
-        if (!isNaN(pid)) {
-          const p = await prisma.product.findUnique({ where: { id: pid } });
-          if (p) {
-            provisionalAmount += Number(p.price) * (it.quantity || 1);
-          } else if (it.price) {
-            provisionalAmount += Number(it.price) * (it.quantity || 1);
-          }
-        } else if (it.price) {
-          provisionalAmount += Number(it.price) * (it.quantity || 1);
-        }
-      }
-      amountInPaise = Math.round(provisionalAmount * 100);
-    } else {
+    if (!itemsToProcess || itemsToProcess.length === 0) {
       return res.status(400).json({
         success: false,
-        code: 'MISSING_PARAMS',
-        message: 'Please provide either amount (in paise) or items for order creation.',
+        code: 'MISSING_ITEMS',
+        message: 'Cart items are required for order creation. Authoritative server pricing requires valid items.',
       });
     }
+
+    // 1. Authoritative Server-Side Price & Stock Calculation from Database
+    let serverSubtotal = 0;
+    const validatedItems = [];
+
+    for (const item of itemsToProcess) {
+      const rawPid = item.product_id || item.productId || item.id;
+      const pid = typeof rawPid === 'number' ? rawPid : parseInt(String(rawPid || '').split('-').pop(), 10);
+      const qty = Math.max(1, parseInt(item.quantity || item.qty || 1, 10));
+
+      if (isNaN(pid)) {
+        return res.status(400).json({
+          success: false,
+          code: 'INVALID_PRODUCT_ID',
+          message: `Invalid product ID in checkout request.`,
+        });
+      }
+
+      const product = await prisma.product.findUnique({
+        where: { id: pid },
+        include: { variants: true },
+      });
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          code: 'PRODUCT_NOT_FOUND',
+          message: `Product ID ${pid} does not exist in store catalog.`,
+        });
+      }
+
+      const requestedSize = (item.size || item.selectedSize || '').trim();
+      let variant = null;
+      if (item.variant_id) {
+        variant = product.variants.find(v => v.id === parseInt(item.variant_id, 10));
+      } else if (requestedSize) {
+        variant = product.variants.find(v => v.size.toLowerCase() === requestedSize.toLowerCase());
+      }
+
+      if (!variant && product.variants.length > 0) {
+        variant = product.variants[0];
+      }
+
+      if (!variant) {
+        return res.status(404).json({
+          success: false,
+          code: 'VARIANT_NOT_FOUND',
+          message: `Variant for "${product.name}" (Size: ${requestedSize || 'N/A'}) was not found.`,
+        });
+      }
+
+      if (!variant.is_active) {
+        return res.status(400).json({
+          success: false,
+          code: 'VARIANT_INACTIVE',
+          message: `Product "${product.name}" (${variant.size}) is currently inactive.`,
+        });
+      }
+
+      const availableStock = Math.max(0, variant.stock - variant.reserved_stock);
+      if (qty > availableStock) {
+        return res.status(409).json({
+          success: false,
+          code: 'OUT_OF_STOCK',
+          message: `Insufficient stock for "${product.name}" (${variant.size}). Available: ${availableStock}, Requested: ${qty}`,
+          availableStock,
+        });
+      }
+
+      const itemUnitPrice = Number(variant.price || product.price);
+      const itemSubtotal = itemUnitPrice * qty;
+      serverSubtotal += itemSubtotal;
+
+      validatedItems.push({
+        product_id: product.id,
+        variant_id: variant.id,
+        sku: variant.sku,
+        size: variant.size,
+        quantity: qty,
+        price: itemUnitPrice,
+        total_price: itemSubtotal,
+      });
+    }
+
+    // 2. Authoritative Coupon Discount Calculation
+    let discountAmount = 0;
+    let appliedCouponCode = null;
+
+    if (couponCode) {
+      const { validateCouponServerSide } = await import('./coupon.controller.js');
+      const couponResult = await validateCouponServerSide(couponCode, serverSubtotal);
+
+      if (!couponResult.valid) {
+        return res.status(400).json({
+          success: false,
+          code: couponResult.code || 'INVALID_COUPON',
+          message: couponResult.message,
+        });
+      }
+
+      discountAmount = couponResult.discountAmount;
+      appliedCouponCode = couponResult.coupon.code;
+    }
+
+    const finalPayableTotal = Math.max(0, serverSubtotal - discountAmount);
+    const amountInPaise = Math.round(finalPayableTotal * 100);
 
     if (amountInPaise < 100) {
       return res.status(400).json({
         success: false,
         code: 'INVALID_AMOUNT',
-        message: 'Minimum order amount is 100 paise (₹1.00)',
+        message: 'Minimum order amount must be at least 100 paise (₹1.00)',
       });
     }
 
@@ -124,29 +200,47 @@ export const createRazorpayOrder = async (req, res) => {
       notes: {
         user_id: String(userId || 'guest'),
         user_email: userEmail,
+        coupon_code: appliedCouponCode || 'NONE',
+        server_subtotal: String(serverSubtotal),
+        server_discount: String(discountAmount),
         ...(typeof notes === 'object' ? notes : {}),
       },
     };
 
     // Call Razorpay API to create order
-    const razorpayOrder = await razorpay.orders.create(rzpOptions);
+    let razorpayOrder;
+    try {
+      razorpayOrder = await razorpay.orders.create(rzpOptions);
+    } catch (rzpErr) {
+      if (process.env.NODE_ENV !== 'production' && (rzpErr.statusCode === 401 || process.env.RAZORPAY_KEY_ID?.includes('test'))) {
+        razorpayOrder = {
+          id: `order_test_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          amount: amountInPaise,
+          currency: currency || 'INR',
+          receipt: receiptId,
+          status: 'created',
+        };
+      } else {
+        throw rzpErr;
+      }
+    }
 
     let reservationResult = null;
-    // If authenticated user & items provided, reserve stock atomically (TTL 15m)
-    if (itemsToProcess.length > 0 && userId) {
-      try {
-        reservationResult = await prisma.$transaction(async (tx) => {
-          return await reserveInventoryAtomic({
-            tx,
-            items: itemsToProcess,
-            user_id: userId,
-            razorpay_order_id: razorpayOrder.id,
-            ttlMinutes: 15,
-          });
+    // Reserve stock atomically with server-calculated total
+    try {
+      reservationResult = await prisma.$transaction(async (tx) => {
+        return await reserveInventoryAtomic({
+          tx,
+          items: validatedItems,
+          user_id: userId,
+          razorpay_order_id: razorpayOrder.id,
+          coupon_code: appliedCouponCode,
+          total_amount_override: finalPayableTotal,
+          ttlMinutes: 15,
         });
-      } catch (reserveErr) {
-        console.warn('[Reservation] Stock reservation warning:', reserveErr.message);
-      }
+      });
+    } catch (reserveErr) {
+      console.warn('[Reservation] Stock reservation warning:', reserveErr.message);
     }
 
     return res.status(200).json({
@@ -157,7 +251,10 @@ export const createRazorpayOrder = async (req, res) => {
       currency: razorpayOrder.currency,
       receipt: razorpayOrder.receipt,
       status: razorpayOrder.status,
-      calculatedTotal: reservationResult?.calculatedTotal || (amountInPaise / 100),
+      serverSubtotal,
+      discountAmount,
+      calculatedTotal: finalPayableTotal,
+      couponApplied: appliedCouponCode,
       expiresAt: reservationResult?.expiresAt,
     });
 
@@ -171,6 +268,7 @@ export const createRazorpayOrder = async (req, res) => {
     });
   }
 };
+
 
 /**
  * 2. Verify Payment Signature
@@ -306,6 +404,24 @@ export const verifyRazorpayPayment = async (req, res) => {
         .catch(err => console.error('[Order Confirmation Email error]', err));
     }
 
+    // Realtime broadcast after DB commit
+    if (finalizedOrder) {
+      const { emitOrderCreated, emitInventoryUpdated } = await import('../services/realtime.service.js');
+      emitOrderCreated(finalizedOrder);
+      if (finalizedOrder.items && Array.isArray(finalizedOrder.items)) {
+        finalizedOrder.items.forEach(it => {
+          if (it.variant) {
+            emitInventoryUpdated({
+              variantId: it.variant_id,
+              productId: it.product_id,
+              stock: it.variant.stock,
+              reserved_stock: it.variant.reserved_stock || 0,
+            });
+          }
+        });
+      }
+    }
+
     return res.status(200).json({
       success: true,
       verified: true,
@@ -314,6 +430,7 @@ export const verifyRazorpayPayment = async (req, res) => {
       order_id: rzpOrderId,
       payment_id: rzpPaymentId,
     });
+
 
   } catch (error) {
     console.error('Payment verification error:', error);

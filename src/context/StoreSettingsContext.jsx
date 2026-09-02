@@ -1,6 +1,8 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import API_URL from "../config";
+import { useSocket } from "./SocketContext";
+
 
 const defaultSettings = {
   store_online: true,
@@ -51,10 +53,11 @@ export function StoreSettingsProvider({ children }) {
     }
   }, []);
 
+  const { socket } = useSocket();
+
   useEffect(() => {
     fetchSettings();
-    // Refresh every 10 seconds
-    const interval = setInterval(fetchSettings, 10000);
+    const interval = setInterval(fetchSettings, 30000);
     const handleStorageOrEvent = () => fetchSettings();
     window.addEventListener("storeSettingsChange", handleStorageOrEvent);
     window.addEventListener("storage", handleStorageOrEvent);
@@ -69,6 +72,30 @@ export function StoreSettingsProvider({ children }) {
       document.removeEventListener("visibilitychange", handleStorageOrEvent);
     };
   }, [fetchSettings]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleSettingsUpdated = (data) => {
+      if (data) {
+        setSettings((prev) => {
+          const updated = { ...prev, ...data };
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("miraya_store_settings", JSON.stringify(updated));
+            } catch (_) {}
+          }
+          return updated;
+        });
+      }
+      fetchSettings();
+    };
+    socket.on("store_settings.updated", handleSettingsUpdated);
+    return () => {
+      socket.off("store_settings.updated", handleSettingsUpdated);
+    };
+  }, [socket, fetchSettings]);
+
+
 
   const updateSettings = useCallback((newSettings) => {
     setSettings((prev) => {

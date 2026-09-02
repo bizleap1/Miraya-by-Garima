@@ -356,28 +356,43 @@ model Wishlist {
 // ─── COUPON ──────────────────────────────────────────────────────────────────
 
 model Coupon {
-  id               Int      @id @default(autoincrement())
-  code             String   @unique
+  id               Int       @id @default(autoincrement())
+  code             String    @unique
   discount_percent Int?
   discount_flat    Decimal?
-  min_order_value  Decimal? @default(0)
-  is_active        Boolean  @default(true)
-  created_at       DateTime @default(now())
+  min_order_value  Decimal?  @default(0)
+  is_active        Boolean   @default(true)
+  expires_at       DateTime?
+  usage_limit      Int?
+  used_count       Int       @default(0)
+  created_at       DateTime  @default(now())
 }
 
 // ─── REVIEW ──────────────────────────────────────────────────────────────────
 
 model Review {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  product_id Int
-  rating     Int      @default(5)
-  comment    String
-  created_at DateTime @default(now())
-  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  id            Int      @id @default(autoincrement())
+  user_id       Int?
+  product_id    Int
+  customer_name String?  @default("Verified Customer")
+  customer_city String?
+  title         String?
+  rating        Int      @default(5)
+  comment       String
+  images        String[] @default([])
+  occasion      String?  // e.g. "Bridal Wear", "Sangeet", "Cocktail Party", "Festival", "Reception"
+  is_verified   Boolean  @default(true)
+  is_approved   Boolean  @default(true)
+  likes_count   Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
+  user          User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  product       Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@index([product_id])
+  @@index([rating])
+  @@index([is_approved])
+  @@index([created_at])
 }
 
 // ─── STOCK NOTIFICATION ──────────────────────────────────────────────────────
@@ -478,6 +493,7 @@ model InventoryReservation {
   user_id           Int?
   session_id        String? // Optional guest/checkout tracker
   razorpay_order_id String   @unique
+  coupon_code       String?
   items             Json // [{ variant_id, product_id, sku, quantity, size, price }]
   total_amount      Decimal
   status            String   @default("ACTIVE") // "ACTIVE" | "CONFIRMED" | "RELEASED" | "EXPIRED"
@@ -507,8 +523,11 @@ model StoreSettings {
   google_review_url   String?  @default("https://g.page/r/miraya-nagpur")
   announcement_text   String?
   announcement_active Boolean  @default(false)
+  exchange_enabled    Boolean  @default(true)
+  exchange_window_days Int     @default(7)
   updated_at          DateTime @updatedAt
 }
+
 
 // ─── PROMOTION CAMPAIGNS (Marketing & Dynamic Pricing) ───────────────────────
 

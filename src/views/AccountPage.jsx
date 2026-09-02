@@ -9,11 +9,14 @@ import API_URL from '../config';
 import ConfirmModal from '../components/ConfirmModal';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
+import { useSocket } from '../context/SocketContext';
 import './AccountPage.css';
+
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: User },
   { id: 'orders', label: 'Order History', icon: ShoppingBag },
+  { id: 'exchanges', label: 'Exchange Requests', icon: RotateCcw },
   { id: 'addresses', label: 'Addresses', icon: MapPin }
 ];
 
@@ -23,6 +26,7 @@ const AccountPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [storeSettings, setStoreSettings] = useState({ exchange_enabled: true, exchange_window_days: 7 });
   
   // Data states
   const [orders, setOrders] = useState([]);
@@ -43,11 +47,20 @@ const AccountPage = () => {
   const [editingAddress, setEditingAddress] = useState(null);
   const [addressForm, setAddressForm] = useState({ label: 'Home', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false });
   
-  const [returnModal, setReturnModal] = useState(false);
-  const [returnOrder, setReturnOrder] = useState(null);
-  const [returnReason, setReturnReason] = useState('');
+  // Exchange Modal State
+  const [exchangeModal, setExchangeModal] = useState(false);
+  const [exchangeOrder, setExchangeOrder] = useState(null);
+  const [exchangeItem, setExchangeItem] = useState(null);
+  const [exchangeReason, setExchangeReason] = useState('Size issue');
+  const [exchangeNote, setExchangeNote] = useState('');
+  const [selectedReplacementVariant, setSelectedReplacementVariant] = useState(null);
+  const [exchangeQty, setExchangeQty] = useState(1);
+  const [productVariants, setProductVariants] = useState([]);
+  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [submittingExchange, setSubmittingExchange] = useState(false);
 
   const [settingsForm, setSettingsForm] = useState({ firstName: '', lastName: '', phone: '', currentPassword: '', newPassword: '' });
+
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const { wishlist } = useWishlist();
@@ -89,13 +102,21 @@ const AccountPage = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [profile, ordersData, returnsData, addrs, meas] = await Promise.all([
+        const [profile, ordersData, returnsData, addrs, meas, setts] = await Promise.all([
           api('/api/auth/profile').catch(() => null),
           api('/api/orders').catch(() => []),
           api('/api/returns/my').catch(() => []),
           api('/api/addresses').catch(() => []),
-          api('/api/measurements').catch(() => [])
+          api('/api/measurements').catch(() => []),
+          fetch(`${API_URL}/api/settings`).then(r => r.json()).catch(() => ({ exchange_enabled: true, exchange_window_days: 7 }))
         ]);
+
+        if (setts) {
+          setStoreSettings({
+            exchange_enabled: setts.exchange_enabled !== undefined ? setts.exchange_enabled : true,
+            exchange_window_days: setts.exchange_window_days || 7
+          });
+        }
 
         if (profile) {
           const nameParts = (profile.name || '').split(' ');
@@ -136,6 +157,40 @@ const AccountPage = () => {
     };
     loadData();
   }, []); // Removed token, navigate, location.state, api to prevent infinite re-renders
+
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleOrderRealtime = (data) => {
+      if (!data) return;
+      api('/api/orders').then(ordersData => {
+        let backendOrders = Array.isArray(ordersData) ? ordersData : (ordersData?.orders || []);
+        setOrders(backendOrders);
+      }).catch(() => {});
+    };
+
+    const handleExchangeRealtime = (data) => {
+      if (!data) return;
+      api('/api/returns/my').then(returnsData => {
+        if (Array.isArray(returnsData)) setReturns(returnsData);
+      }).catch(() => {});
+    };
+
+    socket.on('order.created', handleOrderRealtime);
+    socket.on('order.updated', handleOrderRealtime);
+    socket.on('exchange.created', handleExchangeRealtime);
+    socket.on('exchange.updated', handleExchangeRealtime);
+
+    return () => {
+      socket.off('order.created', handleOrderRealtime);
+      socket.off('order.updated', handleOrderRealtime);
+      socket.off('exchange.created', handleExchangeRealtime);
+      socket.off('exchange.updated', handleExchangeRealtime);
+    };
+  }, [socket, api]);
+
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -184,7 +239,74 @@ const AccountPage = () => {
     }
   };
 
+  const handleOpenExchangeModal = async (order) => {
+    if (!order || !order.items || order.items.length === 0) return;
+    const targetItem = order.items[0];
+    setExchangeOrder(order);
+    setExchangeItem(targetItem);
+    setExchangeReason('Size issue');
+    setExchangeNote('');
+    setExchangeQty(1);
+    setLoadingVariants(true);
+    try {
+      const res = await fetch(`${API_URL}/api/products/${targetItem.product_id}`);
+      const data = await res.json();
+      const vars = data.variants || data.product?.variants || [];
+      setProductVariants(vars);
+      const firstAvailable = vars.find(v => (v.stock - (v.reserved_stock || 0)) > 0 && String(v.size).toUpperCase() !== String(targetItem.size).toUpperCase());
+      setSelectedReplacementVariant(firstAvailable || vars[0] || null);
+    } catch (e) {
+      toast.error('Failed to load size options for this product.', 'EXCHANGE ERROR');
+    } finally {
+      setLoadingVariants(false);
+      setExchangeModal(true);
+    }
+  };
+
+  const submitExchangeRequest = async (e) => {
+    e.preventDefault();
+    if (!selectedReplacementVariant) {
+      toast.error('Please select a replacement size for exchange.', 'SELECT SIZE');
+      return;
+    }
+    setSubmittingExchange(true);
+    try {
+      const res = await fetch(`${API_URL}/api/returns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          order_id: exchangeOrder.id,
+          product_id: exchangeItem.product_id,
+          variant_id: exchangeItem.variant_id,
+          exchange_variant_id: selectedReplacementVariant.id,
+          exchange_quantity: exchangeQty,
+          quantity: exchangeQty,
+          reason: exchangeReason,
+          type: 'EXCHANGE',
+          customer_note: exchangeNote
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Exchange request #EX-${data.returnRequest.id} submitted!`, 'EXCHANGE REQUESTED');
+        setExchangeModal(false);
+        api('/api/returns/my').then(rData => { if (Array.isArray(rData)) setReturns(rData); }).catch(() => {});
+      } else {
+        toast.error(data.message || 'Failed to submit exchange request.', 'EXCHANGE ERROR');
+      }
+    } catch (err) {
+      toast.error('Network error submitting exchange request.', 'NETWORK ERROR');
+    } finally {
+      setSubmittingExchange(false);
+    }
+  };
+
   // --- ADDRESSES ---
+
   const saveAddress = async (e) => {
     e.preventDefault();
     try {
@@ -400,11 +522,36 @@ const AccountPage = () => {
                       ))}
                     </div>
                     <div className="order-history-footer" style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', alignItems: 'center', marginTop: '1rem', paddingTop: '0.8rem', borderTop: '1px solid #eee' }}>
-                      {statusStr.toUpperCase() === 'DELIVERED' && (
-                        <button className="btn-secondary btn-sm" onClick={() => { setReturnOrder(order); setReturnReason(''); setReturnModal(true); }}>
-                          Request Return
-                        </button>
-                      )}
+                      {storeSettings.exchange_enabled && ['DELIVERED', 'SHIPPED', 'COMPLETED', 'PROCESSING'].includes(statusStr.toUpperCase()) && (() => {
+                        const deliveryDate = order.updated_at || order.created_at;
+                        const diffDays = Math.floor((Date.now() - new Date(deliveryDate).getTime()) / (1000 * 3600 * 24));
+                        const windowDays = storeSettings.exchange_window_days || 7;
+                        if (diffDays <= windowDays) {
+                          return (
+                            <button
+                              type="button"
+                              className="btn-secondary btn-sm"
+                              style={{
+                                background: 'rgba(198, 164, 106, 0.12)',
+                                color: '#7a5a22',
+                                border: '1px solid #c6a46a',
+                                padding: '6px 14px',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                              onClick={() => handleOpenExchangeModal(order)}
+                            >
+                              <RotateCcw size={14} /> Request Exchange
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
 
                       {!['CANCELLED', 'SHIPPED', 'DELIVERED', 'REFUNDED'].includes(statusStr.toUpperCase()) && (
                         <button 
@@ -466,25 +613,33 @@ const AccountPage = () => {
           </div>
         );
 
-      case 'returns':
+      case 'exchanges':
         return (
           <div className="account-returns">
-            <h3 className="section-title">Return Requests</h3>
+            <h3 className="section-title">Exchange Requests</h3>
+            <p style={{ fontSize: '0.88rem', color: '#666', marginBottom: '1.2rem' }}>
+              View and track size exchange requests for your delivered couture orders.
+            </p>
             <div className="returns-list">
-              {returns.map(ret => (
-                <div key={ret.id} className="return-card">
+              {returns.map(ex => (
+                <div key={ex.id} className="return-card" style={{ borderLeft: '4px solid var(--primary-burgundy)' }}>
                   <div className="ret-header">
-                    <span>Return #{ret.id} <span style={{ color: '#888', fontSize: '0.85rem' }}>(Order #MRY-{ret.orderId})</span></span>
-                    <span className={`status-badge ${ret.status.toLowerCase()}`}>{ret.status}</span>
+                    <span>Exchange #EX-{ex.id} <span style={{ color: '#888', fontSize: '0.85rem' }}>(Order #MRY-{ex.order_id || ex.orderId})</span></span>
+                    <span className={`status-badge ${String(ex.status).toLowerCase()}`}>{ex.status}</span>
                   </div>
-                  <p className="ret-reason"><strong>Reason:</strong> {ret.reason}</p>
-                  <p className="ret-date">Requested on {new Date(ret.createdAt).toLocaleDateString()}</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px', background: '#fcfaf7', padding: '10px', borderRadius: '6px' }}>
+                    <div><span style={{ fontSize: '11px', color: '#888' }}>Purchased Size:</span> <strong style={{ color: '#5e0a0b' }}>{ex.variant?.size || 'N/A'}</strong></div>
+                    <div><span style={{ fontSize: '11px', color: '#888' }}>Requested Size:</span> <strong style={{ color: '#15803d' }}>{ex.exchange_variant?.size || 'N/A'}</strong></div>
+                  </div>
+                  <p className="ret-reason" style={{ marginTop: '8px' }}><strong>Reason:</strong> {ex.reason}</p>
+                  <p className="ret-date" style={{ fontSize: '0.78rem', color: '#888', marginTop: '4px' }}>Requested on {new Date(ex.created_at || ex.createdAt).toLocaleDateString('en-IN')}</p>
                 </div>
               ))}
-              {!returns.length && <p className="empty-state">No return requests found.</p>}
+              {!returns.length && <p className="empty-state">No size exchange requests submitted yet.</p>}
             </div>
           </div>
         );
+
 
       case 'addresses':
         return (
@@ -731,23 +886,116 @@ const AccountPage = () => {
         </div>
       )}
 
-      {returnModal && (
-        <div className="modal-overlay" data-lenis-prevent="true" onClick={() => setReturnModal(false)}>
-          <div className="modal-content" data-lenis-prevent="true" style={{ overscrollBehavior: 'contain' }} onClick={e => e.stopPropagation()}>
+      {/* EXCHANGE REQUEST MODAL */}
+      {exchangeModal && exchangeItem && (
+        <div className="modal-overlay" data-lenis-prevent="true" onClick={() => setExchangeModal(false)}>
+          <div className="modal-content" data-lenis-prevent="true" style={{ overscrollBehavior: 'contain', maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Request Return for #MRY-{returnOrder?.id}</h3>
-              <button className="btn-close" onClick={() => setReturnModal(false)}>✕</button>
+              <h3>Request Size Exchange</h3>
+              <button className="btn-close" onClick={() => setExchangeModal(false)}>✕</button>
             </div>
-            <form onSubmit={submitReturn} className="modal-form">
-              <div className="form-group">
-                <label>Reason for Return</label>
-                <textarea required rows={4} value={returnReason} onChange={e => setReturnReason(e.target.value)} placeholder="Please tell us why you want to return this item..." />
+            <form onSubmit={submitExchangeRequest} className="modal-form">
+              {/* Product Info Card */}
+              <div style={{ display: 'flex', gap: '14px', alignItems: 'center', background: '#fdfbf7', border: '1px solid #e8ded1', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                <img
+                  src={exchangeItem.product?.image_url || exchangeItem.product?.image || '/products/Lehenga-Pink Blush/1.JPG'}
+                  alt=""
+                  style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '6px' }}
+                />
+                <div>
+                  <strong style={{ fontSize: '15px', color: '#5e0a0b', display: 'block' }}>{exchangeItem.product?.name || exchangeItem.product?.title || 'Garment'}</strong>
+                  <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                    Purchased Size: <strong>{exchangeItem.size || 'M'}</strong> | Qty: <strong>{exchangeItem.quantity || 1}</strong>
+                  </div>
+                </div>
               </div>
-              <button type="submit" className="btn-primary w-full">Submit Request</button>
+
+              {/* Reason for Exchange */}
+              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: '600', color: '#444' }}>Reason for Exchange</label>
+                <select
+                  value={exchangeReason}
+                  onChange={e => setExchangeReason(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' }}
+                >
+                  <option value="Size issue">Size issue</option>
+                  <option value="Fit issue">Fit issue</option>
+                  <option value="Received wrong size">Received wrong size</option>
+                  <option value="Received wrong item">Received wrong item</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Replacement Size Selector */}
+              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: '600', color: '#444' }}>Exchange To Size</label>
+                {loadingVariants ? (
+                  <div style={{ fontSize: '13px', color: '#888', padding: '10px' }}><Loader2 size={16} className="animate-spin" /> Loading sizes...</div>
+                ) : (
+                  <select
+                    value={selectedReplacementVariant?.id || ''}
+                    onChange={e => {
+                      const sel = productVariants.find(v => String(v.id) === String(e.target.value));
+                      setSelectedReplacementVariant(sel || null);
+                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' }}
+                  >
+                    {productVariants.map(v => {
+                      const availStock = Math.max(0, (v.stock || 0) - (v.reserved_stock || 0));
+                      const isSameSize = String(v.size).toUpperCase() === String(exchangeItem.size).toUpperCase();
+                      const isOos = availStock <= 0;
+
+                      return (
+                        <option key={v.id} value={v.id} disabled={isOos}>
+                          Size {v.size} {isSameSize ? '(Current Size)' : ''} {isOos ? '— Out of Stock' : `(${availStock} available)`}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+              </div>
+
+              {/* Quantity Selector */}
+              {(exchangeItem.quantity || 1) > 1 && (
+                <div className="form-group">
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: '#444' }}>Exchange Quantity</label>
+                  <select
+                    value={exchangeQty}
+                    onChange={e => setExchangeQty(parseInt(e.target.value, 10))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' }}
+                  >
+                    {Array.from({ length: exchangeItem.quantity || 1 }, (_, idx) => idx + 1).map(n => (
+                      <option key={n} value={n}>{n} unit{n > 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Customer Note */}
+              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: '600', color: '#444' }}>Additional Notes (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={exchangeNote}
+                  onChange={e => setExchangeNote(e.target.value)}
+                  placeholder="E.g., Need 2 inches looser around hips..."
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13px' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingExchange || !selectedReplacementVariant}
+                className="btn-primary w-full"
+                style={{ background: 'var(--primary-burgundy)', color: '#fff', padding: '12px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+              >
+                {submittingExchange ? 'Submitting Request...' : 'Submit Exchange Request'}
+              </button>
             </form>
           </div>
         </div>
       )}
+
 
       {editProfileModal && (
         <div className="modal-overlay" data-lenis-prevent="true" onClick={() => setEditProfileModal(false)}>
