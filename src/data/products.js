@@ -674,26 +674,9 @@ export const getProductById = (uniqueId, category) => {
   let found = allProducts.find(p => String(p.id).toLowerCase() === lowerId);
   if (found) return found;
 
-  // 2. Numeric ID match (e.g. "1", "2", "23" from backend database primary key)
-  const numId = parseInt(rawId, 10);
-  if (!isNaN(numId) && String(numId) === rawId) {
-    // Special handling for backend dress IDs 26 to 41
-    if (numId >= 26 && numId <= 41 && productsData['dresses']) {
-      const dressIdx = numId - 26;
-      if (productsData['dresses'][dressIdx]) {
-        return productsData['dresses'][dressIdx];
-      }
-    }
-    if (cleanCat && productsData[cleanCat]) {
-      const catList = productsData[cleanCat];
-      if (numId >= 1 && numId <= catList.length) {
-        return catList[numId - 1];
-      }
-    }
-    if (numId >= 1 && numId <= allProducts.length) {
-      return allProducts[numId - 1];
-    }
-  }
+  // 2. Composite ID match (e.g., "indo-western-iw-1" or "dresses-dress-1")
+  found = allProducts.find(p => `${String(p.category).toLowerCase()}-${String(p.id).toLowerCase()}` === lowerId);
+  if (found) return found;
 
   // 3. Haute Couture Dress name match (e.g., "haute-couture-dress-16" or "Haute Couture Dress 16")
   const dressNumMatch = lowerId.match(/haute[- ]couture[- ]dress[- ]*(\d+)/i);
@@ -704,11 +687,7 @@ export const getProductById = (uniqueId, category) => {
     }
   }
 
-  // 4. Composite ID match (e.g., "indo-western-iw-1" or "dresses-dress-1")
-  found = allProducts.find(p => `${String(p.category).toLowerCase()}-${String(p.id).toLowerCase()}` === lowerId);
-  if (found) return found;
-
-  // 5. Category-scoped search if category provided
+  // 4. Category-scoped search if category provided
   if (cleanCat && productsData[cleanCat]) {
     const catList = productsData[cleanCat];
     // Suffix match within category
@@ -728,7 +707,7 @@ export const getProductById = (uniqueId, category) => {
     if (found) return found;
   }
 
-  // 6. Global suffix / title / slug match across all products
+  // 5. Global suffix / title / slug match across all products
   found = allProducts.find(p => {
     const pId = String(p.id).toLowerCase();
     return lowerId.endsWith(`-${pId}`) || lowerId.endsWith(pId);

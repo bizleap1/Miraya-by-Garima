@@ -580,7 +580,13 @@ const CategoryPage = () => {
                   </div>
                   <div className="card-info">
                     <div className="title-price-row">
-                      <h3>{item.title || item.name}</h3>
+                      <Link 
+                        to={`/product/${item.category || category}/${item.id}`}
+                        state={{ product: item, from: `/collection/${category}`, filters: selectedCategories }}
+                        style={{ textDecoration: 'none', color: 'inherit', display: 'block', flex: 1 }}
+                      >
+                        <h3>{item.title || item.name}</h3>
+                      </Link>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <span className="product-price">{formatPrice(item.price)}</span>
                         {item.mrp_price && Number(item.mrp_price) > Number(item.price) && (

@@ -1,6 +1,6 @@
 'use client';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useState, useMemo, useRef } from 'react';
 import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2, Check, Trash2, ShoppingBag, RotateCcw } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,7 +69,13 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   const isStoreOffline = !store_online || !new_orders_enabled;
 
   const [product, setProduct] = useState(() => {
-    if (initialProduct) {
+    const isInitialMatch = initialProduct && (
+      String(initialProduct.id) === String(id) ||
+      String(initialProduct.catalogId || '') === String(id) ||
+      String(initialProduct.slug || '') === String(id) ||
+      String(id).endsWith(`-${initialProduct.id}`)
+    );
+    if (isInitialMatch) {
       let initImgs = initialProduct.images;
       if (typeof initImgs === 'string') {
         try { initImgs = JSON.parse(initImgs); } catch (_) { initImgs = [initImgs]; }
@@ -110,14 +116,34 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     }
   };
 
-  const [loading, setLoading] = useState(!initialProduct);
+  const isInitialProductValid = initialProduct && (
+    String(initialProduct.id) === String(id) ||
+    String(initialProduct.catalogId || '') === String(id) ||
+    String(initialProduct.slug || '') === String(id) ||
+    String(id).endsWith(`-${initialProduct.id}`)
+  );
 
+  const [loading, setLoading] = useState(!isInitialProductValid);
+
+  const lastScrolledIdRef = useRef(id);
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
+    if (lastScrolledIdRef.current && lastScrolledIdRef.current !== id) {
+      window.scrollTo(0, 0);
+    }
+    lastScrolledIdRef.current = id;
   }, [id]);
 
   useEffect(() => {
-    if (initialProduct) {
+    let isSubscribed = true;
+
+    const isMatch = initialProduct && (
+      String(initialProduct.id) === String(id) ||
+      String(initialProduct.catalogId || '') === String(id) ||
+      String(initialProduct.slug || '') === String(id) ||
+      String(id).endsWith(`-${initialProduct.id}`)
+    );
+
+    if (isMatch) {
       let initImgs = initialProduct.images;
       if (typeof initImgs === 'string') {
         try { initImgs = JSON.parse(initImgs); } catch (_) { initImgs = [initImgs]; }
@@ -135,21 +161,30 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
         images: initImgs
       });
       setLoading(false);
+    } else {
+      setLoading(true);
     }
 
     const fetchProduct = async () => {
       if (!id) {
-        setLoading(false);
+        if (isSubscribed) setLoading(false);
         return;
       }
 
       let fetched = false;
       try {
         const res = await fetch(`${API_URL}/api/products/${id}`);
+        if (!isSubscribed) return;
+
         if (res.ok) {
           const data = await res.json();
+          if (!isSubscribed) return;
+
           const { getProductById } = await import('../data/products');
-          const localMatch = getProductById(data.id, data.category?.name || data.category || category) || {};
+          // Only perform local lookup if data has a explicit string catalog code or matching string ID
+          const localMatch = (data.catalogId || (typeof data.id === 'string' && isNaN(Number(data.id))))
+            ? (getProductById(data.catalogId || data.id, data.category?.slug || data.category?.name || data.category || category) || {})
+            : {};
 
           let apiImgs = data.images;
           if (typeof apiImgs === 'string') {
@@ -159,14 +194,16 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             apiImgs = [data.image_url || data.image || localMatch.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
           }
 
-          const resolvedMainImg = getProductImage(localMatch.image || data.image_url || data.image || apiImgs[0]);
-          const resolvedImgs = (localMatch.images?.length ? localMatch.images : apiImgs).map(img => getProductImage(img));
+          const resolvedMainImg = getProductImage(data.image_url || data.image || localMatch.image || apiImgs[0]);
+          const resolvedImgs = (apiImgs.length ? apiImgs : (localMatch.images || [])).map(img => getProductImage(img));
 
           setProduct({
             ...localMatch,
             ...data,
             id: data.id,
-            title: localMatch.title || data.name || data.title || 'Outfit',
+            // CRITICAL: Backend data is authoritative for title/name
+            title: data.name || data.title || localMatch.title || 'Outfit',
+            name: data.name || data.title || localMatch.title || 'Outfit',
             price: data.price,
             category: data.category?.slug || data.category?.name || data.category || category,
             image: resolvedMainImg,
@@ -175,53 +212,76 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
           fetched = true;
         }
       } catch (error) {
-        // Silently fall back to local dataset
+        // Silent network fallback
       }
 
-      if (!fetched && !initialProduct) {
+      if (!fetched && !isMatch) {
         try {
           const { getProductById } = await import('../data/products');
           const localProd = getProductById(id, category);
-          if (localProd) {
+          if (localProd && isSubscribed) {
             setProduct(localProd);
+            fetched = true;
           }
         } catch (e) {
           // Silent local fallback
         }
       }
-      setLoading(false);
+
+      if (isSubscribed) {
+        setLoading(false);
+      }
     };
+
     fetchProduct();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [category, id, initialProduct]);
 
   const { socket } = useSocket();
+  const currentProductId = product?.id;
 
   useEffect(() => {
-    if (!socket || !product?.id) return;
+    if (!socket || !currentProductId) return;
 
     const handleRealtimeUpdate = (data) => {
-      if (data && String(data.productId) === String(product.id)) {
-        if (data.price !== undefined) {
-          setProduct(prev => prev ? { ...prev, price: data.price, mrp_price: data.mrp_price || prev.mrp_price } : prev);
-        }
-        // Refetch full product details safely
-        fetch(`${API_URL}/api/products/${product.id}`)
-          .then(r => r.json())
-          .then(resData => {
-            if (resData && (resData.id || resData.product?.id)) {
-              const fresh = resData.product || resData;
-              setProduct(prev => ({
+      const eventProductId = data?.productId ?? data?.id;
+      if (!eventProductId || String(eventProductId) !== String(currentProductId)) {
+        return;
+      }
+
+      if (data.price !== undefined) {
+        setProduct(prev => (prev && String(prev.id) === String(currentProductId))
+          ? { ...prev, price: data.price, mrp_price: data.mrp_price || prev.mrp_price }
+          : prev
+        );
+      }
+
+      // Refetch full product details safely
+      fetch(`${API_URL}/api/products/${currentProductId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(resData => {
+          if (resData && (resData.id || resData.product?.id)) {
+            const fresh = resData.product || resData;
+            if (String(fresh.id) !== String(currentProductId)) return;
+
+            setProduct(prev => {
+              if (!prev || String(prev.id) !== String(currentProductId)) return prev;
+              return {
                 ...prev,
                 ...fresh,
                 title: fresh.name || fresh.title || prev.title,
+                name: fresh.name || fresh.title || prev.title,
                 price: fresh.price,
                 stock: fresh.stock,
                 variants: fresh.variants || prev.variants
-              }));
-            }
-          })
-          .catch(() => {});
-      }
+              };
+            });
+          }
+        })
+        .catch(() => {});
     };
 
     socket.on('product.updated', handleRealtimeUpdate);
@@ -231,7 +291,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
       socket.off('product.updated', handleRealtimeUpdate);
       socket.off('inventory.updated', handleRealtimeUpdate);
     };
-  }, [socket, product?.id]);
+  }, [socket, currentProductId]);
 
 
   const buyNow = () => {
