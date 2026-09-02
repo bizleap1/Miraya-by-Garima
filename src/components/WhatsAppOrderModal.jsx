@@ -22,18 +22,17 @@ export default function WhatsAppOrderModal({ isOpen, onClose, product, selectedS
   const productLink = origin && product?.id ? `${origin}/product/${prodCategorySlug}/${product.id}` : "";
 
   const message = encodeURIComponent(
-    `👑 *PRODUCT INQUIRY — MIRAYA BY GARIMA*\n` +
+    `*PRODUCT INQUIRY — MIRAYA BY GARIMA*\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Hello! I am interested in this outfit and would like to get more details:\n\n` +
-    `👗 *Garment Name:* ${productName}\n` +
-    `🏷️ *Category:* ${categoryName}\n` +
-    (price ? `💰 *Price:* ${price}\n` : "") +
-    (size ? `📏 *Size:* ${size}\n` : "") +
-    (product?.fabric ? `🧵 *Fabric:* ${product.fabric}\n` : "") +
-    (product?.color ? `🎨 *Color:* ${product.color}\n` : "") +
-    (fullImgUrl ? `🖼️ *Product Image:* ${fullImgUrl}\n` : "") +
-    (productLink ? `🔗 *Product Link:* ${productLink}\n\n` : "\n") +
-    `Please share details regarding availability, custom tailoring, and delivery timeline. Thank you! 🙏`
+    `*Garment Name:* ${productName}\n` +
+    `*Category:* ${categoryName}\n` +
+    (price ? `*Price:* ${price}\n` : "") +
+    (size ? `*Size:* ${size}\n` : "") +
+    (product?.fabric ? `*Fabric:* ${product.fabric}\n` : "") +
+    (product?.color ? `*Color:* ${product.color}\n` : "") +
+    (productLink ? `*Product Link:* ${productLink}\n\n` : "\n") +
+    `Please share details regarding availability, custom tailoring, and delivery timeline. Thank you!`
   );
 
   const waUrl = `https://wa.me/${(whatsapp_number || "+919271218156").replace(/[^0-9]/g, "")}?text=${message}`;
@@ -150,7 +149,7 @@ export default function WhatsAppOrderModal({ isOpen, onClose, product, selectedS
               }}
             >
               {isStoreDown
-                ? "Online automated orders are temporarily paused. Click below to message our atelier directly on WhatsApp — we will assist you immediately! 🙏"
+                ? "Online automated orders are temporarily paused. Click below to message our atelier directly on WhatsApp — we will assist you immediately!"
                 : "Order directly via WhatsApp. Our design team will confirm your order details promptly!"}
             </p>
 

@@ -287,19 +287,18 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     const rawImg = product?.image || product?.image_url || (product?.images && product.images[0]) || '';
     const fullImgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${origin}${rawImg}`) : '';
 
-    let text = `👑 *PRODUCT INQUIRY — MIRAYA BY GARIMA*\n`;
+    let text = `*PRODUCT INQUIRY — MIRAYA BY GARIMA*\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
     text += `Hello! I am interested in this outfit and would like to get more details:\n\n`;
-    text += `👗 *Garment Name:* ${productName}\n`;
-    if (categoryName) text += `🏷️ *Category:* ${categoryName}\n`;
-    if (priceFormatted) text += `💰 *Price:* ${priceFormatted}\n`;
-    if (size) text += `📏 *Size:* ${size}\n`;
-    if (quantity > 1) text += `🔢 *Quantity:* ${quantity}\n`;
-    if (product?.fabric) text += `🧵 *Fabric:* ${product.fabric}\n`;
-    if (product?.color) text += `🎨 *Color:* ${product.color}\n`;
-    if (fullImgUrl) text += `🖼️ *Product Image:* ${fullImgUrl}\n`;
-    if (currentUrl) text += `🔗 *Product Link:* ${currentUrl}\n\n`;
-    text += `Please share more details regarding availability, custom tailoring, and delivery timeline. Thank you! 🙏`;
+    text += `*Garment Name:* ${productName}\n`;
+    if (categoryName) text += `*Category:* ${categoryName}\n`;
+    if (priceFormatted) text += `*Price:* ${priceFormatted}\n`;
+    if (size) text += `*Size:* ${size}\n`;
+    if (quantity > 1) text += `*Quantity:* ${quantity}\n`;
+    if (product?.fabric) text += `*Fabric:* ${product.fabric}\n`;
+    if (product?.color) text += `*Color:* ${product.color}\n`;
+    if (currentUrl) text += `*Product Link:* ${currentUrl}\n\n`;
+    text += `Please share more details regarding availability, custom tailoring, and delivery timeline. Thank you!`;
 
     const cleanNum = (whatsapp_number || '+919271218156').replace(/[^0-9]/g, '');
     const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`;
