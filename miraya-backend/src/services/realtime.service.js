@@ -1,8 +1,37 @@
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env.js';
+import prisma from '../prisma/client.js';
 
 let io = null;
+const onlineUsersMap = new Map(); // userId -> Set of socketId
+
+/**
+ * Get IDs of users with active websocket connections
+ */
+export function getLiveOnlineUserIds() {
+  return Array.from(onlineUsersMap.keys()).map(id => parseInt(id, 10)).filter(Boolean);
+}
+
+/**
+ * Get total count of users with active websocket connections
+ */
+export function getLiveOnlineUsersCount() {
+  return onlineUsersMap.size;
+}
+
+/**
+ * Emit presence update to admin room
+ */
+export function emitPresenceUpdate() {
+  if (!io) return;
+  const onlineUserIds = getLiveOnlineUserIds();
+  io.to('admin').emit('users.presence_updated', {
+    onlineUsersCount: onlineUserIds.length,
+    onlineUserIds,
+    timestamp: new Date().toISOString(),
+  });
+}
 
 /**
  * Initialize Socket.IO server with HTTP server instance
@@ -54,7 +83,8 @@ export function initRealtimeService(httpServer) {
     socket.join('public');
 
     if (socket.user && socket.user.userId) {
-      const userIdStr = String(socket.user.userId);
+      const userId = socket.user.userId;
+      const userIdStr = String(userId);
       socket.join(`user:${userIdStr}`);
 
       const userRole = (socket.user.role || '').toLowerCase();
@@ -62,10 +92,59 @@ export function initRealtimeService(httpServer) {
       if (adminRoles.includes(userRole)) {
         socket.join('admin');
       }
+
+      let userSockets = onlineUsersMap.get(userId);
+      if (!userSockets) {
+        userSockets = new Set();
+        onlineUsersMap.set(userId, userSockets);
+      }
+      const wasOffline = userSockets.size === 0;
+      userSockets.add(socket.id);
+
+      if (wasOffline) {
+        prisma.user.update({
+          where: { id: userId },
+          data: { is_online: true, last_active_at: new Date() },
+        }).catch(() => {});
+        emitPresenceUpdate();
+      }
     }
 
-    socket.on('disconnect', () => {});
+    socket.on('disconnect', () => {
+      if (socket.user && socket.user.userId) {
+        const userId = socket.user.userId;
+        const userSockets = onlineUsersMap.get(userId);
+        if (userSockets) {
+          userSockets.delete(socket.id);
+          if (userSockets.size === 0) {
+            onlineUsersMap.delete(userId);
+            // User closed all tabs/windows — mark offline immediately
+            prisma.user.update({
+              where: { id: userId },
+              data: { is_online: false, last_active_at: new Date() },
+            }).catch(() => {});
+            emitPresenceUpdate();
+          }
+        }
+      }
+    });
   });
+
+  // Periodic cleanup every 60s for stale sessions
+  setInterval(async () => {
+    try {
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+      const liveIds = getLiveOnlineUserIds();
+      await prisma.user.updateMany({
+        where: {
+          is_online: true,
+          last_active_at: { lt: twoMinutesAgo },
+          ...(liveIds.length > 0 ? { id: { notIn: liveIds } } : {}),
+        },
+        data: { is_online: false },
+      });
+    } catch (_) {}
+  }, 60000);
 
   return io;
 }

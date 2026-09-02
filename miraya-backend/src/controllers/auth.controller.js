@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../prisma/client.js';
 import { JWT_SECRET } from '../config/env.js';
 import { sendWelcomeEmail, sendPasswordResetOtpEmail, sendLoginOtpEmail, sendRegisterOtpEmail } from '../utils/email.service.js';
+import { getLiveOnlineUserIds, emitPresenceUpdate } from '../services/realtime.service.js';
 
 export const register = async (req, res) => {
   try {
@@ -483,6 +484,9 @@ export const logout = async (req, res) => {
           },
         });
       } catch (_) {}
+
+      // Broadcast live presence change
+      emitPresenceUpdate();
     }
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
@@ -495,7 +499,8 @@ export const logout = async (req, res) => {
  */
 export const getRealtimeLogins = async (req, res) => {
   try {
-    const activeThreshold = new Date(Date.now() - 5 * 60 * 1000); // Active in last 5 minutes
+    const activeThreshold = new Date(Date.now() - 2 * 60 * 1000); // Active in last 2 minutes
+    const liveSocketIds = getLiveOnlineUserIds();
 
     // 1. Fetch currently online & recent users
     const users = await prisma.user.findMany({
@@ -516,7 +521,8 @@ export const getRealtimeLogins = async (req, res) => {
 
     const activeUsers = users.map((u) => {
       const isOnline = Boolean(
-        u.is_online || (u.last_active_at && new Date(u.last_active_at) >= activeThreshold)
+        liveSocketIds.includes(u.id) ||
+        (u.is_online && u.last_active_at && new Date(u.last_active_at) >= activeThreshold)
       );
       return {
         ...u,
@@ -525,7 +531,7 @@ export const getRealtimeLogins = async (req, res) => {
       };
     });
 
-    const onlineCount = activeUsers.filter((u) => u.is_online).length;
+    const onlineCount = Math.max(activeUsers.filter((u) => u.is_online).length, liveSocketIds.length);
 
     // 2. Fetch live login events from AdminAuditLog
     const recentLoginLogs = await prisma.adminAuditLog.findMany({

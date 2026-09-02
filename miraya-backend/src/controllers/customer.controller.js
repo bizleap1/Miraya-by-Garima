@@ -6,6 +6,7 @@
  */
 
 import prisma from '../prisma/client.js';
+import { getLiveOnlineUserIds } from '../services/realtime.service.js';
 
 /**
  * Get unified customer list combining registered users & offline POS shoppers
@@ -55,7 +56,8 @@ export const getUnifiedCustomers = async (req, res) => {
     const registeredEmailMap = new Map();
     const customerProfiles = [];
 
-    const activeThresholdMs = 5 * 60 * 1000; // 5 minutes
+    const liveSocketIds = getLiveOnlineUserIds();
+    const activeThresholdMs = 2 * 60 * 1000; // 2 minutes
     const nowMs = Date.now();
 
     // Map Registered Users
@@ -64,7 +66,8 @@ export const getUnifiedCustomers = async (req, res) => {
       const onlineSpend = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
       const sortedDates = validOrders.map(o => new Date(o.created_at).getTime()).sort((a, b) => b - a);
       const isOnline = Boolean(
-        u.is_online || (u.last_active_at && (nowMs - new Date(u.last_active_at).getTime()) <= activeThresholdMs)
+        liveSocketIds.includes(u.id) ||
+        (u.is_online && u.last_active_at && (nowMs - new Date(u.last_active_at).getTime()) <= activeThresholdMs)
       );
 
       const profile = {

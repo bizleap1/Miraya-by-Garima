@@ -6,6 +6,7 @@
  */
 
 import prisma from '../prisma/client.js';
+import { getLiveOnlineUserIds } from '../services/realtime.service.js';
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -15,6 +16,9 @@ export const getAdminStats = async (req, res) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const liveSocketIds = getLiveOnlineUserIds();
 
     // Parallel fetch for speed
     const [
@@ -103,12 +107,15 @@ export const getAdminStats = async (req, res) => {
         orderBy: { _sum: { quantity: 'desc' } },
         take: 5,
       }),
-      // Live Online Users (Active in last 5 minutes)
+      // Live Online Users (Active in last 2 minutes or actively connected via Socket)
       prisma.user.findMany({
         where: {
           OR: [
-            { is_online: true },
-            { last_active_at: { gte: new Date(Date.now() - 5 * 60 * 1000) } },
+            ...(liveSocketIds.length > 0 ? [{ id: { in: liveSocketIds } }] : []),
+            {
+              is_online: true,
+              last_active_at: { gte: twoMinutesAgo },
+            },
           ],
         },
         select: { id: true, name: true, email: true, role: true, last_login: true, last_active_at: true, is_online: true },
@@ -231,7 +238,13 @@ export const getAdminStats = async (req, res) => {
       recentPosSales,
       onlineUsersCount: liveOnlineUsers.length,
       onlineUsers: liveOnlineUsers,
-      recentLogins: recentUserLogins,
+      recentLogins: recentUserLogins.map(u => ({
+        ...u,
+        is_online: Boolean(
+          liveSocketIds.includes(u.id) ||
+          (u.is_online && u.last_active_at && new Date(u.last_active_at) >= twoMinutesAgo)
+        ),
+      })),
     });
   } catch (error) {
     console.error('Stats controller error:', error);

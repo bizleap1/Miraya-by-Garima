@@ -820,10 +820,23 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!socket || !isAdminLoggedIn) return;
 
-    const handleRealtimeSync = (data) => {
+    const handleRealtimeSync = () => {
       loadDashboard(true);
     };
 
+    const handlePresenceUpdate = (data) => {
+      if (data && typeof data.onlineUsersCount === 'number') {
+        setDashboard(prev => ({
+          ...prev,
+          onlineUsersCount: data.onlineUsersCount
+        }));
+      }
+      loadDashboard(true);
+    };
+
+    socket.on('users.presence_updated', handlePresenceUpdate);
+    socket.on('user.login', handleRealtimeSync);
+    socket.on('user.logout', handleRealtimeSync);
     socket.on('order.created', handleRealtimeSync);
     socket.on('order.updated', handleRealtimeSync);
     socket.on('inventory.updated', handleRealtimeSync);
@@ -833,7 +846,24 @@ export default function AdminDashboard() {
     socket.on('exchange.created', handleRealtimeSync);
     socket.on('exchange.updated', handleRealtimeSync);
 
+    // Admin active heartbeat every 45s while dashboard is open
+    const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('token');
+    let heartbeatTimer = null;
+    if (adminToken) {
+      const ping = () => {
+        fetch(`${API}/api/auth/heartbeat`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${adminToken}` }
+        }).catch(() => {});
+      };
+      ping();
+      heartbeatTimer = setInterval(ping, 45000);
+    }
+
     return () => {
+      socket.off('users.presence_updated', handlePresenceUpdate);
+      socket.off('user.login', handleRealtimeSync);
+      socket.off('user.logout', handleRealtimeSync);
       socket.off('order.created', handleRealtimeSync);
       socket.off('order.updated', handleRealtimeSync);
       socket.off('inventory.updated', handleRealtimeSync);
@@ -842,6 +872,7 @@ export default function AdminDashboard() {
       socket.off('product.deleted', handleRealtimeSync);
       socket.off('exchange.created', handleRealtimeSync);
       socket.off('exchange.updated', handleRealtimeSync);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
     };
   }, [socket, isAdminLoggedIn]);
 
@@ -1476,9 +1507,7 @@ export default function AdminDashboard() {
                           </tr>
                         )}
                         {(dashboard.recentLogins || []).map((u) => {
-                          const isOnline = Boolean(
-                            u.is_online || (u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) <= 5 * 60 * 1000)
-                          );
+                          const isOnline = Boolean(u.is_online);
                           const isAdminRole = ['admin', 'super_admin', 'store_manager'].includes(u.role);
                           return (
                             <tr key={u.id}>

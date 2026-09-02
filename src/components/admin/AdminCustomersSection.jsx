@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Search, Eye, X, User, Phone, Mail, ShoppingBag, Calendar, ShieldCheck, MapPin, Sparkles, Database, Download, FileText } from 'lucide-react';
 import { exportCustomersPDF } from '../../utils/pdfExportHelper';
+import { useSocket } from '../../context/SocketContext';
 
 const formatINR = (amount) => {
   return new Intl.NumberFormat('en-IN', {
@@ -16,6 +17,7 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'ONLINE' | 'REGISTERED' | 'BUYERS'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const { socket } = useSocket();
 
   const fetchCustomers = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -37,8 +39,22 @@ export default function AdminCustomersSection({ token, API_BASE_URL }) {
     const interval = setInterval(() => {
       fetchCustomers(true);
     }, 8000);
+
+    if (socket) {
+      const handlePresenceSync = () => fetchCustomers(true);
+      socket.on('users.presence_updated', handlePresenceSync);
+      socket.on('user.login', handlePresenceSync);
+      socket.on('user.logout', handlePresenceSync);
+      return () => {
+        clearInterval(interval);
+        socket.off('users.presence_updated', handlePresenceSync);
+        socket.off('user.login', handlePresenceSync);
+        socket.off('user.logout', handlePresenceSync);
+      };
+    }
+
     return () => clearInterval(interval);
-  }, []);
+  }, [socket]);
 
   const onlineCount = customers.filter(c => c.is_online).length;
   const registeredCount = customers.filter(c => c.type === 'REGISTERED' || c.type === 'ADMIN').length;
