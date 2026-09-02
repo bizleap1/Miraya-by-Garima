@@ -63,9 +63,17 @@ export default function AdminProductsSection({ products = [], categories = [], t
     name: '',
     description: '',
     category_id: '',
+    sub_category: '',
     price: '',
     mrp: '',
     color: 'Default',
+    fabric: '',
+    embroidery: '',
+    wash_care: '',
+    fit_notes: '',
+    dispatch_info: '',
+    highlights: '',
+    promo_label: '',
     image_url: '',
     is_active: true,
     whatsapp_inquiry: false
@@ -86,7 +94,7 @@ export default function AdminProductsSection({ products = [], categories = [], t
       (`#SKU-${p.id}`).toLowerCase().includes(search.toLowerCase());
     const catMatch = selectedCat === 'all' || String(p.category_id) === String(selectedCat);
     const isActive = p.is_active !== false && p.status !== 'inactive';
-    const statusMatch = statusFilter === 'all' || (statusFilter === 'active' ? isActive : !isActive);
+    const statusMatch = statusFilter === 'all' || (statusFilter === 'all' ? true : (statusFilter === 'active' ? isActive : !isActive));
     return titleMatch && catMatch && statusMatch;
   });
 
@@ -102,9 +110,17 @@ export default function AdminProductsSection({ products = [], categories = [], t
       name: '',
       description: '',
       category_id: categoryList.length > 0 ? String(categoryList[0].id) : '',
+      sub_category: '',
       price: '',
       mrp: '',
       color: 'Default',
+      fabric: '',
+      embroidery: '',
+      wash_care: '',
+      fit_notes: '',
+      dispatch_info: '',
+      highlights: '',
+      promo_label: '',
       image_url: '',
       is_active: true,
       whatsapp_inquiry: false
@@ -113,6 +129,29 @@ export default function AdminProductsSection({ products = [], categories = [], t
     setSizeStock({ S: 5, M: 5, L: 5, XL: 2, XXL: 0 });
     setFormError('');
     setShowModal(true);
+  };
+
+
+  const [newCustomSize, setNewCustomSize] = useState('');
+
+  const handleAddCustomSize = (sizeName) => {
+    const trimmed = (sizeName || newCustomSize || '').trim();
+    if (!trimmed) return;
+    const exists = selectedSizes.some(s => s.toLowerCase() === trimmed.toLowerCase());
+    if (!exists) {
+      setSelectedSizes(prev => [...prev, trimmed]);
+      setSizeStock(prev => ({ ...prev, [trimmed]: prev[trimmed] !== undefined ? prev[trimmed] : 5 }));
+    }
+    setNewCustomSize('');
+  };
+
+  const handleRemoveSize = (sizeName) => {
+    setSelectedSizes(prev => prev.filter(s => s.toLowerCase() !== sizeName.toLowerCase()));
+    setSizeStock(prev => {
+      const next = { ...prev };
+      delete next[sizeName];
+      return next;
+    });
   };
 
   // Open modal for EDITING product
@@ -166,22 +205,33 @@ export default function AdminProductsSection({ products = [], categories = [], t
       name: p.name || '',
       description: p.description || '',
       category_id: p.category_id ? String(p.category_id) : '',
+      sub_category: p.sub_category || '',
       price: p.price ? String(p.price) : '',
-      mrp: p.mrp ? String(p.mrp) : (p.price ? String(Math.round(Number(p.price) * 1.2)) : ''),
+      mrp: p.mrp ? String(p.mrp) : (p.mrp_price ? String(p.mrp_price) : (p.price ? String(Math.round(Number(p.price) * 1.2)) : '')),
       color: firstVariant?.color || p.color || 'Default',
+      fabric: p.fabric || '',
+      embroidery: p.embroidery || '',
+      wash_care: p.wash_care || '',
+      fit_notes: p.fit_notes || '',
+      dispatch_info: p.dispatch_info || '',
+      highlights: p.highlights || '',
+      promo_label: p.promo_label || '',
       image_url: p.image_url || '',
       is_active: p.is_active !== false && p.status !== 'inactive',
       whatsapp_inquiry: p.whatsapp_inquiry === true || (p.price && String(p.price).toLowerCase().includes('whatsapp'))
     });
 
-    setSelectedSizes(COMMON_SIZES);
-    COMMON_SIZES.forEach(sz => {
+
+    const activeSizesList = sizesFound.length > 0 ? sizesFound : ['S', 'M', 'L', 'XL', 'XXL'];
+    setSelectedSizes(activeSizesList);
+    activeSizesList.forEach(sz => {
       if (currentSizeStock[sz] === undefined) currentSizeStock[sz] = 0;
     });
     setSizeStock(currentSizeStock);
     setFormError('');
     setShowModal(true);
   };
+
 
   const handleSizeStockChange = (sz, val) => {
     const num = Math.max(0, parseInt(val, 10) || 0);
@@ -324,7 +374,15 @@ export default function AdminProductsSection({ products = [], categories = [], t
         if (formData.mrp) fd.append('mrp', String(formData.mrp));
         fd.append('stock', String(totalStock));
         fd.append('category_id', formData.category_id ? String(formData.category_id) : '');
+        fd.append('sub_category', formData.sub_category ? formData.sub_category.trim() : '');
         fd.append('color', formData.color ? formData.color.trim() : 'Default');
+        fd.append('fabric', formData.fabric ? formData.fabric.trim() : '');
+        fd.append('embroidery', formData.embroidery ? formData.embroidery.trim() : '');
+        fd.append('wash_care', formData.wash_care ? formData.wash_care.trim() : '');
+        fd.append('fit_notes', formData.fit_notes ? formData.fit_notes.trim() : '');
+        fd.append('dispatch_info', formData.dispatch_info ? formData.dispatch_info.trim() : '');
+        fd.append('highlights', formData.highlights ? formData.highlights.trim() : '');
+        fd.append('promo_label', formData.promo_label ? formData.promo_label.trim() : '');
         fd.append('sizes', JSON.stringify(selectedSizes));
         fd.append('size_stock', JSON.stringify(finalSizeStock));
         fd.append('whatsapp_inquiry', String(Boolean(formData.whatsapp_inquiry)));
@@ -360,11 +418,20 @@ export default function AdminProductsSection({ products = [], categories = [], t
           size_stock: finalSizeStock,
           sizes: selectedSizes,
           color: formData.color ? formData.color.trim() : 'Default',
+          sub_category: formData.sub_category ? formData.sub_category.trim() : undefined,
+          fabric: formData.fabric ? formData.fabric.trim() : undefined,
+          embroidery: formData.embroidery ? formData.embroidery.trim() : undefined,
+          wash_care: formData.wash_care ? formData.wash_care.trim() : undefined,
+          fit_notes: formData.fit_notes ? formData.fit_notes.trim() : undefined,
+          dispatch_info: formData.dispatch_info ? formData.dispatch_info.trim() : undefined,
+          highlights: formData.highlights ? formData.highlights.trim() : undefined,
+          promo_label: formData.promo_label ? formData.promo_label.trim() : undefined,
           image_url: mainImage,
           images: imageUrlList.length > 0 ? imageUrlList : (mainImage ? [mainImage] : []),
           category_id: formData.category_id ? parseInt(formData.category_id, 10) : null,
           whatsapp_inquiry: Boolean(formData.whatsapp_inquiry)
         };
+
 
         res = await fetch(url, {
           method,
@@ -1010,37 +1077,228 @@ export default function AdminProductsSection({ products = [], categories = [], t
                   )}
                 </div>
 
-                {/* SIZE-WISE STOCK INPUT MATRIX */}
+                {/* SIZE-WISE STOCK INPUT MATRIX WITH ADD / REMOVE OPTIONS */}
                 <div style={{ background: 'var(--miraya-bg)', border: '1px solid var(--miraya-border)', padding: '14px', borderRadius: '8px', marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '10px' }}>Size-wise Stock Allocation</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '8px', width: '100%' }}>
-                    {COMMON_SIZES.map(sz => (
-                      <div key={sz}>
-                        <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', textAlign: 'center', marginBottom: '4px', whiteSpace: 'nowrap' }}>{sz}</span>
-                        <input
-                          type="number"
-                          className="admin-input"
-                          style={{ textAlign: 'center', height: '36px', padding: '0 4px', width: '100%' }}
-                          value={sizeStock[sz] !== undefined ? sizeStock[sz] : 0}
-                          onChange={(e) => handleSizeStockChange(sz, e.target.value)}
-                          min="0"
-                        />
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <label style={{ fontSize: '13px', fontWeight: '700', color: 'var(--miraya-text)' }}>
+                      Size-wise Stock Allocation ({selectedSizes.length} Active Sizes)
+                    </label>
+
+                    {/* Quick Add Preset Pills */}
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'Free Size'].map(preset => {
+                        const isAdded = selectedSizes.some(s => s.toLowerCase() === preset.toLowerCase());
+                        if (isAdded) return null;
+                        return (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => handleAddCustomSize(preset)}
+                            style={{
+                              padding: '2px 7px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              borderRadius: '4px',
+                              border: '1px solid var(--miraya-red)',
+                              background: '#fff',
+                              color: 'var(--miraya-red)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            + {preset}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* CUSTOM SIZE INPUT FIELD */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      style={{ height: '32px', fontSize: '12px', flex: 1 }}
+                      placeholder="Type custom size (e.g. 3XL, 34, Custom Fit)..."
+                      value={newCustomSize}
+                      onChange={(e) => setNewCustomSize(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomSize(); } }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ padding: '0 12px', height: '32px', fontSize: '12px', minHeight: '32px' }}
+                      onClick={() => handleAddCustomSize()}
+                    >
+                      <Plus size={14} /> Add Size
+                    </button>
+                  </div>
+
+                  {/* ACTIVE SIZES GRID WITH REMOVE BUTTON */}
+                  {selectedSizes.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '8px', width: '100%' }}>
+                      {selectedSizes.map(sz => (
+                        <div
+                          key={sz}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid var(--miraya-border)',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--miraya-text)' }}>{sz}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSize(sz)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#e74c3c',
+                                cursor: 'pointer',
+                                padding: '0 2px',
+                                lineHeight: 1
+                              }}
+                              title={`Remove size ${sz}`}
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                          <input
+                            type="number"
+                            className="admin-input"
+                            style={{ textAlign: 'center', height: '32px', padding: '0 4px', width: '100%', fontSize: '12px', fontWeight: '700' }}
+                            value={sizeStock[sz] !== undefined ? sizeStock[sz] : 0}
+                            onChange={(e) => handleSizeStockChange(sz, e.target.value)}
+                            min="0"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '12px', color: 'var(--miraya-muted)', textAlign: 'center', padding: '10px', margin: 0 }}>
+                      No sizes selected. Click presets above or add custom size.
+                    </p>
+                  )}
+                </div>
+
+
+                {/* RICH SPECIFICATIONS & PDP ACCORDION DETAILS */}
+                <div style={{ background: '#FAF8F5', border: '1px solid #e6d8c3', borderRadius: '8px', padding: '14px', marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--miraya-text)', marginBottom: '12px' }}>
+                    ✨ Rich Product Specifications & PDP Description Details
+                  </label>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Fabric & Material</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Raw Silk & Organza Chiffon"
+                        value={formData.fabric}
+                        onChange={(e) => setFormData({ ...formData, fabric: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Embroidery & Handcrafted Work</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Zari, Sequin Rain & Cutdana Work"
+                        value={formData.embroidery}
+                        onChange={(e) => setFormData({ ...formData, embroidery: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Style / Sub-Category</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Anarkali Gown / Drape Saree / Co-ord Set"
+                        value={formData.sub_category}
+                        onChange={(e) => setFormData({ ...formData, sub_category: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Wash & Care Instructions</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Dry Clean Only"
+                        value={formData.wash_care}
+                        onChange={(e) => setFormData({ ...formData, wash_care: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Fit & Alteration Notes</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Tailored luxury fit, 2-inch margin inside"
+                        value={formData.fit_notes}
+                        onChange={(e) => setFormData({ ...formData, fit_notes: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Dispatch & Shipping Time</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Ships within 3-5 business days"
+                        value={formData.dispatch_info}
+                        onChange={(e) => setFormData({ ...formData, dispatch_info: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Promo / Sale Badge Label</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. FESTIVE SALE / 15% OFF / NEW ARRIVAL"
+                        value={formData.promo_label}
+                        onChange={(e) => setFormData({ ...formData, promo_label: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Key Feature Highlights</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. Scalloped borders • Padded blouse • Sheer dupatta"
+                        value={formData.highlights}
+                        onChange={(e) => setFormData({ ...formData, highlights: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px' }}>Main Overview Description</label>
+                    <textarea
+                      className="admin-input"
+                      rows="3"
+                      style={{ height: 'auto', padding: '8px 12px' }}
+                      placeholder="A sheer, breathtaking piece with hand-scalloped borders and scattered sequin rain..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>Description</label>
-                  <textarea
-                    className="admin-input"
-                    rows="3"
-                    style={{ height: 'auto', padding: '8px 12px' }}
-                    placeholder="Enter garment material, embroidery & care instructions..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
               </div>
 
               <div className="modal-footer">

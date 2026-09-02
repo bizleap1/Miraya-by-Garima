@@ -9,34 +9,41 @@ import {
 
 export const getProducts = async (req, res) => {
   try {
-    const { search, category, sort } = req.query;
+    const { search, category, sort, include_inactive } = req.query;
 
     const where = {};
+
+    // Public storefront should ONLY see active products (not soft-archived/deleted)
+    if (include_inactive !== 'true') {
+      where.variants = {
+        some: {
+          is_active: true,
+        },
+      };
+    }
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
     }
+
     if (category) {
-      const catLower = category.toLowerCase().trim();
-      if (catLower.includes('coord') || catLower.includes('co-ord')) {
-        where.category = { name: { contains: 'Co-ord', mode: 'insensitive' } };
-      } else if (catLower.includes('indo')) {
-        where.category = { name: { contains: 'Indo', mode: 'insensitive' } };
-      } else if (catLower.includes('drape') || catLower.includes('saree')) {
-        where.category = { name: { contains: 'Drape', mode: 'insensitive' } };
-      } else if (catLower.includes('designer') || catLower.includes('suit')) {
-        where.category = { name: { contains: 'Designer', mode: 'insensitive' } };
-      } else if (catLower.includes('premium') || catLower.includes('material')) {
-        where.category = { name: { contains: 'Premium', mode: 'insensitive' } };
+      const catTrim = String(category).trim();
+      const numId = parseInt(catTrim, 10);
+
+      if (!isNaN(numId) && String(numId) === catTrim) {
+        where.category_id = numId;
       } else {
-        const altName = category.replace(/-/g, ' ');
-        where.category = {
-          name: { contains: altName, mode: 'insensitive' }
-        };
+        const altName = catTrim.replace(/-/g, ' ');
+        where.OR = [
+          { category: { name: { contains: altName, mode: 'insensitive' } } },
+          { sub_category: { contains: altName, mode: 'insensitive' } },
+        ];
       }
     }
+
 
     let orderBy = { created_at: 'desc' };
     if (sort === 'price_asc') orderBy = { price: 'asc' };
@@ -198,16 +205,25 @@ export const createProduct = async (req, res) => {
           name,
           description,
           price: numPrice,
+          mrp_price: mrp ? parseFloat(mrp) : (mrp_price ? parseFloat(mrp_price) : null),
           stock: totalStock,
           image_url: images[0] || null,
           images,
           category_id: category_id ? parseInt(category_id, 10) : null,
-          sub_category,
+          sub_category: sub_category || null,
+          fabric: req.body.fabric || null,
+          embroidery: req.body.embroidery || null,
+          wash_care: req.body.wash_care || null,
+          fit_notes: req.body.fit_notes || null,
+          dispatch_info: req.body.dispatch_info || null,
+          highlights: req.body.highlights || null,
+          promo_label: req.body.promo_label || null,
           sizes: targetSizes,
           size_stock: parsedSizeStock,
           whatsapp_inquiry: req.body.whatsapp_inquiry === 'true' || req.body.whatsapp_inquiry === true || false,
         },
       });
+
 
       // 2. Create authoritative ProductVariants
       const skuPrefix = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase() || 'MIR';
@@ -311,6 +327,18 @@ export const updateProduct = async (req, res) => {
     if (req.body.whatsapp_inquiry !== undefined) {
       data.whatsapp_inquiry = req.body.whatsapp_inquiry === 'true' || req.body.whatsapp_inquiry === true;
     }
+    if (req.body.mrp !== undefined || req.body.mrp_price !== undefined) {
+      const val = req.body.mrp || req.body.mrp_price;
+      data.mrp_price = val ? parseFloat(val) : null;
+    }
+    if (req.body.fabric !== undefined) data.fabric = req.body.fabric;
+    if (req.body.embroidery !== undefined) data.embroidery = req.body.embroidery;
+    if (req.body.wash_care !== undefined) data.wash_care = req.body.wash_care;
+    if (req.body.fit_notes !== undefined) data.fit_notes = req.body.fit_notes;
+    if (req.body.dispatch_info !== undefined) data.dispatch_info = req.body.dispatch_info;
+    if (req.body.highlights !== undefined) data.highlights = req.body.highlights;
+    if (req.body.promo_label !== undefined) data.promo_label = req.body.promo_label;
+
 
     if (req.files && req.files.length > 0) {
       const uploaded = req.files.map((file) => {
@@ -349,6 +377,20 @@ export const updateProduct = async (req, res) => {
     const updated = await prisma.$transaction(async (tx) => {
       // If explicit variants provided or size_stock updated, sync variants
       if (parsedSizeStock && typeof parsedSizeStock === 'object') {
+        const activeSizesList = Array.isArray(parsedSizes)
+          ? parsedSizes.map(s => String(s).toLowerCase().trim())
+          : Object.keys(parsedSizeStock).map(s => String(s).toLowerCase().trim());
+
+        // Deactivate variants for sizes removed by admin
+        for (const v of existing.variants) {
+          if (!activeSizesList.includes(String(v.size).toLowerCase().trim())) {
+            await tx.productVariant.update({
+              where: { id: v.id },
+              data: { is_active: false, stock: 0 },
+            });
+          }
+        }
+
         for (const [sz, st] of Object.entries(parsedSizeStock)) {
           const existingVariant = existing.variants.find(v => v.size.toLowerCase() === sz.toLowerCase());
           if (existingVariant) {
@@ -356,6 +398,7 @@ export const updateProduct = async (req, res) => {
               where: { id: existingVariant.id },
               data: {
                 stock: parseInt(st, 10),
+                is_active: true,
                 ...(price ? { price: parseFloat(price) } : {}),
                 ...(req.body.color ? { color: req.body.color } : {}),
               },
@@ -377,6 +420,7 @@ export const updateProduct = async (req, res) => {
           }
         }
       }
+
 
       // Recompute Product total stock from variants
       const allVariants = await tx.productVariant.findMany({ where: { product_id: productId } });
@@ -432,7 +476,9 @@ export const deleteProduct = async (req, res) => {
 
       });
 
+      emitProductDeleted({ id: productId });
       emitProductUpdated({ id: productId, is_active: false });
+
 
       return res.json({
         success: true,

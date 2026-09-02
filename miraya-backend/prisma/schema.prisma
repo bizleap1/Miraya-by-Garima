@@ -65,7 +65,14 @@ model Product {
   discount_percent   Int?                // Calculated discount percentage
   is_on_sale         Boolean             @default(false)
   promo_label        String?             // e.g. "FESTIVE SALE", "15% OFF"
+  fabric             String?             // e.g. "Raw Silk & Organza"
+  embroidery         String?             // e.g. "Hand-crafted Zari & Sequin Work"
+  wash_care          String?             // e.g. "Dry Clean Only"
+  fit_notes          String?             // e.g. "Tailored fit, includes 2-inch margin"
+  dispatch_info      String?             // e.g. "Ships within 3-5 business days"
+  highlights         String?             // e.g. "Scalloped borders • Padded blouse • Sheer dupatta"
   category           Category?           @relation(fields: [category_id], references: [id])
+
   created_at         DateTime            @default(now())
   updated_at         DateTime            @default(now()) @updatedAt
   variants           ProductVariant[]

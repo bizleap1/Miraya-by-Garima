@@ -66,29 +66,9 @@ const CategoryPage = () => {
     : category === 'festive-edit' ? 'Festive Edit'
     : category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ');
 
-  const [samples, setSamples] = useState(() => {
-    let data = [];
-    const allItems = [];
-    Object.values(productsData).forEach(arr => { allItems.push(...arr); });
+  const [samples, setSamples] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    if (category === 'all') {
-      data = allItems;
-    } else if (category === 'dresses') {
-      data = productsData['dresses'] || [];
-    } else if (category === 'lehenga') {
-      data = allItems.filter(p => (p.title || '').toLowerCase().includes('lehenga'));
-      if (data.length === 0) data = productsData['indo-western'] || [];
-    } else if (category === 'festive-edit') {
-      data = allItems.filter(p => (p.title || '').toLowerCase().includes('suit') || (p.title || '').toLowerCase().includes('lehenga') || (p.title || '').toLowerCase().includes('saree') || (p.title || '').toLowerCase().includes('dress'));
-      if (data.length === 0) data = allItems;
-    } else if (category === 'kurtis') {
-      data = productsData['coord-sets'] || [];
-    } else {
-      data = productsData[category] || allItems;
-    }
-    return data.map(item => ({ ...item, id: String(item.id).includes('-') ? item.id : `${item.category}-${item.id}` }));
-  });
-  const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
@@ -140,7 +120,7 @@ const CategoryPage = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const availableCategories = ['indo-western', 'drape-sarees', 'designer-suits', 'premium-suit-materials', 'coord-sets'];
+  const [dbCategories, setDbCategories] = useState([]);
 
   const normalizeCat = (catName) => {
     if (!catName) return 'indo-western';
@@ -149,11 +129,32 @@ const CategoryPage = () => {
     return slug;
   };
 
+  useEffect(() => {
+    const fetchDynamicCategories = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/categories`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) setDbCategories(data);
+        }
+      } catch (_) {}
+    };
+    fetchDynamicCategories();
+  }, []);
+
+  const availableCategories = useMemo(() => {
+    const defaults = ['indo-western', 'drape-sarees', 'designer-suits', 'premium-suit-materials', 'coord-sets'];
+    const dbSlugs = dbCategories.map(c => normalizeCat(c.name));
+    const sampleSlugs = samples.map(s => normalizeCat(s.category?.name || s.category));
+    return Array.from(new Set([...defaults, ...dbSlugs, ...sampleSlugs])).filter(Boolean);
+  }, [dbCategories, samples]);
+
   const handleCheckboxChange = (setState, value) => {
     setState(prev => 
       prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
     );
   };
+
 
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...samples];
@@ -252,34 +253,16 @@ const CategoryPage = () => {
           };
         });
         
-        if (mappedData.length > 0) {
-          setSamples(mappedData);
-        } else {
-          let fallback = productsData[category] || [];
-          if (fallback.length === 0 && (category === 'coord-sets' || category === 'kurtis')) {
-            fallback = productsData['coord-sets'] || [];
-          }
-          setSamples(fallback.map(item => ({ ...item, id: item.id })));
-        }
-      } catch (err) {
-        // Graceful fallback to rich local catalog on network/backend retry
-        let data = [];
-        if (category === 'all') {
-          Object.values(productsData).forEach(arr => {
-            data = [...data, ...arr];
-          });
-        } else {
-          data = productsData[category] || [];
-        }
-        const mappedData = data.map(item => ({
-          ...item,
-          id: item.id
-        }));
         setSamples(mappedData);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchProducts();
     const interval = setInterval(fetchProducts, 12000);
+
     const onFocus = () => fetchProducts();
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
@@ -324,8 +307,9 @@ const CategoryPage = () => {
     if (c === 'drape-sarees') return 'Drape Sarees';
     if (c === 'designer-suits') return 'Designer Suits';
     if (c === 'premium-suit-materials') return 'Premium Suit Materials';
-    return c.charAt(0).toUpperCase() + c.slice(1);
+    return c.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
+
 
   const getCategoryIcon = (cat) => {
     switch(cat) {
