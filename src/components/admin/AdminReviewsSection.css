@@ -291,8 +291,19 @@
 /* Rating Cell */
 .table-rating-stars {
   display: flex;
-  gap: 2px;
-  margin-bottom: 2px;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.table-rating-stars .star-filled {
+  fill: #d4af37 !important;
+  color: #d4af37 !important;
+}
+
+.table-rating-stars .star-empty {
+  fill: none !important;
+  color: #dcd4c8 !important;
 }
 
 .table-date-str {

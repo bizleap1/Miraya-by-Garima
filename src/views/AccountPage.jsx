@@ -17,6 +17,7 @@ const TABS = [
   { id: 'overview', label: 'Overview', icon: User },
   { id: 'orders', label: 'Order History', icon: ShoppingBag },
   { id: 'exchanges', label: 'Exchange Requests', icon: RotateCcw },
+  { id: 'reviews', label: 'My Reviews', icon: Star },
   { id: 'addresses', label: 'Addresses', icon: MapPin }
 ];
 
@@ -31,6 +32,8 @@ const AccountPage = () => {
   // Data states
   const [orders, setOrders] = useState([]);
   const [returns, setReturns] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
   const [measurements, setMeasurements] = useState([
     { id: 1, name: 'My Standard Fit', bust: 34, waist: 28, hips: 38, height: "5'5\"" }
   ]);
@@ -191,6 +194,58 @@ const AccountPage = () => {
     };
   }, [socket, api]);
 
+
+  const fetchUserReviews = useCallback(async () => {
+    if (!token) return;
+    try {
+      setLoadingReviews(true);
+      const res = await fetch(`${API_URL}/api/reviews/user/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUserReviews(data.reviews || []);
+      }
+    } catch (err) {
+      console.error('Error fetching user reviews:', err);
+    } finally {
+      setLoadingReviews(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      fetchUserReviews();
+    }
+  }, [activeTab, fetchUserReviews]);
+
+  const handleDeleteMyReview = (review) => {
+    setConfirmConfig({
+      title: 'Delete Customer Review',
+      message: `Are you sure you want to permanently delete your review for "${review.product?.name || 'this garment'}"?`,
+      confirmText: 'Delete Review',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/reviews/${review.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            toast?.success?.('Your review has been successfully removed.');
+            setUserReviews(prev => prev.filter(r => r.id !== review.id));
+            setConfirmConfig(null);
+          } else {
+            toast?.error?.(data.message || 'Failed to delete review.');
+          }
+        } catch (err) {
+          console.error('Delete review error:', err);
+          toast?.error?.('Server communication error.');
+        }
+      }
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -641,6 +696,97 @@ const AccountPage = () => {
         );
 
 
+      case 'reviews':
+        return (
+          <div className="account-reviews">
+            <h3 className="section-title">My Product Reviews</h3>
+            <p style={{ fontSize: '0.88rem', color: '#666', marginBottom: '1.2rem' }}>
+              View and manage the feedback and star ratings you have shared for Miraya garments.
+            </p>
+            {loadingReviews ? (
+              <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading your reviews...</p>
+            ) : userReviews.length > 0 ? (
+              <div className="user-reviews-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {userReviews.map((rev) => (
+                  <div key={rev.id} style={{
+                    background: '#fff',
+                    border: '1px solid rgba(198, 164, 106, 0.3)',
+                    borderRadius: '8px',
+                    padding: '18px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {rev.product?.image_url && (
+                          <img
+                            src={rev.product.image_url}
+                            alt={rev.product.name}
+                            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e0d8cc' }}
+                          />
+                        )}
+                        <div>
+                          <h4 style={{ margin: 0, color: '#5e0a0b', fontSize: '1rem', fontFamily: 'var(--font-heading)' }}>
+                            {rev.product?.name || `Product #${rev.product_id}`}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: '#888' }}>
+                            {new Date(rev.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteMyReview(rev)}
+                        style={{
+                          background: '#fff5f5',
+                          border: '1px solid rgba(220, 53, 69, 0.35)',
+                          color: '#c0392b',
+                          padding: '6px 14px',
+                          borderRadius: '4px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Trash2 size={13} /> Delete Review
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          size={15}
+                          fill={s <= (Number(rev.rating) || 0) ? '#d4af37' : 'none'}
+                          color={s <= (Number(rev.rating) || 0) ? '#d4af37' : '#dcd4c8'}
+                        />
+                      ))}
+                    </div>
+
+                    {rev.title && <strong style={{ fontSize: '0.92rem', color: '#222' }}>{rev.title}</strong>}
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#555', lineHeight: 1.5 }}>{rev.comment}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state" style={{ textAlign: 'center', padding: '3rem 0', background: '#fff', borderRadius: '12px', border: '1px dashed #ccc' }}>
+                <Star size={36} color="#c6a46a" style={{ margin: '0 auto 12px auto' }} />
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>No Reviews Submitted Yet</h4>
+                <p style={{ margin: '0 0 1.5rem 0', color: '#777', fontSize: '0.9rem' }}>
+                  Share your fitting and styling experience on any couture garment.
+                </p>
+                <Link to="/collection" className="btn-solid-burgundy" style={{ display: 'inline-block', padding: '0.6rem 1.4rem', textDecoration: 'none', color: '#fff', borderRadius: '4px' }}>
+                  Explore Collection
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+
       case 'addresses':
         return (
           <div className="account-addresses">
@@ -1082,7 +1228,12 @@ const AccountPage = () => {
         </div>
       )}
 
-      {confirmConfig && <ConfirmModal {...confirmConfig} onCancel={() => setConfirmConfig(null)} />}
+      {confirmConfig && (
+        <ConfirmModal
+          config={confirmConfig}
+          onClose={() => setConfirmConfig(null)}
+        />
+      )}
     </div>
   );
 };

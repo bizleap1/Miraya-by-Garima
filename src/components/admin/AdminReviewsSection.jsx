@@ -319,6 +319,7 @@ export default function AdminReviewsSection({
       title: 'Delete Customer Review',
       message: `Are you sure you want to permanently delete the review by "${review.customer_name || 'Customer'}"? This action cannot be undone.`,
       confirmText: 'Delete Review',
+      danger: true,
       onConfirm: async () => {
         try {
           const headers = {};
@@ -548,13 +549,19 @@ export default function AdminReviewsSection({
                     {/* Rating */}
                     <td>
                       <div className="table-rating-stars">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star
-                            key={s}
-                            size={14}
-                            className={s <= rev.rating ? 'star-filled' : 'star-empty'}
-                          />
-                        ))}
+                        {[1, 2, 3, 4, 5].map((s) => {
+                          const numRating = Number(rev.rating) || 0;
+                          const isFilled = s <= numRating;
+                          return (
+                            <Star
+                              key={s}
+                              size={15}
+                              fill={isFilled ? '#d4af37' : 'none'}
+                              color={isFilled ? '#d4af37' : '#dcd4c8'}
+                              className={isFilled ? 'star-filled' : 'star-empty'}
+                            />
+                          );
+                        })}
                       </div>
                       <span className="table-date-str">
                         {new Date(rev.created_at).toLocaleDateString('en-IN', {
@@ -1037,16 +1044,10 @@ export default function AdminReviewsSection({
       )}
 
       {/* ─── CONFIRM DELETE MODAL ─── */}
-      {confirmDeleteConfig && (
-        <ConfirmModal
-          isOpen={true}
-          title={confirmDeleteConfig.title}
-          message={confirmDeleteConfig.message}
-          confirmText={confirmDeleteConfig.confirmText}
-          onConfirm={confirmDeleteConfig.onConfirm}
-          onClose={() => setConfirmDeleteConfig(null)}
-        />
-      )}
+      <ConfirmModal
+        config={confirmDeleteConfig}
+        onClose={() => setConfirmDeleteConfig(null)}
+      />
 
       {/* ─── LIGHTBOX MODAL ─── */}
       {lightboxImg && (

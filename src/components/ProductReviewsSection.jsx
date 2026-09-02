@@ -12,9 +12,11 @@ import {
   Filter,
   ChevronRight,
   ShieldCheck,
-  Maximize2
+  Maximize2,
+  Trash2
 } from 'lucide-react';
 import API_URL from '../config';
+import ConfirmModal from './ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import './ProductReviewsSection.css';
 
@@ -65,6 +67,25 @@ export default function ProductReviewsSection({ product }) {
   // Lightbox State
   const [lightboxImg, setLightboxImg] = useState(null);
   const [likedMap, setLikedMap] = useState({});
+  const [deleteConfirmConfig, setDeleteConfirmConfig] = useState(null);
+
+  const currentUser = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (_) {
+      return null;
+    }
+  }, []);
+
+  const [myReviewIds, setMyReviewIds] = useState(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(localStorage.getItem('miraya_my_reviews') || '[]');
+    } catch (_) {
+      return [];
+    }
+  });
 
   // Fetch reviews for current product
   const fetchReviews = async () => {
@@ -170,6 +191,16 @@ export default function ProductReviewsSection({ product }) {
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success?.('Thank you! Your verified review is now live.');
+        if (data.review?.id) {
+          try {
+            const currentMy = JSON.parse(localStorage.getItem('miraya_my_reviews') || '[]');
+            if (!currentMy.includes(data.review.id)) {
+              currentMy.push(data.review.id);
+              localStorage.setItem('miraya_my_reviews', JSON.stringify(currentMy));
+              setMyReviewIds([...currentMy]);
+            }
+          } catch (_) {}
+        }
         setIsModalOpen(false);
         // Reset form
         setFormData({
@@ -207,6 +238,45 @@ export default function ProductReviewsSection({ product }) {
     } catch (err) {
       console.error('Error liking review:', err);
     }
+  };
+
+  // Delete User Review
+  const handleDeleteUserReviewClick = (review) => {
+    setDeleteConfirmConfig({
+      title: 'Delete Your Review',
+      message: 'Are you sure you want to permanently remove your review for this garment? This action cannot be undone.',
+      confirmText: 'Delete Review',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('user_token')) : null;
+          const headers = {};
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const res = await fetch(`${API}/api/reviews/${review.id}`, {
+            method: 'DELETE',
+            headers
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            toast.success?.('Your review has been successfully removed.');
+            setReviews(prev => prev.filter(r => r.id !== review.id));
+            setDeleteConfirmConfig(null);
+            try {
+              const myIds = JSON.parse(localStorage.getItem('miraya_my_reviews') || '[]');
+              const updated = myIds.filter(id => id !== review.id);
+              localStorage.setItem('miraya_my_reviews', JSON.stringify(updated));
+              setMyReviewIds(updated);
+            } catch (_) {}
+          } else {
+            toast.error?.(data.message || 'Failed to delete review.');
+          }
+        } catch (err) {
+          console.error('Delete user review error:', err);
+          toast.error?.('Server communication error.');
+        }
+      }
+    });
   };
 
   // Filtered reviews
@@ -261,13 +331,18 @@ export default function ProductReviewsSection({ product }) {
             {stats.averageRating ? stats.averageRating.toFixed(1) : '5.0'}
           </div>
           <div className="stars-row large-stars">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={22}
-                className={star <= Math.round(stats.averageRating || 5) ? 'star-filled' : 'star-empty'}
-              />
-            ))}
+            {[1, 2, 3, 4, 5].map((star) => {
+              const isFilled = star <= Math.round(stats.averageRating || 5);
+              return (
+                <Star
+                  key={star}
+                  size={22}
+                  fill={isFilled ? '#d4af37' : 'none'}
+                  color={isFilled ? '#d4af37' : '#dcd4c8'}
+                  className={isFilled ? 'star-filled' : 'star-empty'}
+                />
+              );
+            })}
           </div>
           <p className="total-reviews-count">
             Based on <strong>{stats.totalReviews || reviews.length}</strong> verified boutique reviews
@@ -390,91 +465,115 @@ export default function ProductReviewsSection({ product }) {
             </button>
           </div>
         ) : (
-          filteredReviews.map((review) => (
-            <div key={review.id} className="luxury-review-card">
-              <div className="review-card-top">
-                <div className="reviewer-info">
-                  <div className="reviewer-avatar">
-                    {(review.customer_name || 'V')[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="reviewer-name-row">
-                      <span className="reviewer-name">
-                        {review.customer_name || 'Verified Customer'}
-                      </span>
-                      {review.is_verified && (
-                        <span className="verified-buyer-tag">
-                          <CheckCircle2 size={13} />
-                          Verified Buyer
+          filteredReviews.map((review) => {
+            const isMyReview = Boolean(
+              (currentUser?.id && review.user_id && String(review.user_id) === String(currentUser.id)) ||
+              myReviewIds.includes(review.id) ||
+              (currentUser?.name && review.customer_name && review.customer_name.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
+            );
+
+            return (
+              <div key={review.id} className="luxury-review-card">
+                <div className="review-card-top">
+                  <div className="reviewer-info">
+                    <div className="reviewer-avatar">
+                      {(review.customer_name || 'V')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="reviewer-name-row">
+                        <span className="reviewer-name">
+                          {review.customer_name || 'Verified Customer'}
                         </span>
+                        {review.is_verified && (
+                          <span className="verified-buyer-tag">
+                            <CheckCircle2 size={13} />
+                            Verified Buyer
+                          </span>
+                        )}
+                      </div>
+                      {review.customer_city && (
+                        <span className="reviewer-city">{review.customer_city}</span>
                       )}
                     </div>
-                    {review.customer_city && (
-                      <span className="reviewer-city">{review.customer_city}</span>
+                  </div>
+
+                  <div className="review-meta-right">
+                    {review.occasion && (
+                      <span className="occasion-pill">
+                        ✨ {review.occasion}
+                      </span>
                     )}
+                    <span className="review-date">
+                      {new Date(review.created_at).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </span>
                   </div>
                 </div>
 
-                <div className="review-meta-right">
-                  {review.occasion && (
-                    <span className="occasion-pill">
-                      ✨ {review.occasion}
-                    </span>
-                  )}
-                  <span className="review-date">
-                    {new Date(review.created_at).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
-                  </span>
+                <div className="review-stars-row">
+                  {[1, 2, 3, 4, 5].map((s) => {
+                    const isFilled = s <= (Number(review.rating) || 0);
+                    return (
+                      <Star
+                        key={s}
+                        size={16}
+                        fill={isFilled ? '#d4af37' : 'none'}
+                        color={isFilled ? '#d4af37' : '#dcd4c8'}
+                        className={isFilled ? 'star-filled' : 'star-empty'}
+                      />
+                    );
+                  })}
+                  <span className="rating-text-label">{ratingLabel(review.rating)}</span>
                 </div>
-              </div>
 
-              <div className="review-stars-row">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    size={16}
-                    className={s <= review.rating ? 'star-filled' : 'star-empty'}
-                  />
-                ))}
-                <span className="rating-text-label">{ratingLabel(review.rating)}</span>
-              </div>
+                {review.title && (
+                  <h4 className="review-card-title">{review.title}</h4>
+                )}
 
-              {review.title && (
-                <h4 className="review-card-title">{review.title}</h4>
-              )}
+                <p className="review-card-comment">{review.comment}</p>
 
-              <p className="review-card-comment">{review.comment}</p>
+                {/* Photos attached to this review */}
+                {Array.isArray(review.images) && review.images.length > 0 && (
+                  <div className="review-attached-photos">
+                    {review.images.map((img, i) => (
+                      <div
+                        key={i}
+                        className="review-thumb-box"
+                        onClick={() => setLightboxImg(img)}
+                      >
+                        <img src={img} alt={`Review photo ${i + 1}`} loading="lazy" />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {/* Photos attached to this review */}
-              {Array.isArray(review.images) && review.images.length > 0 && (
-                <div className="review-attached-photos">
-                  {review.images.map((img, i) => (
-                    <div
-                      key={i}
-                      className="review-thumb-box"
-                      onClick={() => setLightboxImg(img)}
+                <div className="review-card-footer">
+                  <button
+                    className={`helpful-btn ${likedMap[review.id] ? 'liked' : ''}`}
+                    onClick={() => handleLike(review.id)}
+                    title="Mark this review as helpful"
+                  >
+                    <ThumbsUp size={14} />
+                    <span>Helpful ({review.likes_count || 0})</span>
+                  </button>
+
+                  {isMyReview && (
+                    <button
+                      className="delete-user-review-btn"
+                      onClick={() => handleDeleteUserReviewClick(review)}
+                      title="Delete your review"
                     >
-                      <img src={img} alt={`Review photo ${i + 1}`} loading="lazy" />
-                    </div>
-                  ))}
+                      <Trash2 size={13} />
+                      <span>Delete My Review</span>
+                    </button>
+                  )}
                 </div>
-              )}
-
-              <div className="review-card-footer">
-                <button
-                  className={`helpful-btn ${likedMap[review.id] ? 'liked' : ''}`}
-                  onClick={() => handleLike(review.id)}
-                  title="Mark this review as helpful"
-                >
-                  <ThumbsUp size={14} />
-                  <span>Helpful ({review.likes_count || 0})</span>
-                </button>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -686,6 +785,11 @@ export default function ProductReviewsSection({ product }) {
           </div>
         </div>
       )}
+      {/* ─── CONFIRM DELETE USER REVIEW MODAL ─── */}
+      <ConfirmModal
+        config={deleteConfirmConfig}
+        onClose={() => setDeleteConfirmConfig(null)}
+      />
     </div>
   );
 }

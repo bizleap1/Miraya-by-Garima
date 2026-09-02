@@ -8,8 +8,9 @@ import {
   toggleReviewApproval,
   likeReview,
   deleteReview,
+  getUserReviews,
 } from '../controllers/review.controller.js';
-import { authMiddleware, authorizeRoles } from '../middleware/auth.middleware.js';
+import { authMiddleware, authorizeRoles, optionalAuthMiddleware } from '../middleware/auth.middleware.js';
 import { upload } from '../middleware/upload.middleware.js';
 
 const router = Router();
@@ -17,7 +18,8 @@ const router = Router();
 // Public / Customer Endpoints
 router.get('/', getReviews);
 router.get('/product/:productId', getProductReviews);
-router.post('/', upload.array('images', 5), addReview);
+router.get('/user/my', authMiddleware, getUserReviews);
+router.post('/', optionalAuthMiddleware, upload.array('images', 5), addReview);
 router.post('/:id/like', likeReview);
 
 // Admin & Staff Review Management Endpoints
@@ -44,10 +46,10 @@ router.patch(
   toggleReviewApproval
 );
 
+// Review Deletion (Admin/Staff OR Review Owner)
 router.delete(
   '/:id',
   authMiddleware,
-  authorizeRoles('admin', 'super_admin', 'store_manager'),
   deleteReview
 );
 

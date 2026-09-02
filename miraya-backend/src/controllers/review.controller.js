@@ -500,17 +500,61 @@ export const likeReview = async (req, res) => {
 
 /**
  * DELETE /api/reviews/:id
- * Admin deletes a review
+ * Admin or review owner deletes a review
  */
 export const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
     const reviewId = parseInt(id, 10);
+    const userId = req.user?.id;
+    const userRole = req.user?.role?.toLowerCase();
+
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Review not found.' });
+    }
+
+    const isAdmin = ['admin', 'super_admin', 'store_manager'].includes(userRole);
+    const isOwner = (review.user_id && userId && String(review.user_id) === String(userId)) ||
+      (userId && !review.user_id && req.user?.name && review.customer_name && review.customer_name.toLowerCase() === req.user.name.toLowerCase());
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to delete this review.'
+      });
+    }
 
     await prisma.review.delete({ where: { id: reviewId } });
     res.json({ success: true, message: 'Review deleted successfully.' });
   } catch (error) {
     console.error('Delete review error:', error);
     res.status(500).json({ success: false, message: 'Error deleting review', error: error.message });
+  }
+};
+
+/**
+ * GET /api/reviews/user/my
+ * Customer views their own reviews
+ */
+export const getUserReviews = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+
+    const reviews = await prisma.review.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' },
+      include: {
+        product: { select: { id: true, name: true, image_url: true, category: true } }
+      }
+    });
+
+    res.json({ success: true, reviews });
+  } catch (error) {
+    console.error('Get user reviews error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching reviews', error: error.message });
   }
 };
