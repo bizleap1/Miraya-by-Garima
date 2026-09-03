@@ -151,13 +151,16 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
       if (!Array.isArray(initImgs) || initImgs.length === 0) {
         initImgs = [initialProduct.image_url || initialProduct.image || '/products/Lehenga-Pink Blush/1.JPG'];
       }
+      if (initialProduct.image_url && initImgs.includes(initialProduct.image_url) && initImgs[0] !== initialProduct.image_url) {
+        initImgs = [initialProduct.image_url, ...initImgs.filter(img => img !== initialProduct.image_url)];
+      }
       setProduct({
         ...initialProduct,
         id: initialProduct.id,
         title: initialProduct.name || initialProduct.title || 'Outfit',
         price: initialProduct.price,
         category: initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category,
-        image: initialProduct.image_url || initialProduct.image || initImgs[0],
+        image: initialProduct.image_url || initImgs[0] || initialProduct.image,
         images: initImgs
       });
       setLoading(false);
@@ -194,7 +197,11 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             apiImgs = [data.image_url || data.image || localMatch.image || '/products/Lehenga-Pink%20Blush/1.JPG'];
           }
 
-          const resolvedMainImg = getProductImage(data.image_url || data.image || localMatch.image || apiImgs[0]);
+          if (data.image_url && apiImgs.includes(data.image_url) && apiImgs[0] !== data.image_url) {
+            apiImgs = [data.image_url, ...apiImgs.filter(img => img !== data.image_url)];
+          }
+
+          const resolvedMainImg = getProductImage(data.image_url || apiImgs[0] || data.image || localMatch.image);
           const resolvedImgs = (apiImgs.length ? apiImgs : (localMatch.images || [])).map(img => getProductImage(img));
 
           setProduct({

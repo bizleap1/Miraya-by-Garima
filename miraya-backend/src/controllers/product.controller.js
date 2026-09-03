@@ -155,7 +155,20 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, stock, category_id, sub_category, sizes, size_stock, color, variants: explicitVariants } = req.body;
+    const {
+      name,
+      description,
+      price,
+      mrp,
+      mrp_price,
+      stock,
+      category_id,
+      sub_category,
+      sizes,
+      size_stock,
+      color,
+      variants: explicitVariants
+    } = req.body;
 
     if (!name || price === undefined) {
       return res.status(400).json({ success: false, message: 'Product name and price are required.' });
@@ -176,7 +189,36 @@ export const createProduct = async (req, res) => {
           existing = typeof req.body.existing_images === 'string' ? JSON.parse(req.body.existing_images) : req.body.existing_images;
         } catch (_) {}
       }
-      images = [...existing, ...uploaded];
+
+      if (req.body.gallery_order) {
+        try {
+          const order = typeof req.body.gallery_order === 'string' ? JSON.parse(req.body.gallery_order) : req.body.gallery_order;
+          let upIdx = 0;
+          let exIdx = 0;
+          images = order.map((item) => {
+            if (item === '__NEW_FILE__' && upIdx < uploaded.length) {
+              return uploaded[upIdx++];
+            }
+            if (item !== '__NEW_FILE__' && existing.includes(item)) {
+              return item;
+            }
+            if (exIdx < existing.length) {
+              return existing[exIdx++];
+            }
+            return item;
+          }).filter(Boolean);
+
+          while (upIdx < uploaded.length) images.push(uploaded[upIdx++]);
+          while (exIdx < existing.length) {
+            if (!images.includes(existing[exIdx])) images.push(existing[exIdx]);
+            exIdx++;
+          }
+        } catch (_) {
+          images = [...uploaded, ...existing];
+        }
+      } else {
+        images = [...uploaded, ...existing];
+      }
     } else if (req.body.images) {
       images = typeof req.body.images === 'string' ? JSON.parse(req.body.images) : req.body.images;
     } else if (req.body.image_url) {
@@ -188,16 +230,29 @@ export const createProduct = async (req, res) => {
     const parsedExplicitVariants = typeof explicitVariants === 'string' ? JSON.parse(explicitVariants) : explicitVariants;
 
     const numPrice = parseFloat(price);
+    const rawMrp = mrp !== undefined ? mrp : (mrp_price !== undefined ? mrp_price : (req.body.mrp || req.body.mrp_price));
+    const parsedMrp = rawMrp ? parseFloat(rawMrp) : null;
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Determine sizes & variant structure
-      const targetSizes = Array.isArray(parsedSizes) && parsedSizes.length > 0
+      const rawSizes = Array.isArray(parsedSizes) && parsedSizes.length > 0
         ? parsedSizes
         : (Object.keys(parsedSizeStock).length > 0 ? Object.keys(parsedSizeStock) : ['Free Size']);
+      const targetSizes = [...new Set(rawSizes)];
 
       const totalStock = Object.keys(parsedSizeStock).length > 0
         ? Object.values(parsedSizeStock).reduce((a, b) => a + Number(b || 0), 0)
         : parseInt(stock || 0, 10);
+
+      // Validate category_id exists in database if supplied
+      let validCategoryId = null;
+      if (category_id) {
+        const catNum = parseInt(category_id, 10);
+        if (!isNaN(catNum)) {
+          const catExists = await tx.category.findUnique({ where: { id: catNum } });
+          if (catExists) validCategoryId = catNum;
+        }
+      }
 
       // Create base product
       const product = await tx.product.create({
@@ -205,11 +260,11 @@ export const createProduct = async (req, res) => {
           name,
           description,
           price: numPrice,
-          mrp_price: mrp ? parseFloat(mrp) : (mrp_price ? parseFloat(mrp_price) : null),
+          mrp_price: parsedMrp,
           stock: totalStock,
           image_url: images[0] || null,
           images,
-          category_id: category_id ? parseInt(category_id, 10) : null,
+          category_id: validCategoryId,
           sub_category: sub_category || null,
           fabric: req.body.fabric || null,
           embroidery: req.body.embroidery || null,
@@ -224,7 +279,6 @@ export const createProduct = async (req, res) => {
         },
       });
 
-
       // 2. Create authoritative ProductVariants
       const skuPrefix = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase() || 'MIR';
       const createdVariants = [];
@@ -237,10 +291,11 @@ export const createProduct = async (req, res) => {
             data: {
               product_id: product.id,
               sku: vSku,
-              barcode: ev.barcode || `BAR-${product.id}-${ev.size || 'M'}`,
+              barcode: ev.barcode || `BAR-${product.id}-${(ev.size || 'M').replace(/\s+/g, '-').toUpperCase()}`,
               size: ev.size || 'Free Size',
               color: ev.color || color || 'Default',
               price: ev.price !== undefined ? parseFloat(ev.price) : numPrice,
+              mrp_price: ev.mrp_price ? parseFloat(ev.mrp_price) : parsedMrp,
               stock: vStock,
               is_active: ev.is_active !== undefined ? ev.is_active : true,
             },
@@ -250,15 +305,17 @@ export const createProduct = async (req, res) => {
       } else {
         for (const sz of targetSizes) {
           const vStock = parsedSizeStock[sz] !== undefined ? parseInt(parsedSizeStock[sz], 10) : Math.max(0, Math.floor(totalStock / targetSizes.length));
-          const vSku = `MIR-${skuPrefix}-${product.id}-${sz.toUpperCase()}`;
+          const cleanSize = String(sz).replace(/\s+/g, '-').toUpperCase();
+          const vSku = `MIR-${skuPrefix}-${product.id}-${cleanSize}`;
           const v = await tx.productVariant.create({
             data: {
               product_id: product.id,
               sku: vSku,
-              barcode: `BAR-${product.id}-${sz.toUpperCase()}`,
+              barcode: `BAR-${product.id}-${cleanSize}`,
               size: sz,
               color: color || 'Default',
               price: numPrice,
+              mrp_price: parsedMrp,
               stock: vStock,
               is_active: true,
             },
@@ -354,7 +411,36 @@ export const updateProduct = async (req, res) => {
           existing = typeof req.body.existing_images === 'string' ? JSON.parse(req.body.existing_images) : req.body.existing_images;
         } catch (_) {}
       }
-      const allImgs = [...existing, ...uploaded];
+      let allImgs = [];
+      if (req.body.gallery_order) {
+        try {
+          const order = typeof req.body.gallery_order === 'string' ? JSON.parse(req.body.gallery_order) : req.body.gallery_order;
+          let upIdx = 0;
+          let exIdx = 0;
+          allImgs = order.map((item) => {
+            if (item === '__NEW_FILE__' && upIdx < uploaded.length) {
+              return uploaded[upIdx++];
+            }
+            if (item !== '__NEW_FILE__' && existing.includes(item)) {
+              return item;
+            }
+            if (exIdx < existing.length) {
+              return existing[exIdx++];
+            }
+            return item;
+          }).filter(Boolean);
+
+          while (upIdx < uploaded.length) allImgs.push(uploaded[upIdx++]);
+          while (exIdx < existing.length) {
+            if (!allImgs.includes(existing[exIdx])) allImgs.push(existing[exIdx]);
+            exIdx++;
+          }
+        } catch (_) {
+          allImgs = [...uploaded, ...existing];
+        }
+      } else {
+        allImgs = [...uploaded, ...existing];
+      }
       data.images = allImgs;
       data.image_url = allImgs[0] || null;
     } else if (req.body.images) {

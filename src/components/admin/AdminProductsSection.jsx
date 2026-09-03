@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   Plus, Search, Edit, Trash2, X, Image as ImageIcon,
   Check, AlertCircle, Eye, RefreshCw, UploadCloud,
-  Link as LinkIcon, Crop as CropIcon, ImagePlus, Star, Trash
+  Link as LinkIcon, Crop as CropIcon, ImagePlus, Star, Trash,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import ImageCropperModal from './ImageCropperModal';
 import ConfirmModal from '../ConfirmModal';
@@ -306,21 +307,40 @@ export default function AdminProductsSection({ products = [], categories = [], t
     setUrlInput('');
   };
 
-  // Set Main Cover Image
+  // Set Main Cover Image (Moves to #1 position & sets isMain: true)
   const handleSetMainCover = (index) => {
-    setGalleryImages((prev) =>
-      prev.map((img, idx) => ({ ...img, isMain: idx === index }))
-    );
+    setGalleryImages((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const target = { ...prev[index], isMain: true };
+      const others = prev.filter((_, idx) => idx !== index).map(img => ({ ...img, isMain: false }));
+      return [target, ...others];
+    });
+  };
+
+  // Move image earlier or later in sequence (index 0 is always the Cover Image)
+  const handleMoveImage = (index, direction) => {
+    setGalleryImages((prev) => {
+      const newIndex = direction === 'left' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[newIndex];
+      next[newIndex] = temp;
+      return next.map((img, idx) => ({
+        ...img,
+        isMain: idx === 0
+      }));
+    });
   };
 
   // Remove Image from Gallery
   const handleRemoveImage = (index) => {
     setGalleryImages((prev) => {
       const next = prev.filter((_, idx) => idx !== index);
-      if (next.length > 0 && !next.some(img => img.isMain)) {
-        next[0].isMain = true;
-      }
-      return next;
+      return next.map((img, idx) => ({
+        ...img,
+        isMain: idx === 0
+      }));
     });
   };
 
@@ -361,8 +381,17 @@ export default function AdminProductsSection({ products = [], categories = [], t
 
       const method = isEditing ? 'PUT' : 'POST';
 
-      // Separate newly cropped files vs existing URL strings
-      const sortedGallery = [...galleryImages].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+      // Ensure sequence has the chosen cover image at position 0
+      const sortedGallery = [...galleryImages];
+      if (sortedGallery.length > 0 && !sortedGallery[0].isMain) {
+        const coverIdx = sortedGallery.findIndex(g => g.isMain);
+        if (coverIdx > 0) {
+          const [coverItem] = sortedGallery.splice(coverIdx, 1);
+          sortedGallery.unshift(coverItem);
+        }
+      }
+      sortedGallery.forEach((g, idx) => { g.isMain = (idx === 0); });
+
       const hasNewFiles = sortedGallery.some(g => g.file !== null);
 
       let res;
@@ -388,17 +417,23 @@ export default function AdminProductsSection({ products = [], categories = [], t
         fd.append('whatsapp_inquiry', String(Boolean(formData.whatsapp_inquiry)));
 
         const existingUrls = [];
+        const galleryOrder = [];
+
         sortedGallery.forEach((g) => {
           if (g.file) {
             fd.append('images', g.file);
+            galleryOrder.push('__NEW_FILE__');
           } else if (g.rawUrl || (g.url && !g.url.startsWith('data:'))) {
-            existingUrls.push(g.rawUrl || g.url);
+            const u = g.rawUrl || g.url;
+            existingUrls.push(u);
+            galleryOrder.push(u);
           }
         });
 
         if (existingUrls.length > 0) {
           fd.append('existing_images', JSON.stringify(existingUrls));
         }
+        fd.append('gallery_order', JSON.stringify(galleryOrder));
 
         res = await fetch(url, {
           method,
@@ -449,7 +484,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
         setShowModal(false);
         if (onRefresh) onRefresh();
       } else {
-        const errorMsg = data.message || data.error || 'Error saving product';
+        const detail = data.error && data.error !== data.message ? `: ${data.error}` : '';
+        const errorMsg = (data.message || 'Error saving product') + detail;
         setFormError(errorMsg);
       }
     } catch (err) {
@@ -976,99 +1012,213 @@ export default function AdminProductsSection({ products = [], categories = [], t
                   {/* MULTI-IMAGE GALLERY GRID */}
                   {galleryImages.length > 0 && (
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#444' }}>
-                          Attached Photos ({galleryImages.length}):
-                        </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0 6px', flexWrap: 'wrap', gap: '6px' }}>
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--miraya-text)' }}>
+                            Attached Photos ({galleryImages.length}):
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#666', display: 'block', marginTop: '2px' }}>
+                            Photo <strong>#1</strong> is the <strong>Cover Image</strong> shown on Collection pages. Photos <strong>#2, #3...</strong> appear on the Product Details Page in this exact sequence.
+                          </span>
+                        </div>
                         <label
                           htmlFor="admin-product-file-input"
-                          style={{ fontSize: '11px', color: 'var(--miraya-red)', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          style={{ fontSize: '11px', color: 'var(--miraya-red)', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fff', border: '1px solid var(--miraya-border)', padding: '5px 10px', borderRadius: '5px' }}
                         >
                           <Plus size={12} /> Add More
                         </label>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px', marginTop: '8px' }}>
                         {galleryImages.map((imgItem, idx) => (
                           <div
-                            key={imgItem.id}
+                            key={imgItem.id || idx}
                             style={{
                               position: 'relative',
                               borderRadius: '8px',
                               overflow: 'hidden',
                               border: imgItem.isMain ? '2px solid #b51624' : '1px solid var(--miraya-border)',
                               background: '#ffffff',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                              boxShadow: imgItem.isMain ? '0 3px 10px rgba(181, 22, 36, 0.18)' : '0 2px 6px rgba(0,0,0,0.06)',
+                              display: 'flex',
+                              flexDirection: 'column'
                             }}
                           >
-                            <img
-                              src={imgItem.url}
-                              alt={`Photo ${idx + 1}`}
-                              style={{ width: '100%', height: '110px', objectFit: 'cover', display: 'block' }}
-                            />
+                            {/* IMAGE PREVIEW WITH TOP BADGES */}
+                            <div style={{ position: 'relative', width: '100%', height: '140px', background: '#f5f5f5' }}>
+                              <img
+                                src={imgItem.url}
+                                alt={`Photo ${idx + 1}`}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                              />
 
-                            {/* COVER BADGE */}
-                            {imgItem.isMain && (
+                              {/* SEQUENCE / COVER BADGE */}
                               <div
                                 style={{
                                   position: 'absolute',
-                                  top: '4px',
-                                  left: '4px',
-                                  background: '#b51624',
+                                  top: '6px',
+                                  left: '6px',
+                                  background: imgItem.isMain ? '#b51624' : 'rgba(0, 0, 0, 0.72)',
                                   color: '#fff',
                                   fontSize: '9px',
                                   fontWeight: 700,
-                                  padding: '2px 5px',
-                                  borderRadius: '3px',
-                                  letterSpacing: '0.3px'
+                                  padding: '3px 6px',
+                                  borderRadius: '4px',
+                                  letterSpacing: '0.4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                                 }}
                               >
-                                ★ COVER
+                                {imgItem.isMain ? '★ #1 COVER' : `#${idx + 1}`}
                               </div>
-                            )}
 
-                            {/* ACTION OVERLAY */}
-                            <div
-                              style={{
-                                position: 'absolute',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                background: 'rgba(0, 0, 0, 0.75)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-around',
-                                padding: '4px'
-                              }}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => handleRecropExisting(idx)}
-                                style={{ background: 'none', border: 'none', color: '#c6a46a', cursor: 'pointer', padding: '2px' }}
-                                title="Crop / Re-align image"
+                              {/* QUICK ACTIONS (Crop & Delete) */}
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '6px',
+                                  right: '6px',
+                                  display: 'flex',
+                                  gap: '4px'
+                                }}
                               >
-                                <CropIcon size={14} />
-                              </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRecropExisting(idx)}
+                                  style={{
+                                    background: 'rgba(0, 0, 0, 0.65)',
+                                    border: 'none',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    padding: '4px',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  title="Crop / Re-align (3:4 studio)"
+                                >
+                                  <CropIcon size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(idx)}
+                                  style={{
+                                    background: 'rgba(214, 48, 49, 0.85)',
+                                    border: 'none',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    padding: '4px',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  title="Delete Photo"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
 
-                              {!imgItem.isMain && (
+                            {/* CARD CONTROLS & SEQUENCE ARROWS */}
+                            <div style={{ padding: '8px 6px', background: imgItem.isMain ? '#fff9fa' : '#fafafa', borderTop: '1px solid var(--miraya-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {/* COVER TOGGLE BUTTON */}
+                              {imgItem.isMain ? (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    background: '#e8f5e9',
+                                    color: '#2e7d32',
+                                    border: '1px solid #a5d6a7',
+                                    borderRadius: '4px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  <Check size={11} /> Cover Photo
+                                </div>
+                              ) : (
                                 <button
                                   type="button"
                                   onClick={() => handleSetMainCover(idx)}
-                                  style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '2px' }}
-                                  title="Set as Main Cover Photo"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    background: '#fff',
+                                    color: '#b51624',
+                                    border: '1px solid #b51624',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                  title="Make this photo the Cover Image (#1)"
                                 >
-                                  <Star size={14} />
+                                  <Star size={11} /> Set as Cover
                                 </button>
                               )}
 
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveImage(idx)}
-                                style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', padding: '2px' }}
-                                title="Remove photo"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              {/* REORDER SEQUENCE BUTTONS */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => handleMoveImage(idx, 'left')}
+                                  style={{
+                                    flex: 1,
+                                    padding: '3px 4px',
+                                    fontSize: '10px',
+                                    background: idx === 0 ? '#f0f0f0' : '#fff',
+                                    border: '1px solid var(--miraya-border)',
+                                    borderRadius: '3px',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                    color: idx === 0 ? '#bbb' : '#444',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '2px'
+                                  }}
+                                  title="Move earlier in sequence"
+                                >
+                                  <ChevronLeft size={12} /> Move
+                                </button>
+
+                                <button
+                                  type="button"
+                                  disabled={idx === galleryImages.length - 1}
+                                  onClick={() => handleMoveImage(idx, 'right')}
+                                  style={{
+                                    flex: 1,
+                                    padding: '3px 4px',
+                                    fontSize: '10px',
+                                    background: idx === galleryImages.length - 1 ? '#f0f0f0' : '#fff',
+                                    border: '1px solid var(--miraya-border)',
+                                    borderRadius: '3px',
+                                    cursor: idx === galleryImages.length - 1 ? 'not-allowed' : 'pointer',
+                                    color: idx === galleryImages.length - 1 ? '#bbb' : '#444',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '2px'
+                                  }}
+                                  title="Move later in sequence"
+                                >
+                                  Move <ChevronRight size={12} />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}

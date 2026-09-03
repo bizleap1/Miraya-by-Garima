@@ -230,9 +230,11 @@ const CategoryPage = () => {
             sizesList = ['S', 'M', 'L', 'XL'];
           }
 
-          const rawImg = localMatch.image || item.image_url || item.image;
+          const rawImg = item.image_url || (Array.isArray(item.images) && item.images[0]) || localMatch.image || item.image;
           const resolvedMainImg = getProductImage(rawImg);
-          const rawImgs = localMatch.images?.length ? localMatch.images : (item.images?.length ? item.images : [rawImg]);
+          const rawImgs = (Array.isArray(item.images) && item.images.length > 0)
+            ? item.images
+            : (localMatch.images?.length ? localMatch.images : [rawImg]);
           const resolvedImgs = rawImgs.map(img => getProductImage(img));
 
           return {
