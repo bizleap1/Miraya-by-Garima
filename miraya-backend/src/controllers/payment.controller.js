@@ -12,7 +12,7 @@
 import crypto from 'crypto';
 import razorpay from '../config/razorpay.js';
 import prisma from '../prisma/client.js';
-import { RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET } from '../config/env.js';
+import { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET } from '../config/env.js';
 import {
   reserveInventoryAtomic,
   confirmReservationAtomic,
@@ -212,7 +212,7 @@ export const createRazorpayOrder = async (req, res) => {
     try {
       razorpayOrder = await razorpay.orders.create(rzpOptions);
     } catch (rzpErr) {
-      if (process.env.NODE_ENV !== 'production' && (rzpErr.statusCode === 401 || process.env.RAZORPAY_KEY_ID?.includes('test'))) {
+      if (process.env.NODE_ENV !== 'production' && !RAZORPAY_KEY_ID?.startsWith('rzp_live') && (rzpErr.statusCode === 401 || RAZORPAY_KEY_ID?.includes('test'))) {
         razorpayOrder = {
           id: `order_test_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
           amount: amountInPaise,
@@ -247,6 +247,7 @@ export const createRazorpayOrder = async (req, res) => {
       success: true,
       order_id: razorpayOrder.id,
       id: razorpayOrder.id,
+      key_id: RAZORPAY_KEY_ID,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       receipt: razorpayOrder.receipt,

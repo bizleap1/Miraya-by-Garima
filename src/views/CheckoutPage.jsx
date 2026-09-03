@@ -540,7 +540,7 @@ const CheckoutPage = () => {
         }
 
         const razorpayOrderId = orderData.order_id || orderData.id;
-        const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TUJwjLBb7chIpr';
+        const razorpayKey = orderData.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TUJwjLBb7chIpr';
 
         // Step 3: Configure Razorpay Standard Modal options
         const options = {
