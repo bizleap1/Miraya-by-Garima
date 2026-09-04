@@ -36,5 +36,10 @@
   },
   "devDependencies": {
     "prisma": "^6.3.0"
+  },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "$cloudinary"
+    }
   }
 }
