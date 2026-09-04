@@ -524,6 +524,7 @@ const CheckoutPage = () => {
           body: JSON.stringify({
             amount: Math.round(finalTotal * 100), // amount in paise (minimum 100 paise)
             currency: 'INR',
+            couponCode: couponApplied ? couponCode : null,
             items: orderPayload.items,
             shippingDetails: orderPayload.shippingDetails,
             notes: {

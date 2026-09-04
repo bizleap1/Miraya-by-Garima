@@ -93,13 +93,24 @@ function sanitizeObject(obj) {
 
 export const xssSanitizer = (req, res, next) => {
   if (req.body && typeof req.body === 'object') {
-    req.body = sanitizeObject(req.body);
+    try {
+      req.body = sanitizeObject(req.body);
+    } catch (_) {}
   }
   if (req.query && typeof req.query === 'object') {
-    req.query = sanitizeObject(req.query);
+    try {
+      const sanitized = sanitizeObject(req.query);
+      for (const k of Object.keys(req.query)) {
+        delete req.query[k];
+      }
+      Object.assign(req.query, sanitized);
+    } catch (_) {}
   }
   if (req.params && typeof req.params === 'object') {
-    req.params = sanitizeObject(req.params);
+    try {
+      const sanitized = sanitizeObject(req.params);
+      Object.assign(req.params, sanitized);
+    } catch (_) {}
   }
   next();
 };

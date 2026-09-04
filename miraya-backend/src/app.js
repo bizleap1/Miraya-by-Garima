@@ -44,8 +44,13 @@ app.set('trust proxy', 1);
 app.use(applySecurityHeaders);
 app.use(corsSecurityOptions);
 
-// 2. Body Parsers with payload size bounds
-app.use(express.json({ limit: '10mb' }));
+// 2. Body Parsers with payload size bounds & raw body capture for webhooks
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 3. XSS Sanitization & Parameter Pollution Guard

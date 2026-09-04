@@ -31,6 +31,8 @@ const AuthPage = () => {
   const [registerOtp, setRegisterOtp] = useState('');
 
   // Forgot Password State
+  const [forgotOtpSent, setForgotOtpSent] = useState(false);
+  const [forgotOtp, setForgotOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
@@ -253,17 +255,48 @@ const AuthPage = () => {
     // --- 1. FORGOT PASSWORD FLOW ---
     if (authMode === 'forgot') {
       if (!email.trim()) return setError('Please enter your registered email address.');
+
+      // Step 1: Send OTP
+      if (!forgotOtpSent) {
+        setSubmitting(true);
+        showLoading('Sending 6-Digit Password Reset OTP...');
+        try {
+          const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim().toLowerCase() })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Failed to send password reset OTP');
+
+          setForgotOtpSent(true);
+          setSuccessMsg(`🔐 Reset OTP sent to ${email.trim()}! Please check your email.`);
+        } catch (err) {
+          setError(err.message || 'Failed to send OTP');
+        } finally {
+          setSubmitting(false);
+          hideLoading();
+        }
+        return;
+      }
+
+      // Step 2: Verify OTP & Reset Password
+      if (!forgotOtp.trim() || forgotOtp.trim().length !== 6) return setError('Please enter the 6-digit OTP sent to your email.');
       if (!newPassword || !confirmNewPassword) return setError('Please enter and confirm your new password.');
       if (newPassword !== confirmNewPassword) return setError('Passwords do not match.');
       if (newPassword.length < 6) return setError('Password must be at least 6 characters long.');
 
       setSubmitting(true);
-      showLoading('Updating your password...');
+      showLoading('Verifying OTP & Updating Password...');
       try {
         const res = await fetch(`${API_URL}/api/auth/reset-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), newPassword })
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            otp: forgotOtp.trim(),
+            newPassword
+          })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Password update failed');
@@ -274,6 +307,8 @@ const AuthPage = () => {
           setPassword(newPassword);
           setNewPassword('');
           setConfirmNewPassword('');
+          setForgotOtp('');
+          setForgotOtpSent(false);
           setSuccessMsg('Password updated! You can now sign in.');
         }, 1500);
       } catch (err) {
@@ -450,7 +485,7 @@ const AuthPage = () => {
                   </div>
                 )}
 
-                {/* --- FORGOT PASSWORD FORM --- */}
+                {/* --- FORGOT PASSWORD FORM (2-Step Flow) --- */}
                 {authMode === 'forgot' && (
                   <>
                     <div className="input-group">
@@ -462,52 +497,86 @@ const AuthPage = () => {
                           placeholder="Enter your email" 
                           value={email} 
                           onChange={(e) => setEmail(e.target.value)} 
+                          disabled={forgotOtpSent}
                           required 
                         />
                       </div>
                     </div>
 
-                    <div className="input-group">
-                      <label>New Password</label>
-                      <div className="input-wrapper">
-                        <Lock size={18} className="input-icon" />
-                        <input 
-                          type={showPassword ? "text" : "password"} 
-                          placeholder="Enter new password" 
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)} 
-                          required 
-                        />
-                        <button 
-                          type="button" 
-                          className="eye-btn"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                    </div>
+                    {forgotOtpSent ? (
+                      <>
+                        <div className="otp-info-banner">
+                          <ShieldCheck size={18} />
+                          <span>Enter the 6-digit reset code sent to <strong>{email}</strong></span>
+                        </div>
 
-                    <div className="input-group">
-                      <label>Confirm New Password</label>
-                      <div className="input-wrapper">
-                        <Lock size={18} className="input-icon" />
-                        <input 
-                          type={showConfirmPassword ? "text" : "password"} 
-                          placeholder="Confirm new password" 
-                          value={confirmNewPassword}
-                          onChange={(e) => setConfirmNewPassword(e.target.value)} 
-                          required 
-                        />
+                        <div className="input-group">
+                          <label>6-Digit Reset OTP Code</label>
+                          <div className="input-wrapper">
+                            <KeyRound size={18} className="input-icon" />
+                            <input 
+                              type="text" 
+                              className="otp-code-input"
+                              placeholder="000000" 
+                              maxLength={6}
+                              value={forgotOtp} 
+                              onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))} 
+                              required 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="input-group">
+                          <label>New Password</label>
+                          <div className="input-wrapper">
+                            <Lock size={18} className="input-icon" />
+                            <input 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="Enter new password (min 6 chars)" 
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)} 
+                              required 
+                            />
+                            <button 
+                              type="button" 
+                              className="eye-btn"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="input-group">
+                          <label>Confirm New Password</label>
+                          <div className="input-wrapper">
+                            <Lock size={18} className="input-icon" />
+                            <input 
+                              type={showConfirmPassword ? "text" : "password"} 
+                              placeholder="Confirm new password" 
+                              value={confirmNewPassword}
+                              onChange={(e) => setConfirmNewPassword(e.target.value)} 
+                              required 
+                            />
+                            <button 
+                              type="button" 
+                              className="eye-btn"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
+                        </div>
+
                         <button 
                           type="button" 
-                          className="eye-btn"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() => { setForgotOtpSent(false); setForgotOtp(''); setError(''); }}
+                          style={{ background: 'none', border: 'none', color: '#c6a46a', fontSize: '0.8rem', cursor: 'pointer', marginBottom: '1rem', textDecoration: 'underline' }}
                         >
-                          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          Change Email or Resend Code
                         </button>
-                      </div>
-                    </div>
+                      </>
+                    ) : null}
                   </>
                 )}
 
@@ -746,7 +815,7 @@ const AuthPage = () => {
                       <Loader2 size={18} className="animate-spin" /> Processing...
                     </span>
                   ) : authMode === 'forgot' ? (
-                    'UPDATE PASSWORD'
+                    forgotOtpSent ? 'RESET PASSWORD' : 'SEND RESET OTP'
                   ) : authMode === 'register' ? (
                     registerOtpSent ? 'VERIFY OTP & COMPLETE REGISTRATION' : 'SEND OTP TO REGISTER'
                   ) : loginMethod === 'otp' ? (

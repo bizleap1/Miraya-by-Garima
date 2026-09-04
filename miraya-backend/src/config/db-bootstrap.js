@@ -26,6 +26,13 @@ function isPortOpen(port, host = '127.0.0.1', timeout = 1500) {
 let pgInstance = null;
 
 export async function ensureDatabaseRunning() {
+  // Never probe port or attempt to boot embedded postgres in production, serverless, or with cloud DBs
+  const dbUrl = process.env.DATABASE_URL || '';
+  const isCloudDb = dbUrl && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1');
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL || isCloudDb) {
+    return;
+  }
+
   const isRunning = await isPortOpen(5432, '127.0.0.1');
   if (isRunning) {
     console.log('🐘 [Database] PostgreSQL is active and ready on port 5432.');

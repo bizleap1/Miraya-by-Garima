@@ -195,9 +195,9 @@ export const forgotPassword = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
-    if (!email || !newPassword) {
-      return res.status(400).json({ message: 'Email and new password are required' });
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'Email, OTP, and new password are required' });
     }
 
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
@@ -205,11 +205,33 @@ export const resetPassword = async (req, res) => {
       return res.status(404).json({ message: 'No registered account found with this email address.' });
     }
 
+    if (!user.reset_otp || user.reset_otp !== String(otp).trim() || !user.reset_otp_expiry || new Date() > user.reset_otp_expiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code. Please request a new OTP.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
     const password_hash = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: user.id },
       data: { password_hash, reset_otp: null, reset_otp_expiry: null },
     });
+
+    // Record password reset in audit log
+    try {
+      await prisma.adminAuditLog.create({
+        data: {
+          actor_id: user.id,
+          actor_email: user.email,
+          action: 'user.password_reset',
+          entity: 'User',
+          entity_id: String(user.id),
+          metadata: { name: user.name, role: user.role, method: 'otp' },
+        },
+      });
+    } catch (_) {}
 
     res.json({ message: 'Password updated successfully! You can now sign in with your new password.' });
   } catch (error) {

@@ -457,6 +457,25 @@ export const releasePaymentHold = async (req, res) => {
       return res.status(400).json({ success: false, message: 'razorpay_order_id is required' });
     }
 
+    const existingReservation = await prisma.inventoryReservation.findUnique({
+      where: { razorpay_order_id: rzpOrderId },
+    });
+
+    if (!existingReservation) {
+      return res.status(404).json({ success: false, message: 'No active reservation found for this payment order' });
+    }
+
+    // Ownership check: If reservation was created for an authenticated user, require ownership or admin role
+    if (existingReservation.user_id) {
+      if (!req.user || (req.user.id !== existingReservation.user_id && req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+        return res.status(403).json({
+          success: false,
+          code: 'UNAUTHORIZED_RELEASE',
+          message: 'Forbidden: You do not have permission to release another user’s reservation.',
+        });
+      }
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       return await releaseReservationAtomic({
         tx,
@@ -486,9 +505,11 @@ export const razorpayWebhook = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing webhook signature' });
     }
 
+    // Use rawBody buffer if available to preserve exact byte sequence, fallback to stringified body
+    const payloadData = req.rawBody || JSON.stringify(req.body);
     const expectedSignature = crypto
       .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
-      .update(JSON.stringify(req.body))
+      .update(payloadData)
       .digest('hex');
 
     if (expectedSignature !== signature) {

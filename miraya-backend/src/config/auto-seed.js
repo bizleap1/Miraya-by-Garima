@@ -81,28 +81,37 @@ export async function autoSeedIfEmpty() {
       console.log(`📦 [AutoSeed] Database already contains ${productCount} products. Preserving all live customizations.`);
     }
 
-    // Always audit & ensure product variants exist for all catalog items
-    try {
-      await migrateProductVariants();
-    } catch (_) {}
+    // In development or when products were just seeded, audit variants
+    if (productCount === 0 || (process.env.NODE_ENV !== 'production' && !process.env.VERCEL)) {
+      try {
+        await migrateProductVariants();
+      } catch (_) {}
+    }
 
     // 2. Check Admin Account
-    const adminUser = await prisma.user.findFirst({ where: { role: 'admin' } });
+    const adminUser = await prisma.user.findFirst({ where: { role: { in: ['admin', 'super_admin'] } } });
     if (!adminUser) {
-      console.log('🌱 [AutoSeed] Admin account missing. Creating default admin...');
-      const hash = await bcrypt.hash('adminpassword', 10);
-      await prisma.user.upsert({
-        where: { email: 'admin@miraya.com' },
-        update: { password_hash: hash, role: 'admin', name: 'Garima (Admin)' },
-        create: {
-          name: 'Garima (Admin)',
-          email: 'admin@miraya.com',
-          password_hash: hash,
-          phone: '9999999999',
-          role: 'admin',
-        },
-      });
-      console.log('✅ [AutoSeed] Admin user admin@miraya.com ready.');
+      const adminEmail = process.env.ADMIN_INITIAL_EMAIL || 'admin@miraya.com';
+      const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || (process.env.NODE_ENV !== 'production' ? 'adminpassword' : null);
+
+      if (adminPassword) {
+        console.log(`🌱 [AutoSeed] Admin account missing. Creating initial admin (${adminEmail})...`);
+        const hash = await bcrypt.hash(adminPassword, 10);
+        await prisma.user.upsert({
+          where: { email: adminEmail },
+          update: { password_hash: hash, role: 'admin', name: 'Garima (Admin)' },
+          create: {
+            name: 'Garima (Admin)',
+            email: adminEmail,
+            password_hash: hash,
+            phone: '9999999999',
+            role: 'admin',
+          },
+        });
+        console.log(`✅ [AutoSeed] Admin user ${adminEmail} ready.`);
+      } else {
+        console.warn('⚠️ [AutoSeed] No admin user exists and ADMIN_INITIAL_PASSWORD not configured. Skipping insecure default admin creation in production.');
+      }
     }
 
     // 3. No dummy coupons or dummy customers are auto-seeded.

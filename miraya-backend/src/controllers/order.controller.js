@@ -27,16 +27,34 @@ export const createOrder = async (req, res) => {
       razorpayOrderId,
       shippingDetails,
       paymentMethod,
-      payment_method
+      payment_method,
+      couponCode: requestCouponCode,
+      coupon: fallbackCouponCode
     } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Cart items are required to place an order' });
     }
 
-    const actualPaymentId = payment_id || paymentId || (paymentMethod === 'razorpay' ? `pay_${crypto.randomBytes(8).toString('hex')}` : null);
+    const method = (paymentMethod || payment_method || 'cod').toLowerCase();
+
+    // Security Gate: Disallow synthetic payment creation for Razorpay.
+    // Online payments MUST be verified cryptographically via /api/payments/verify or webhook.
+    if (method === 'razorpay' || method === 'online') {
+      return res.status(400).json({
+        success: false,
+        code: 'DIRECT_PAYMENT_NOT_PERMITTED',
+        message: 'Online payments cannot be placed directly via /api/orders. Please complete payment via the secure payment verification gateway.',
+      });
+    }
+
+    const actualPaymentId = payment_id || paymentId || (method === 'cod' ? null : null);
     const actualRazorpayOrderId = razorpay_order_id || razorpayOrderId || null;
-    const method = (paymentMethod || payment_method || (actualPaymentId ? 'razorpay' : 'cod')).toLowerCase();
+
+    // Optional Coupon Validation
+    const couponCode = (requestCouponCode || fallbackCouponCode || '').trim();
+    let couponDiscount = 0;
+    let validatedCoupon = null;
 
     // Generate unique temp reference to avoid collision with concurrent orders
     const tempRef = `ORD-TEMP-${crypto.randomBytes(8).toString('hex')}`;
@@ -53,7 +71,29 @@ export const createOrder = async (req, res) => {
       });
 
       // Server calculates total — NEVER trust client total
-      const calculatedTotal = deductedItems.reduce((acc, it) => acc + it.total_price, 0);
+      const calculatedSubtotal = deductedItems.reduce((acc, it) => acc + it.total_price, 0);
+
+      // Server-side authoritative coupon calculation
+      if (couponCode) {
+        const { validateCouponServerSide } = await import('./coupon.controller.js');
+        const couponResult = await validateCouponServerSide(couponCode, calculatedSubtotal);
+        if (!couponResult.valid) {
+          const err = new Error(couponResult.message || 'Invalid or expired coupon');
+          err.statusCode = 400;
+          err.code = couponResult.code || 'INVALID_COUPON';
+          throw err;
+        }
+        couponDiscount = couponResult.discountAmount;
+        validatedCoupon = couponResult.coupon;
+
+        // Atomically increment coupon usage
+        await tx.coupon.update({
+          where: { id: validatedCoupon.id },
+          data: { used_count: { increment: 1 } },
+        });
+      }
+
+      const calculatedFinalTotal = Math.max(0, calculatedSubtotal - couponDiscount);
 
       // 2. Shipping Address Snapshot
       const shipName = shippingDetails?.fullName || req.user?.name || 'Valued Client';
@@ -67,7 +107,7 @@ export const createOrder = async (req, res) => {
       const createdOrder = await tx.order.create({
         data: {
           user_id: req.user.id,
-          total: calculatedTotal,
+          total: calculatedFinalTotal,
           status: 'processing',
           payment_id: actualPaymentId || (method === 'cod' ? 'COD' : null),
           razorpay_order_id: actualRazorpayOrderId || null,
@@ -101,34 +141,15 @@ export const createOrder = async (req, res) => {
         data: { reference_id: `ORD-${createdOrder.id}` },
       });
 
-      // 5. Create Payment record
-      if (actualPaymentId && method === 'razorpay') {
-        const existingPayment = await tx.payment.findFirst({
-          where: { gateway_payment_id: actualPaymentId },
-        });
-
-        if (!existingPayment) {
-          await tx.payment.create({
-            data: {
-              order_id: createdOrder.id,
-              gateway: 'RAZORPAY',
-              gateway_payment_id: actualPaymentId,
-              gateway_order_id: actualRazorpayOrderId || null,
-              amount: calculatedTotal,
-              currency: 'INR',
-              status: 'PAID',
-              payment_reference: actualPaymentId,
-            },
-          });
-        }
-      } else if (method === 'cod') {
+      // 5. Create Payment record for COD
+      if (method === 'cod') {
         await tx.payment.create({
           data: {
             order_id: createdOrder.id,
             gateway: 'COD',
             gateway_payment_id: `COD-${createdOrder.id}`,
             gateway_order_id: null,
-            amount: calculatedTotal,
+            amount: calculatedFinalTotal,
             currency: 'INR',
             status: 'PENDING_COD',
             payment_reference: 'CASH_ON_DELIVERY',

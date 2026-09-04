@@ -30,7 +30,9 @@ function optional(key, defaultValue = '') {
 
 // ─── REQUIRED SECRETS (no fallback, fail if missing) ─────────────────────────
 
-export const JWT_SECRET = required('JWT_SECRET', 'miraya-dev-jwt-secret-key-2026');
+export const JWT_SECRET = process.env.NODE_ENV === 'production'
+  ? required('JWT_SECRET')
+  : optional('JWT_SECRET', 'f6c91a02d4e83c79a1f59e08cb67d43b2e59178ad9c0e4392b4512fd79aa31ce');
 export const DATABASE_URL = required('DATABASE_URL', 'postgresql://postgres:password@localhost:5432/postgres');
 
 // ─── RAZORPAY (required for payment processing) ─────────────────────────────
