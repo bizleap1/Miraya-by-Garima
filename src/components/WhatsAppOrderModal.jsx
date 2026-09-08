@@ -18,7 +18,10 @@ export default function WhatsAppOrderModal({ isOpen, onClose, product, selectedS
   const rawImg = product?.image || product?.image_url || (product?.images && product.images[0]) || "";
   const fullImgUrl = rawImg ? (rawImg.startsWith("http") ? rawImg : `${origin}${rawImg}`) : "";
 
-  const prodCategorySlug = product?.category?.slug || product?.category || "all";
+  const rawCategory = product?.category?.slug || product?.category?.name || product?.category;
+  const prodCategorySlug = typeof rawCategory === "string"
+    ? rawCategory.toLowerCase().trim().replace(/\s+/g, "-")
+    : "all";
   const productLink = origin && product?.id ? `${origin}/product/${prodCategorySlug}/${product.id}` : "";
 
   const message = encodeURIComponent(

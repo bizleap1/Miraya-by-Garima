@@ -47,13 +47,14 @@ export default function AdminCouponsSection({ coupons = [], token, API_BASE_URL,
   const handleOpenEdit = (cp) => {
     setIsEditing(true);
     setEditingId(cp.id);
+    const exp = cp.expires_at || cp.expiry_date;
     setFormData({
       code: cp.code || '',
       discount_type: cp.discount_type || 'PERCENTAGE',
       discount_value: String(cp.discount_value || cp.discount || 10),
       min_order_value: String(cp.min_order_value || cp.minOrder || 0),
       usage_limit: String(cp.usage_limit || 100),
-      expiry_date: cp.expiry_date ? String(cp.expiry_date).slice(0, 10) : '',
+      expiry_date: exp ? String(exp).slice(0, 10) : '',
       is_active: cp.is_active !== false
     });
     setShowModal(true);
@@ -97,6 +98,7 @@ export default function AdminCouponsSection({ coupons = [], token, API_BASE_URL,
           min_order_value: parseFloat(formData.min_order_value || 0),
           usage_limit: parseInt(formData.usage_limit || 100, 10),
           expiry_date: formData.expiry_date || null,
+          expires_at: formData.expiry_date || null,
           is_active: formData.is_active
         })
       });
@@ -204,7 +206,7 @@ export default function AdminCouponsSection({ coupons = [], token, API_BASE_URL,
                     <td><strong style={{ fontSize: '13px' }}>{discLabel}</strong></td>
                     <td>{formatINR(c.min_order_value || c.minOrder || 0)}</td>
                     <td>{c.used_count || 0} / {c.usage_limit || 100}</td>
-                    <td style={{ color: 'var(--miraya-muted)' }}>{c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('en-IN') : 'No Expiry'}</td>
+                    <td style={{ color: 'var(--miraya-muted)' }}>{(c.expires_at || c.expiry_date) ? new Date(c.expires_at || c.expiry_date).toLocaleDateString('en-IN') : 'No Expiry'}</td>
                     <td>
                       <span className={`status-badge ${isActive ? 'status-success' : 'status-neutral'}`}>
                         {isActive ? 'Active' : 'Inactive'}

@@ -70,6 +70,7 @@ const menuItems = [
   { id: "customers", label: "Customers", icon: Users },
   { id: "categories", label: "Categories", icon: Layers3 },
   { id: "coupons", label: "Coupons", icon: Tag },
+  { id: "promotions", label: "Promotions & Pricing", icon: Percent },
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "settings", label: "Store Settings", icon: SlidersHorizontal },
 ];
