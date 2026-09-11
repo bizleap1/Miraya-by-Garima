@@ -54,6 +54,8 @@ import AdminCouponsSection from "../components/admin/AdminCouponsSection";
 import AdminCancellationsSection from "../components/admin/AdminCancellationsSection";
 import AdminStoreSettingsSection from "../components/admin/AdminStoreSettingsSection";
 import AdminPromotionsSection from "../components/admin/AdminPromotionsSection";
+import AdminNewArrivalsSection from "../components/admin/AdminNewArrivalsSection";
+import { Sparkles } from "lucide-react";
 import { exportStoreAuditPDF } from "../utils/pdfExportHelper";
 import { useSocket } from "../context/SocketContext";
 import "./AdminDashboard.css";
@@ -69,6 +71,7 @@ const menuItems = [
   { id: "exchanges", label: "Exchanges", icon: RefreshCw },
   { id: "customers", label: "Customers", icon: Users },
   { id: "categories", label: "Categories", icon: Layers3 },
+  { id: "homepage-sections", label: "Homepage Sections", icon: Sparkles },
   { id: "coupons", label: "Coupons", icon: Tag },
   { id: "promotions", label: "Promotions & Pricing", icon: Percent },
   { id: "reviews", label: "Reviews", icon: Star },
@@ -1653,6 +1656,15 @@ export default function AdminDashboard() {
               categories={categories}
               token={token}
               onRefresh={loadDashboard}
+            />
+          )}
+
+          {activeTab === "homepage-sections" && (
+            <AdminNewArrivalsSection
+              products={products}
+              categories={categories}
+              token={token}
+              API_BASE_URL={API}
             />
           )}
 

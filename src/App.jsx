@@ -1,4 +1,5 @@
 import { useState, Suspense, lazy, useEffect } from 'react';
+import { IntroProvider, useIntro } from './context/IntroContext';
 import { Routes, Route, useLocation, useNavigationType } from 'react-router-dom';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { AnimatePresence } from 'framer-motion';
@@ -35,28 +36,47 @@ function ScrollManager() {
   const lenis = useLenis();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    if (lenis) {
+      window.lenis = lenis;
+    }
+  }, [lenis]);
+
+  useEffect(() => {
     if (lenis && typeof lenis.scrollTo === 'function') {
       lenis.scrollTo(0, { immediate: true });
+    } else if (typeof window !== 'undefined' && window.lenis && typeof window.lenis.scrollTo === 'function') {
+      window.lenis.scrollTo(0, { immediate: true });
     }
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [location.pathname, lenis]);
+  }, [location.pathname]);
 
   return null;
 }
 
-function App() {
+// Resets on every hard reload — intro plays every time site is opened fresh
+let introShownThisLoad = false;
+
+function AppInner() {
   const location = useLocation();
   const { navLoading, startNavLoading, stopNavLoading } = useLoading();
+  const { setIntroComplete } = useIntro();
   const [isNavigating, setIsNavigating] = useState(false);
 
   const isAuthPage = location.pathname === '/auth';
   const isAdminPage = location.pathname.startsWith('/admin');
   const isStandalonePage = isAuthPage || isAdminPage;
+
+  // Show intro on every fresh page load; skip only on SPA navigations
   const [isPreloading, setIsPreloading] = useState(() => {
-    const hasVisited = sessionStorage.getItem('miraya_visited');
-    return !hasVisited;
+    if (introShownThisLoad) return false;
+    introShownThisLoad = true;
+    return true;
   });
 
   // Trigger top progress bar on route change
@@ -68,11 +88,10 @@ function App() {
     return () => clearTimeout(timer);
   }, [location.pathname, location.search]);
 
-  // Prevent scrolling while preloading
+  // Lock scroll while preloader is active
   useEffect(() => {
     if (isPreloading) {
       document.body.style.overflow = 'hidden';
-      sessionStorage.setItem('miraya_visited', 'true');
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -87,7 +106,7 @@ function App() {
         <GlobalLoadingOverlay />
         <AnimatePresence>
           {isPreloading && (
-            <Preloader key="preloader" onComplete={() => setIsPreloading(false)} />
+            <Preloader key="preloader" onComplete={() => { setIsPreloading(false); setIntroComplete(true); }} />
           )}
         </AnimatePresence>
         <div className="app-container">
@@ -121,6 +140,14 @@ function App() {
         </div>
       </ReactLenis>
     </ToastProvider>
+  );
+}
+
+function App() {
+  return (
+    <IntroProvider>
+      <AppInner />
+    </IntroProvider>
   );
 }
 

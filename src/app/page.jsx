@@ -1,4 +1,5 @@
 import Hero from '../components/Hero';
+import NewArrivals from '../components/NewArrivals';
 import PremiumSlider from '../components/PremiumSlider';
 import OurStory from '../components/OurStory';
 import Collections from '../components/Collections';
@@ -20,6 +21,7 @@ export default function HomePage() {
   return (
     <main>
       <Hero />
+      <NewArrivals />
       <PremiumSlider />
       <OurStory />
       <Collections />

@@ -46,15 +46,16 @@ const Hero = () => {
       {/* Video Background */}
       <motion.div 
         className="hero-video-wrapper"
-        initial={{ scale: 1 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 2.5, ease: "easeOut" }}
         style={{ y: videoY, scale: videoScale, originY: 0 }}
       >
-        <img 
-          src="/yebg.png" 
-          alt="Hero Background"
+        <video
           className="hero-video"
+          src="/0911_hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
         />
         <div className="video-overlay-gradient"></div>
       </motion.div>

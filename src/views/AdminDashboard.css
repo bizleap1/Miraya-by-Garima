@@ -922,6 +922,15 @@ button {
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overscroll-behavior: contain !important;
+}
+
+.drawer-content::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .drawer-footer {
@@ -977,6 +986,15 @@ button {
   padding: 22px;
   overflow-y: auto;
   flex: 1;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overscroll-behavior: contain !important;
+}
+
+.modal-body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .modal-footer {

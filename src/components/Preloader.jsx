@@ -3,13 +3,33 @@ import { motion, useAnimation } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import './Preloader.css';
 
-const PARTICLES = Array.from({ length: 25 }, (_, i) => ({
-  id: i,
-  left: `${5 + Math.random() * 90}%`,
-  delay: Math.random() * 6,
-  duration: 6 + Math.random() * 5,
-  size: 1 + Math.random() * 2,
-}));
+const PARTICLES = [
+  { id: 0, left: '8%', delay: 0.2, duration: 8.5, size: 2 },
+  { id: 1, left: '15%', delay: 1.4, duration: 9.2, size: 1.5 },
+  { id: 2, left: '22%', delay: 2.8, duration: 7.8, size: 2.5 },
+  { id: 3, left: '31%', delay: 0.6, duration: 10.1, size: 1.8 },
+  { id: 4, left: '39%', delay: 3.2, duration: 8.0, size: 2.2 },
+  { id: 5, left: '46%', delay: 1.9, duration: 9.5, size: 1.2 },
+  { id: 6, left: '53%', delay: 4.1, duration: 7.2, size: 2.8 },
+  { id: 7, left: '62%', delay: 0.9, duration: 8.7, size: 1.6 },
+  { id: 8, left: '71%', delay: 2.5, duration: 10.4, size: 2.4 },
+  { id: 9, left: '79%', delay: 3.8, duration: 8.1, size: 1.4 },
+  { id: 10, left: '88%', delay: 1.1, duration: 9.0, size: 2.6 },
+  { id: 11, left: '12%', delay: 4.5, duration: 7.5, size: 1.7 },
+  { id: 12, left: '27%', delay: 2.1, duration: 9.8, size: 2.1 },
+  { id: 13, left: '35%', delay: 0.4, duration: 8.3, size: 1.3 },
+  { id: 14, left: '49%', delay: 3.6, duration: 10.2, size: 2.7 },
+  { id: 15, left: '58%', delay: 1.7, duration: 7.9, size: 1.9 },
+  { id: 16, left: '67%', delay: 4.8, duration: 8.6, size: 2.3 },
+  { id: 17, left: '75%', delay: 2.3, duration: 9.4, size: 1.5 },
+  { id: 18, left: '84%', delay: 0.8, duration: 7.7, size: 2.0 },
+  { id: 19, left: '92%', delay: 3.0, duration: 10.5, size: 1.6 },
+  { id: 20, left: '18%', delay: 1.5, duration: 8.9, size: 2.4 },
+  { id: 21, left: '42%', delay: 4.2, duration: 7.4, size: 1.8 },
+  { id: 22, left: '65%', delay: 2.9, duration: 9.6, size: 2.2 },
+  { id: 23, left: '81%', delay: 0.5, duration: 8.2, size: 1.5 },
+  { id: 24, left: '95%', delay: 3.4, duration: 9.1, size: 2.5 }
+];
 
 const Preloader = ({ onComplete }) => {
   const [phase, setPhase] = useState('dark');   // dark → brighten → text → hold → exit
@@ -32,8 +52,16 @@ const Preloader = ({ onComplete }) => {
     const t1 = setTimeout(() => setPhase('brighten'), 150);
     const t2 = setTimeout(() => setPhase('text'), 450);
     const t3 = setTimeout(() => setPhase('exit'), 1400);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+    // Guaranteed fallback to dismiss preloader if animation is interrupted
+    const tFallback = setTimeout(() => onComplete?.(), 2500);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(tFallback);
+    };
+  }, [onComplete]);
 
   const showText = phase === 'text' || phase === 'exit';
 

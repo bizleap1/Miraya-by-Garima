@@ -98,46 +98,56 @@ body.modal-open {
   }
 }
 
-/* Modal and Overlay Scroll Containment */
+/* Modal, Overlay, and Drawer Scroll Containment & Clean Invisible Scrollbar */
 .admin-modal-overlay,
 .modal-overlay,
+.admin-drawer-overlay,
+.na-modal-backdrop,
+.report-modal-backdrop,
+.pos-modal-backdrop,
 .admin-modal-card,
 .modal-card,
-[role="dialog"] {
+.admin-modal,
+.admin-drawer,
+.na-modal-content,
+.modal-body,
+.drawer-content,
+.na-prod-grid,
+.admin-modal-box,
+[role="dialog"],
+[data-modal="true"],
+[data-lenis-prevent],
+.hide-scrollbar {
   overscroll-behavior: contain !important;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none !important; /* Firefox: completely hide scrollbar bar */
+  -ms-overflow-style: none !important; /* IE & Edge: completely hide scrollbar bar */
 }
 
-/* Custom Styled Scrollbars for Modals */
+/* Chrome, Safari, Edge, Opera: completely hide scrollbar bar */
+.admin-modal-overlay::-webkit-scrollbar,
+.modal-overlay::-webkit-scrollbar,
+.admin-drawer-overlay::-webkit-scrollbar,
+.na-modal-backdrop::-webkit-scrollbar,
+.report-modal-backdrop::-webkit-scrollbar,
+.pos-modal-backdrop::-webkit-scrollbar,
 .admin-modal-card::-webkit-scrollbar,
 .modal-card::-webkit-scrollbar,
-.admin-modal-overlay::-webkit-scrollbar,
-.modal-overlay::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.admin-modal-card::-webkit-scrollbar-track,
-.modal-card::-webkit-scrollbar-track,
-.admin-modal-overlay::-webkit-scrollbar-track,
-.modal-overlay::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-}
-
-.admin-modal-card::-webkit-scrollbar-thumb,
-.modal-card::-webkit-scrollbar-thumb,
-.admin-modal-overlay::-webkit-scrollbar-thumb,
-.modal-overlay::-webkit-scrollbar-thumb {
-  background: rgba(198, 164, 106, 0.4);
-  border-radius: 4px;
-}
-
-.admin-modal-card::-webkit-scrollbar-thumb:hover,
-.modal-card::-webkit-scrollbar-thumb:hover,
-.admin-modal-overlay::-webkit-scrollbar-thumb:hover,
-.modal-overlay::-webkit-scrollbar-thumb:hover {
-  background: rgba(198, 164, 106, 0.7);
+.admin-modal::-webkit-scrollbar,
+.admin-drawer::-webkit-scrollbar,
+.na-modal-content::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar,
+.drawer-content::-webkit-scrollbar,
+.na-prod-grid::-webkit-scrollbar,
+.admin-modal-box::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar,
+[data-modal="true"]::-webkit-scrollbar,
+[data-lenis-prevent]::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
 .lenis.lenis-smooth iframe {

@@ -736,13 +736,13 @@ export default function AdminProductsSection({ products = [], categories = [], t
 
       {/* VIEW PRODUCT DRAWER */}
       {viewProduct && (
-        <div className="admin-drawer-overlay" onClick={() => setViewProduct(null)}>
-          <div className="admin-drawer" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-drawer-overlay" data-lenis-prevent="true" onClick={() => setViewProduct(null)}>
+          <div className="admin-drawer" data-lenis-prevent="true" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
               <h3>Product Details: {viewProduct.name}</h3>
               <button onClick={() => setViewProduct(null)} style={{ background: 'none', border: 'none' }}><X size={18} /></button>
             </div>
-            <div className="drawer-content">
+            <div className="drawer-content" data-lenis-prevent="true">
               <img
                 src={getImgUrl(viewProduct.image_url || (viewProduct.images && viewProduct.images[0]), API_BASE_URL)}
                 alt={viewProduct.name}
@@ -754,19 +754,34 @@ export default function AdminProductsSection({ products = [], categories = [], t
                 <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>SKU:</span><p style={{ margin: '4px 0', fontFamily: 'monospace' }}>#SKU-{viewProduct.id}</p></div>
                 <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Color:</span><p style={{ margin: '4px 0' }}>{viewProduct.color || 'Standard'}</p></div>
               </div>
-              <h4>Size-wise Inventory:</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginTop: '10px' }}>
-                {COMMON_SIZES.map(sz => (
-                  <div key={sz} style={{ background: 'var(--miraya-bg)', border: '1px solid var(--miraya-border)', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '700', display: 'block' }}>{sz}</span>
-                    <strong style={{ fontSize: '16px', color: 'var(--miraya-red)' }}>{viewProduct.size_stock?.[sz] ?? 0}</strong>
+
+              <div style={{ borderTop: '1px solid var(--miraya-border)', paddingTop: '16px', marginBottom: '20px' }}>
+                <span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Description:</span>
+                <p style={{ margin: '6px 0', fontSize: '13px', lineHeight: '1.5', color: 'var(--miraya-text)' }}>
+                  {viewProduct.description || 'No description provided.'}
+                </p>
+              </div>
+
+              {/* SIZES / VARIANTS LIST */}
+              <div style={{ borderTop: '1px solid var(--miraya-border)', paddingTop: '16px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px' }}>Variants & Stock Levels</h4>
+                {viewProduct.variants && viewProduct.variants.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {viewProduct.variants.map((v, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--miraya-bg)', borderRadius: '6px' }}>
+                        <span style={{ fontWeight: '600' }}>Size {v.size}</span>
+                        <span>Stock: <strong style={{ color: v.stock > 0 ? 'var(--miraya-green)' : 'var(--miraya-red)' }}>{v.stock} pcs</strong></span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p style={{ color: 'var(--miraya-muted)', fontSize: '13px' }}>Standard / Single SKU Product</p>
+                )}
               </div>
             </div>
             <div className="drawer-footer">
               <button className="btn btn-secondary" onClick={() => setViewProduct(null)}>Close</button>
-              <button className="btn btn-primary" onClick={() => { const p = viewProduct; setViewProduct(null); handleOpenEditModal(p); }}>Edit Product</button>
+              <button className="btn btn-primary" onClick={() => { handleOpenEditModal(viewProduct); setViewProduct(null); }}>Edit Product</button>
             </div>
           </div>
         </div>
@@ -774,15 +789,15 @@ export default function AdminProductsSection({ products = [], categories = [], t
 
       {/* ADD / EDIT PRODUCT MODAL */}
       {showModal && (
-        <div className="admin-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-overlay" data-lenis-prevent="true" onClick={() => setShowModal(false)}>
+          <div className="admin-modal" data-lenis-prevent="true" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{isEditing ? `Edit Product: ${formData.name || 'Item'}` : 'Add New Product'}</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none' }}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleSaveProduct} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-              <div className="modal-body">
+              <div className="modal-body" data-lenis-prevent="true">
                 {formError && (
                   <div style={{ background: 'var(--miraya-red-soft)', border: '1px solid var(--miraya-red)', color: 'var(--miraya-red)', padding: '10px', borderRadius: '6px', marginBottom: '14px', fontSize: '13px' }}>
                     <AlertCircle size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> {formError}

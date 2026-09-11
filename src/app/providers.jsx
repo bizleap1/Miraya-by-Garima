@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ReactLenis, useLenis } from 'lenis/react';
 import { ToastProvider } from '../context/ToastContext';
 import { LoadingProvider, useLoading } from '../context/LoadingContext';
@@ -18,50 +18,150 @@ import { usePathname } from 'next/navigation';
 function ScrollToTopManager() {
   const pathname = usePathname() || '/';
   const lenis = useLenis();
+  const prevPathRef = useRef(pathname);
+  const isPopStateRef = useRef(false);
 
+  // Configure manual scroll restoration and expose Lenis instance globally
   useEffect(() => {
-    const handleScrollReset = () => {
-      if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
-      const hash = window.location.hash;
-      if (hash) {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    if (lenis) {
+      window.lenis = lenis;
+    }
+  }, [lenis]);
+
+  // Continuously record scroll position per page in sessionStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY || document.documentElement.scrollTop || 0;
+          try {
+            sessionStorage.setItem('miraya_scroll_' + window.location.pathname, String(y));
+          } catch (_) {}
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Detect browser Back / Forward (popstate) actions
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      isPopStateRef.current = true;
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Handle route changes: restore previous section on back, reset to top on new navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hash = window.location.hash;
+    const isBackNav = isPopStateRef.current;
+    isPopStateRef.current = false;
+
+    let savedY = 0;
+    try {
+      savedY = Number(sessionStorage.getItem('miraya_scroll_' + pathname) || 0);
+    } catch (_) {}
+
+    // Priority 1: If URL has a specific section/product hash, scroll directly to that element
+    if (hash) {
+      const scrollToHash = () => {
         try {
           const target = document.querySelector(hash);
           if (target) {
             if (lenis && typeof lenis.scrollTo === 'function') {
-              lenis.scrollTo(target, { offset: -80, duration: 1.2 });
+              lenis.scrollTo(target, { offset: -95, duration: 0.8 });
+            } else if (window.lenis && typeof window.lenis.scrollTo === 'function') {
+              window.lenis.scrollTo(target, { offset: -95, duration: 0.8 });
             } else {
               target.scrollIntoView({ behavior: 'smooth' });
             }
-            return;
+            return true;
           }
         } catch (_) {}
-      }
+        return false;
+      };
 
-      // Reset scroll to top
+      if (!scrollToHash()) {
+        const t1 = setTimeout(scrollToHash, 100);
+        const t2 = setTimeout(scrollToHash, 300);
+        prevPathRef.current = pathname;
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      }
+      prevPathRef.current = pathname;
+      return;
+    }
+
+    // Priority 2: If navigating Back and we have a saved scroll position, return to previous section
+    if (isBackNav && savedY > 0) {
+      const restoreSaved = () => {
+        if (lenis && typeof lenis.scrollTo === 'function') {
+          lenis.scrollTo(savedY, { immediate: true });
+        } else if (window.lenis && typeof window.lenis.scrollTo === 'function') {
+          window.lenis.scrollTo(savedY, { immediate: true });
+        }
+        window.scrollTo({ top: savedY, behavior: 'instant' });
+        document.documentElement.scrollTop = savedY;
+        document.body.scrollTop = savedY;
+      };
+
+      restoreSaved();
+      const r1 = requestAnimationFrame(restoreSaved);
+      const t1 = setTimeout(restoreSaved, 60);
+      const t2 = setTimeout(restoreSaved, 200);
+
+      prevPathRef.current = pathname;
+      return () => {
+        cancelAnimationFrame(r1);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+
+    // Priority 3: Fresh forward navigation (clicking a category/product) -> start at top
+    const resetScroll = () => {
       if (lenis && typeof lenis.scrollTo === 'function') {
         lenis.scrollTo(0, { immediate: true });
+      } else if (window.lenis && typeof window.lenis.scrollTo === 'function') {
+        window.lenis.scrollTo(0, { immediate: true });
       }
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
 
-    handleScrollReset();
+    resetScroll();
+    const rafId = requestAnimationFrame(resetScroll);
+    const timer = setTimeout(resetScroll, 60);
 
-    const rafId = requestAnimationFrame(() => {
-      handleScrollReset();
-    });
-
-    const timer = setTimeout(() => {
-      handleScrollReset();
-    }, 60);
+    prevPathRef.current = pathname;
 
     return () => {
       cancelAnimationFrame(rafId);
       clearTimeout(timer);
     };
-  }, [pathname, lenis]);
+  }, [pathname]);
 
   return null;
 }
@@ -101,27 +201,40 @@ function AnnouncementBanner() {
   );
 }
 
+import { SocketProvider } from '../context/SocketContext';
+import { IntroProvider, useIntro } from '../context/IntroContext';
+
 function AppLayoutInner({ children }) {
   const pathname = usePathname() || '/';
   const { navLoading } = useLoading();
+  const { setIntroComplete } = useIntro();
   const [isNavigating, setIsNavigating] = useState(false);
 
   const isAuthPage = pathname === '/auth';
   const isAdminPage = pathname.startsWith('/admin');
   const isStandalonePage = isAuthPage || isAdminPage;
 
-  const [isPreloading, setIsPreloading] = useState(false);
+  // Preloader runs on every fresh load and hard reload.
+  // Skipped only on standalone routes (admin/auth).
+  const [isPreloading, setIsPreloading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname;
+      if (p === '/auth' || p.startsWith('/admin')) return false;
+    }
+    return true;
+  });
 
+  // Lock body scroll while intro preloader is running
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const hasVisited = sessionStorage.getItem('miraya_visited');
-        if (!hasVisited) {
-          setIsPreloading(true);
-        }
-      }
-    } catch (_) {}
-  }, []);
+    if (isPreloading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isPreloading]);
 
   useEffect(() => {
     setIsNavigating(true);
@@ -142,9 +255,7 @@ function AppLayoutInner({ children }) {
             key="preloader"
             onComplete={() => {
               setIsPreloading(false);
-              try {
-                sessionStorage.setItem('miraya_visited', 'true');
-              } catch (_) {}
+              setIntroComplete(true);
             }}
           />
         )}
@@ -159,8 +270,6 @@ function AppLayoutInner({ children }) {
   );
 }
 
-import { SocketProvider } from '../context/SocketContext';
-
 export default function Providers({ children }) {
   return (
     <SocketProvider>
@@ -169,7 +278,9 @@ export default function Providers({ children }) {
           <ToastProvider>
             <CartProvider>
               <WishlistProvider>
-                <AppLayoutInner>{children}</AppLayoutInner>
+                <IntroProvider>
+                  <AppLayoutInner>{children}</AppLayoutInner>
+                </IntroProvider>
               </WishlistProvider>
             </CartProvider>
           </ToastProvider>

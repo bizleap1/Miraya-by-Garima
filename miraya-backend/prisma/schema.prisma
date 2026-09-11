@@ -84,6 +84,7 @@ model Product {
   saleItems          SaleItem[]
   inventoryMovements InventoryMovement[]
   returnRequests     ReturnRequest[]
+  newArrivalItems    NewArrivalItem[]
 
   @@index([category_id])
   @@index([name])
@@ -551,3 +552,38 @@ model PromotionCampaign {
   updated_at          DateTime @updatedAt
   backup_prices       Json?
 }
+
+// ─── HOMEPAGE CMS SECTIONS ───────────────────────────────────────────────────
+
+model HomepageSection {
+  id                  Int               @id @default(autoincrement())
+  section_name        String            @unique // "new_arrivals"
+  is_active           Boolean           @default(true)
+  heading             String            @default("Fresh Arrivals,\nTimeless Grace")
+  description         String?           @default("Thoughtfully designed. Beautifully detailed.\nA celebration of you, in every thread.")
+  button_text         String            @default("DISCOVER NEW ARRIVALS")
+  button_link         String            @default("/collection/all")
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+  newArrivalItems     NewArrivalItem[]
+
+  @@index([section_name])
+}
+
+model NewArrivalItem {
+  id                  Int               @id @default(autoincrement())
+  section_id          Int
+  product_id          Int
+  display_order       Int               @default(0)
+  custom_image        String?
+  crop_position       Json?             // { zoom: 1, x: 0, y: 0, objectPosition: "center 10%" }
+  tagline             String?
+  created_at          DateTime          @default(now())
+
+  section             HomepageSection   @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  product             Product           @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([section_id])
+  @@index([product_id])
+}
+

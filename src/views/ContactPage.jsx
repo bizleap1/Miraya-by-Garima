@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Clock, User, Mail, PenLine, MessageSquare, Calendar, Navigation, ExternalLink } from 'lucide-react';
+import { MapPin, Phone, Clock, User, Mail, PenLine, MessageSquare, Navigation, ExternalLink } from 'lucide-react';
 import { useStoreSettings } from '../context/StoreSettingsContext';
 import SEO from '../components/SEO';
 import './ContactPage.css';
@@ -47,7 +47,7 @@ const contactSchema = {
 };
 
 const ContactPage = () => {
-  const { support_phone, support_email, atelier_address, google_review_url } = useStoreSettings();
+  const { support_phone, support_email, atelier_address } = useStoreSettings();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -143,6 +143,18 @@ const ContactPage = () => {
                   We invite you to experience our collections in person.<br/>
                   Our doors are open for those who appreciate the finer details.
                 </p>
+              </div>
+
+              <div className="atelier-storefront-wrap">
+                <img
+                  src="/miraya-storefront.webp"
+                  alt="Miraya by Garima Flagship Atelier Storefront, Jagat Plaza Nagpur"
+                  className="atelier-storefront-img"
+                  loading="lazy"
+                />
+                <div className="atelier-storefront-badge">
+                  <span>FLAGSHIP ATELIER • NAGPUR</span>
+                </div>
               </div>
 
               <div className="info-list">

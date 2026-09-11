@@ -13,6 +13,13 @@
   width: 100%;
   height: 100%;
   z-index: 1;
+  /* Prevent video flash before preloader mounts */
+  animation: heroVideoReveal 0.01s ease 0.5s forwards;
+  opacity: 0;
+}
+
+@keyframes heroVideoReveal {
+  to { opacity: 1; }
 }
 
 .hero-video {

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useState, useMemo, useRef } from 'react';
 import { ArrowLeft, Star, Heart, ZoomIn, Search, Minus, Plus, ShieldCheck, Truck, Lock, Flower2, Check, Trash2, ShoppingBag, RotateCcw } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLenis } from 'lenis/react';
 import API_URL from '../config';
 import { getProductImage, getProductGallery } from '../utils/imageHelper';
 import ConfirmModal from '../components/ConfirmModal';
@@ -67,6 +68,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
   const { store_online, new_orders_enabled, whatsapp_number } = useStoreSettings();
 
   const isStoreOffline = !store_online || !new_orders_enabled;
+  const lenis = useLenis();
 
   const [product, setProduct] = useState(() => {
     const isInitialMatch = initialProduct && (
@@ -125,13 +127,27 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
 
   const [loading, setLoading] = useState(!isInitialProductValid);
 
-  const lastScrolledIdRef = useRef(id);
   useLayoutEffect(() => {
-    if (lastScrolledIdRef.current && lastScrolledIdRef.current !== id) {
-      window.scrollTo(0, 0);
-    }
-    lastScrolledIdRef.current = id;
-  }, [id]);
+    const scrollToTop = () => {
+      if (lenis && typeof lenis.scrollTo === 'function') {
+        lenis.scrollTo(0, { immediate: true });
+      } else if (typeof window !== 'undefined' && window.lenis && typeof window.lenis.scrollTo === 'function') {
+        window.lenis.scrollTo(0, { immediate: true });
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    scrollToTop();
+    const rafId = requestAnimationFrame(scrollToTop);
+    const timer = setTimeout(scrollToTop, 50);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timer);
+    };
+  }, [id, lenis]);
 
   useEffect(() => {
     let isSubscribed = true;

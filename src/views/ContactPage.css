@@ -221,6 +221,51 @@
 }
 
 /* Info Panel Styles */
+.atelier-storefront-wrap {
+  position: relative;
+  width: 100%;
+  height: 210px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(198, 164, 106, 0.35);
+  box-shadow: 0 10px 30px rgba(94, 10, 11, 0.08);
+}
+
+.atelier-storefront-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.atelier-storefront-wrap:hover .atelier-storefront-img {
+  transform: scale(1.05);
+}
+
+.atelier-storefront-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  background: rgba(14, 10, 9, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(198, 164, 106, 0.45);
+}
+
+.atelier-storefront-badge span {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  color: var(--gold-accent-light);
+  text-transform: uppercase;
+}
+
 .info-list {
   display: flex;
   flex-direction: column;

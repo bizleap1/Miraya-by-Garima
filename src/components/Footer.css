@@ -343,42 +343,56 @@
 
 @media (max-width: 768px) {
   .footer {
-    padding: 3rem 1.25rem 5rem 1.25rem;
+    padding: 1.6rem 1rem 1.5rem 1rem;
   }
 
   .footer-top {
     flex-direction: column;
     align-items: stretch;
     text-align: left;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .footer-brand-section {
     align-items: flex-start;
     text-align: left;
-    margin-bottom: 1rem;
-    padding-bottom: 1.5rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.8rem;
     border-bottom: 1px solid rgba(212, 175, 55, 0.2);
     width: 100%;
     max-width: 100%;
   }
 
   .footer-logo-img {
-    height: 85px;
+    height: 58px;
+    margin-bottom: 0.4rem;
     filter: drop-shadow(0 2px 8px rgba(198, 164, 106, 0.3));
+  }
+
+  .footer-desc {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.8rem;
   }
 
   .footer-socials-new {
     justify-content: flex-start;
+    gap: 0.6rem;
+  }
+
+  .footer-socials-new a {
+    width: 32px;
+    height: 32px;
   }
 
   .footer-links-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.8rem 1.25rem;
+    gap: 1rem 0.85rem;
     width: 100%;
     min-width: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
   }
 
   .footer-column-new {
@@ -395,27 +409,38 @@
   .footer-column-new:first-child ul {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem 1rem;
+    gap: 0.35rem 0.6rem;
   }
 
   .footer-heading-new {
     display: block;
     width: 100%;
     text-align: left;
-    padding-bottom: 0.4rem;
-    font-size: 0.82rem;
-    letter-spacing: 0.12em;
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.45rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
   }
 
   .heading-ornament {
     left: 0;
     transform: none;
+    font-size: 0.45rem;
+    bottom: -5px;
+  }
+
+  .footer-column-new li {
+    margin-bottom: 0.3rem;
+  }
+
+  .footer-column-new a {
+    font-size: 0.76rem;
   }
 
   .footer-boutique-section {
     justify-content: stretch;
     width: 100%;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
   }
 
   .boutique-box {
@@ -423,8 +448,8 @@
     width: 100%;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 12px;
-    padding: 1.25rem;
+    border-radius: 8px;
+    padding: 0.85rem 0.9rem;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
@@ -432,24 +457,27 @@
   .boutique-icon {
     display: flex;
     top: 0;
-    left: 1.25rem;
+    left: 1rem;
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
   }
 
   .boutique-heading {
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.76rem;
+    margin-bottom: 0.3rem;
     color: var(--gold-accent);
   }
 
   .boutique-address {
-    font-size: 0.82rem;
-    line-height: 1.5;
-    margin-bottom: 0.8rem;
+    font-size: 0.74rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
   }
 
   .boutique-contact p {
-    font-size: 0.82rem;
-    margin-bottom: 0.3rem;
+    font-size: 0.74rem;
+    margin-bottom: 0.2rem;
     word-break: break-word;
   }
 
@@ -458,19 +486,19 @@
     background: rgba(30, 3, 5, 0.95);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-radius: 10px;
-    padding: 1.25rem 0.8rem 1.75rem;
-    margin-top: 1.8rem;
+    border-radius: 8px;
+    padding: 0.75rem 0.6rem 0.85rem;
+    margin-top: 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.4rem;
     text-align: center;
   }
 
   .footer-bottom-new p {
-    font-size: 0.78rem;
-    line-height: 1.5;
+    font-size: 0.7rem;
+    line-height: 1.35;
     color: rgba(253, 246, 233, 0.85);
     max-width: 95%;
     margin: 0;
@@ -482,24 +510,121 @@
     align-items: center;
     justify-content: center;
   }
+
+  .footer-bottom-ornament svg {
+    width: 26px;
+    height: 13px;
+  }
 }
 
 @media (max-width: 480px) {
   .footer {
-    padding: 2.5rem 1rem 5.5rem 1rem;
+    padding: 1.25rem 0.75rem 1.25rem 0.75rem;
+  }
+
+  .footer-top {
+    gap: 0.8rem;
+  }
+
+  .footer-brand-section {
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.6rem;
   }
 
   .footer-logo-img {
-    height: 75px;
+    height: 48px;
+    margin-bottom: 0.3rem;
+  }
+
+  .footer-desc {
+    font-size: 0.71rem;
+    line-height: 1.35;
+    margin-bottom: 0.6rem;
+  }
+
+  .footer-socials-new {
+    gap: 0.5rem;
+  }
+
+  .footer-socials-new a {
+    width: 28px;
+    height: 28px;
+  }
+
+  .footer-socials-new a svg {
+    width: 13px;
+    height: 13px;
   }
 
   .footer-links-section {
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem 1rem;
+    gap: 0.85rem 0.65rem;
+    margin-bottom: 0.4rem;
   }
 
-  .footer-socials-new a {
-    width: 34px;
-    height: 34px;
+  .footer-column-new:first-child ul {
+    gap: 0.25rem 0.5rem;
+  }
+
+  .footer-heading-new {
+    font-size: 0.72rem;
+    margin-bottom: 0.35rem;
+    padding-bottom: 0.25rem;
+    letter-spacing: 0.08em;
+  }
+
+  .footer-column-new li {
+    margin-bottom: 0.22rem;
+  }
+
+  .footer-column-new a {
+    font-size: 0.71rem;
+  }
+
+  .footer-boutique-section {
+    margin-top: 0.4rem;
+  }
+
+  .boutique-box {
+    padding: 0.7rem 0.75rem;
+    border-radius: 6px;
+  }
+
+  .boutique-icon {
+    left: 0.75rem;
+    width: 22px;
+    height: 22px;
+  }
+
+  .boutique-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .boutique-heading {
+    font-size: 0.72rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .boutique-address {
+    font-size: 0.69rem;
+    line-height: 1.35;
+    margin-bottom: 0.35rem;
+  }
+
+  .boutique-contact p {
+    font-size: 0.69rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .footer-bottom-new {
+    padding: 0.6rem 0.5rem 0.7rem;
+    margin-top: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .footer-bottom-new p {
+    font-size: 0.64rem;
+    line-height: 1.3;
   }
 }

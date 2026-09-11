@@ -1,7 +1,8 @@
 'use client';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
-import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLenis } from 'lenis/react';
 import { Heart, ChevronDown, ChevronUp, LayoutGrid, List, RefreshCw, ShoppingBag, Sparkles, Gem, Shirt, ArrowRight, Layers, X, Check, Trash2 } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
@@ -48,6 +49,7 @@ const CategoryPage = () => {
   const location = useLocation();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { cartItems, addToCart, removeFromCart } = useCart();
+  const lenis = useLenis();
   
   const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState(location.state?.filters || []);
@@ -149,10 +151,40 @@ const CategoryPage = () => {
     return Array.from(new Set([...defaults, ...dbSlugs, ...sampleSlugs])).filter(Boolean);
   }, [dbCategories, samples]);
 
+  const scrollToProductsTop = () => {
+    if (typeof window === 'undefined') return;
+    const target = document.querySelector('.sort-bar-top') || document.querySelector('.category-layout');
+    const targetY = target
+      ? Math.max(0, target.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop) - 95)
+      : 0;
+
+    if (lenis && typeof lenis.scrollTo === 'function') {
+      lenis.scrollTo(targetY, { duration: 0.8 });
+    } else if (typeof window !== 'undefined' && window.lenis && typeof window.lenis.scrollTo === 'function') {
+      window.lenis.scrollTo(targetY, { duration: 0.8 });
+    } else {
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  };
+
+  const handleProductCardClick = () => {
+    if (lenis && typeof lenis.scrollTo === 'function') {
+      lenis.scrollTo(0, { immediate: true });
+    } else if (typeof window !== 'undefined' && window.lenis && typeof window.lenis.scrollTo === 'function') {
+      window.lenis.scrollTo(0, { immediate: true });
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  };
+
   const handleCheckboxChange = (setState, value) => {
     setState(prev => 
       prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
     );
+    scrollToProductsTop();
   };
 
 
@@ -263,7 +295,6 @@ const CategoryPage = () => {
       }
     };
     fetchProducts();
-    const interval = setInterval(fetchProducts, 12000);
 
     const onFocus = () => fetchProducts();
     window.addEventListener('focus', onFocus);
@@ -274,23 +305,77 @@ const CategoryPage = () => {
     }
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onFocus);
     };
   }, [category, location.state]);
 
+  const isInitialMount = useRef(true);
+  const prevCategoryRef = useRef(category);
+
   useLayoutEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        if (lenis && typeof lenis.scrollTo === 'function') {
+          lenis.scrollTo(element, { offset: -95, duration: 0.8 });
+        } else {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    }
+
+    // If user returned via back navigation, restore their previous scroll position
+    let savedY = 0;
+    try {
+      savedY = Number(sessionStorage.getItem('miraya_scroll_' + window.location.pathname) || 0);
+    } catch (_) {}
+
+    if (savedY > 0 && isInitialMount.current) {
+      isInitialMount.current = false;
+      prevCategoryRef.current = category;
+      if (lenis && typeof lenis.scrollTo === 'function') {
+        lenis.scrollTo(savedY, { immediate: true });
+      } else if (typeof window !== 'undefined' && window.lenis) {
+        window.lenis.scrollTo(savedY, { immediate: true });
+      }
+      window.scrollTo({ top: savedY, behavior: 'instant' });
+      document.documentElement.scrollTop = savedY;
+      document.body.scrollTop = savedY;
+      return;
+    }
+
+    // Only scroll to top on initial page mount or when the category parameter changes!
+    if (isInitialMount.current || (prevCategoryRef.current && prevCategoryRef.current !== category)) {
+      isInitialMount.current = false;
+      prevCategoryRef.current = category;
+      if (lenis && typeof lenis.scrollTo === 'function') {
+        lenis.scrollTo(0, { immediate: true });
+      } else if (typeof window !== 'undefined' && window.lenis && typeof window.lenis.scrollTo === 'function') {
+        window.lenis.scrollTo(0, { immediate: true });
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [category, location.hash, lenis]);
+
+  // When products are fetched and rendered, if URL had a hash, scroll to that card
+  useEffect(() => {
     if (location.hash && samples.length > 0) {
       const id = location.hash.replace('#', '');
       const element = document.getElementById(id);
       if (element) {
-        element.scrollIntoView({ behavior: 'instant', block: 'center' });
-        return;
+        if (lenis && typeof lenis.scrollTo === 'function') {
+          lenis.scrollTo(element, { offset: -95, duration: 0.8 });
+        } else {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
     }
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [location.hash, samples, category]);
+  }, [samples, location.hash, lenis]);
 
   const handleWishlistToggle = (item, e) => {
     e.preventDefault();
@@ -359,23 +444,8 @@ const CategoryPage = () => {
         keywords={`${displayTitle}, Designer ${displayTitle} Nagpur, Miraya by Garima ${displayTitle}, Luxury Ethnic Wear`}
         schemaJson={categorySchema}
       />
-      <div className="category-header-banner">
-        <div className="banner-content">
-          <div className="pre-heading-container">
-            <span className="gold-diamond">◈</span>
-            <span className="pre-heading">EXCLUSIVE COLLECTION</span>
-            <span className="gold-diamond">◈</span>
-          </div>
-          <h1>{displayTitle}</h1>
-          <p>Explore our exclusive collection of handcrafted {displayTitle.toLowerCase()},<br/>where timeless tradition meets modern elegance.</p>
-          <div className="ornament-container">
-            <div className="line"></div>
-            <div className="diamond">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="ornament-icon"><path d="M12 2L15 12L12 22L9 12Z"/></svg>
-            </div>
-            <div className="line"></div>
-          </div>
-        </div>
+      <div className="category-header-banner" role="banner" aria-label={displayTitle}>
+        <h1 className="sr-only">{displayTitle}</h1>
       </div>
       <div className="floral-bg-category"></div>
       <div className="container category-layout">
@@ -442,6 +512,7 @@ const CategoryPage = () => {
 
             <button className="clear-filters-btn" onClick={() => {
               setSelectedCategories([]);
+              scrollToProductsTop();
             }}>
               RESET FILTERS <RefreshCw size={14} className="ml-2" />
             </button>
@@ -460,7 +531,10 @@ const CategoryPage = () => {
                 <select
                   className="sort-select"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    scrollToProductsTop();
+                  }}
                   aria-label="Sort products"
                 >
                   <option value="featured">Sort by: Featured</option>
@@ -519,84 +593,66 @@ const CategoryPage = () => {
                   id={`item-${item.id}`} 
                   className="premium-card"
                 >
-                  <div className="card-image-wrapper" style={{ position: 'relative' }}>
+                  <div className="card-image-wrapper">
                     {isItemOutOfStock && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '12px',
-                        left: '12px',
-                        background: 'rgba(231, 76, 60, 0.95)',
-                        color: '#ffffff',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        letterSpacing: '1px',
-                        padding: '4px 10px',
-                        borderRadius: '30px',
-                        zIndex: 5,
-                        textTransform: 'uppercase',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                      }}>
+                      <span className="card-badge-stock">
                         OUT OF STOCK
                       </span>
                     )}
-                    {/* Sale / Strikethrough Discount Badge */}
+                    {/* Sale / Discount Badge */}
                     {!isItemOutOfStock && (item.is_on_sale || (item.mrp_price && Number(item.mrp_price) > Number(item.price)) || item.discount_percent) && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '12px',
-                        left: '12px',
-                        background: 'linear-gradient(135deg, #27ae60, #1e824c)',
-                        color: '#ffffff',
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.5px',
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        zIndex: 5,
-                        textTransform: 'uppercase',
-                        boxShadow: '0 2px 8px rgba(39, 174, 96, 0.35)'
-                      }}>
+                      <span className="card-badge-sale">
                         {item.promo_label || (item.discount_percent ? `${item.discount_percent}% OFF` : 'SPECIAL SALE')}
                       </span>
                     )}
 
                     <button 
+                      type="button"
                       className={`wishlist-btn-card ${isWishlisted ? 'active' : ''}`}
                       onClick={(e) => handleWishlistToggle(item, e)}
+                      aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                     >
                       <Heart size={16} fill={isWishlisted ? "currentColor" : "none"} />
                     </button>
                     <Link 
                       to={`/product/${item.category}/${item.id}`} 
                       state={{ product: item, from: `/collection/${category}`, filters: selectedCategories }}
-                      style={{ display: 'block', height: '100%' }}
+                      className="card-image-link"
+                      onClick={handleProductCardClick}
                     >
                       <img 
                         src={getProductImage(item.image || item.image_url)} 
                         alt={item.title || item.name} 
                         loading="lazy" 
                         decoding="async"
-                        style={isItemOutOfStock ? { filter: 'grayscale(30%) opacity(0.85)' } : {}}
+                        className={`card-product-img ${isItemOutOfStock ? 'out-of-stock-img' : ''}`}
                       />
                     </Link>
                   </div>
                   <div className="card-info">
-                    <div className="title-price-row">
-                      <Link 
-                        to={`/product/${item.category || category}/${item.id}`}
-                        state={{ product: item, from: `/collection/${category}`, filters: selectedCategories }}
-                        style={{ textDecoration: 'none', color: 'inherit', display: 'block', flex: 1 }}
-                      >
-                        <h3>{item.title || item.name}</h3>
-                      </Link>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <span className="product-price">{formatPrice(item.price)}</span>
-                        {item.mrp_price && Number(item.mrp_price) > Number(item.price) && (
-                          <del style={{ fontSize: '0.8rem', color: '#999', textDecoration: 'line-through', fontWeight: 500 }}>
-                            {formatPrice(item.mrp_price)}
-                          </del>
-                        )}
-                      </div>
+                    <span className="card-category-kicker">
+                      {formatCategoryName(item.category || category)}
+                    </span>
+                    <Link 
+                      to={`/product/${item.category || category}/${item.id}`}
+                      state={{ product: item, from: `/collection/${category}`, filters: selectedCategories }}
+                      className="card-title-link"
+                      onClick={handleProductCardClick}
+                    >
+                      <h3 className="card-product-title">{item.title || item.name}</h3>
+                    </Link>
+                    <div className="card-pricing-row">
+                      <span className="product-price">{formatPrice(item.price)}</span>
+                      {item.mrp_price && Number(item.mrp_price) > Number(item.price) && (
+                        <del className="product-mrp-price">
+                          {formatPrice(item.mrp_price)}
+                        </del>
+                      )}
+                      {item.discount_percent && (
+                        <span className="product-discount-pill">
+                          {item.discount_percent}% OFF
+                        </span>
+                      )}
                     </div>
 
                     {/* Desktop List View Product Information */}
@@ -673,6 +729,7 @@ const CategoryPage = () => {
                             className="buy-now-card-btn"
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleProductCardClick();
                             }}
                           >
                             BUY NOW <ArrowRight size={13} className="ml-1" />
