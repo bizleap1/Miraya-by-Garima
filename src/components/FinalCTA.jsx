@@ -4,7 +4,12 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './FinalCTA.css';
 
-const FinalCTA = () => {
+const FinalCTA = ({
+  heading = "YOUR NEXT SIGNATURE LOOK AWAITS",
+  subtitle = "Discover timeless pieces crafted to become part of your story.",
+  buttonText = "EXPLORE COLLECTION",
+  buttonLink = "/collection/all"
+} = {}) => {
   return (
     <section className="final-cta-section">
       <div className="final-cta-overlay"></div>
@@ -17,12 +22,12 @@ const FinalCTA = () => {
           transition={{ duration: 0.8 }}
           className="final-cta-inner"
         >
-          <h2 className="cta-title">YOUR NEXT SIGNATURE LOOK AWAITS</h2>
+          <h2 className="cta-title">{heading}</h2>
           <p className="cta-desc">
-            Discover timeless pieces crafted to become part of your story.
+            {subtitle}
           </p>
-          <Link to="/collection/all" className="cta-button">
-            EXPLORE COLLECTION <span>&rarr;</span>
+          <Link to={buttonLink} className="cta-button">
+            {buttonText} <span>&rarr;</span>
           </Link>
         </motion.div>
       </div>

@@ -32,7 +32,11 @@ const bridesData = [
   }
 ];
 
-const RealBrides = () => {
+const RealBrides = ({
+  title = "Real Queens",
+  subtitle = "Real stories. Real style. Loved and worn by the Miraya community.",
+  tagline = "CLIENT DIARIES"
+} = {}) => {
   const [activeIndex, setActiveIndex] = useState(1);
 
   const nextSlide = () => {
@@ -64,12 +68,18 @@ const RealBrides = () => {
         <div className="section-header text-center">
           <div className="subtitle-wrapper">
             <span className="subtitle-line"></span>
-            <span className="subtitle">CLIENT DIARIES</span>
+            <span className="subtitle">{tagline}</span>
             <span className="subtitle-line"></span>
           </div>
-          <h2 className="title"><i>Real</i> Queens</h2>
+          <h2 className="title">
+            {title === "Real Queens" ? (
+              <><i>Real</i> Queens</>
+            ) : (
+              <>{title}</>
+            )}
+          </h2>
           <p className="description">
-            Real stories. Real style.<br className="mobile-only-br" /> Loved and worn by the Miraya community.
+            {subtitle}
           </p>
         </div>
 

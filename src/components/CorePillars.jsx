@@ -49,7 +49,11 @@ const cardVariants = {
   show: { opacity: 1, y: 0, scale: 1, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } },
 };
 
-const CorePillars = () => {
+const CorePillars = ({
+  title = "THE CORE PILLARS OF MIRAYA",
+  tagline = "OUR PHILOSOPHY",
+  subtitle = "Rooted in tradition. Designed for today. Created to inspire for generations."
+} = {}) => {
   return (
     <section className="core-pillars">
       <div className="pillars-container">
@@ -62,7 +66,7 @@ const CorePillars = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            OUR PHILOSOPHY
+            {tagline}
           </motion.h4>
           <motion.h2
             className="pillars-title"
@@ -71,7 +75,7 @@ const CorePillars = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.1 }}
           >
-            THE CORE PILLARS OF MIRAYA
+            {title}
           </motion.h2>
           <motion.p
             className="pillars-desc"
@@ -80,7 +84,7 @@ const CorePillars = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Rooted in tradition. Designed for today. Created to inspire for generations.
+            {subtitle}
           </motion.p>
         </div>
 

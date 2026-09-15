@@ -67,7 +67,12 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
 };
 
-const NewArrivals = () => {
+const NewArrivals = ({
+  heading: propHeading,
+  description: propDescription,
+  buttonText: propButtonText,
+  buttonLink: propButtonLink,
+} = {}) => {
   const sectionRef = useRef(null);
 
   // Dynamic CMS State
@@ -199,6 +204,10 @@ const NewArrivals = () => {
   }
 
   const displayProducts = cmsData.items.length ? cmsData.items : DEFAULT_PRODUCTS;
+  const activeHeading = propHeading || cmsData.heading;
+  const activeDescription = propDescription || cmsData.description;
+  const activeButtonText = propButtonText || cmsData.button_text;
+  const activeButtonLink = propButtonLink || cmsData.button_link;
 
   return (
     <section className="ed-na-section" ref={sectionRef}>
@@ -221,16 +230,16 @@ const NewArrivals = () => {
           </motion.div>
 
           <motion.h2 className="ed-na-heading" variants={itemVariants} style={{ whiteSpace: 'pre-line' }}>
-            {cmsData.heading}
+            {activeHeading}
           </motion.h2>
 
           <motion.p className="ed-na-desc" variants={itemVariants} style={{ whiteSpace: 'pre-line' }}>
-            {cmsData.description}
+            {activeDescription}
           </motion.p>
 
           <motion.div variants={itemVariants}>
-            <Link to={cmsData.button_link || '/collection/all'} className="ed-na-cta">
-              {cmsData.button_text} <span className="arrow">→</span>
+            <Link to={activeButtonLink || '/collection/all'} className="ed-na-cta">
+              {activeButtonText} <span className="arrow">→</span>
             </Link>
           </motion.div>
 

@@ -27,7 +27,16 @@ const staggerContainer = {
   }
 };
 
-const Hero = () => {
+const Hero = ({
+  tagline = "MIRAYA BY GARIMA",
+  heading,
+  titleLine1 = "The Art of",
+  titleLine2 = "Elegance",
+  description = "Timeless ethnic wear, thoughtfully crafted for the modern wardrobe.",
+  buttonText = "Explore Collection",
+  buttonLink = "/collection/all",
+  videoUrl = "/0911_hero.mp4"
+} = {}) => {
   const containerRef = useRef(null);
   
   // Parallax effects
@@ -41,6 +50,9 @@ const Hero = () => {
   const textY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   const textOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+  const displayLine1 = heading ? heading.split(" ")[0] || titleLine1 : titleLine1;
+  const displayLine2 = heading ? heading.split(" ").slice(1).join(" ") || titleLine2 : titleLine2;
+
   return (
     <section className="hero" ref={containerRef} style={{ overflow: 'hidden', position: 'relative' }}>
       {/* Video Background */}
@@ -50,7 +62,7 @@ const Hero = () => {
       >
         <video
           className="hero-video"
-          src="/0911_hero.mp4"
+          src={videoUrl || "/0911_hero.mp4"}
           autoPlay
           muted
           loop
@@ -74,7 +86,7 @@ const Hero = () => {
           {/* Subtitle */}
           <div className="hero-subtitle-container">
             <motion.div variants={textReveal} className="subtitle-wrapper">
-              <span className="subtitle gold-shimmer-text">MIRAYA BY GARIMA</span>
+              <span className="subtitle gold-shimmer-text">{tagline}</span>
               <div className="hero-divider">
                 <svg width="100%" height="15" viewBox="0 0 250 15" preserveAspectRatio="xMinYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                   <motion.line variants={drawSVG} x1="0" y1="7.5" x2="90" y2="7.5" stroke="#dfc28d" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
@@ -91,10 +103,10 @@ const Hero = () => {
           <div className="hero-title-wrapper">
             <h1 className="hero-title">
               <div className="hero-title-line-1">
-                <motion.span variants={textReveal} className="hero-title-italic">The Art of</motion.span>
+                <motion.span variants={textReveal} className="hero-title-italic">{displayLine1}</motion.span>
               </div>
               <div className="hero-title-line-2">
-                <motion.span variants={textReveal} className="hero-title-bold gold-shimmer-text">Elegance</motion.span>
+                <motion.span variants={textReveal} className="hero-title-bold gold-shimmer-text">{displayLine2}</motion.span>
               </div>
             </h1>
           </div>
@@ -102,7 +114,7 @@ const Hero = () => {
           {/* Description */}
           <div style={{ overflow: "hidden", padding: "0 20px", marginLeft: "-20px" }}>
             <motion.div variants={textReveal}>
-              <p className="hero-description">Timeless ethnic wear, thoughtfully crafted for the modern wardrobe.</p>
+              <p className="hero-description">{description}</p>
             </motion.div>
           </div>
           
@@ -115,8 +127,8 @@ const Hero = () => {
               whileTap={{ scale: 0.95 }}
               style={{ display: "inline-block" }}
             >
-              <Link to="/collection/all" className="btn btn-hollow-gold btn-luxury">
-                Explore Collection <span className="btn-arrow">⟶</span>
+              <Link to={buttonLink || "/collection/all"} className="btn btn-hollow-gold btn-luxury">
+                {buttonText || "Explore Collection"} <span className="btn-arrow">⟶</span>
               </Link>
             </motion.div>
           </div>

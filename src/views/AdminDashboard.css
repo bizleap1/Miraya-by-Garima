@@ -49,7 +49,7 @@ button {
   background: var(--miraya-bg);
 }
 
-/* SIDEBAR */
+/* SIDEBAR (Smooth Mouse Wheel Scrolling without visible scrollbar bar) */
 .admin-sidebar {
   width: 255px;
   height: 100vh;
@@ -60,6 +60,16 @@ button {
   display: flex;
   flex-direction: column;
   z-index: 50;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE & Edge */
+}
+
+.admin-sidebar::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .brand-area {
@@ -68,6 +78,7 @@ button {
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid var(--miraya-border);
+  flex-shrink: 0 !important;
 }
 
 .brand-logo {
@@ -99,6 +110,37 @@ button {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overscroll-behavior-y: contain;
+}
+
+/* Global scrollbar bar removal — smooth mouse wheel scrolling everywhere */
+html,
+body,
+.admin-shell,
+.admin-main,
+.page-content,
+.admin-sidebar,
+.sidebar-nav {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.admin-shell::-webkit-scrollbar,
+.admin-main::-webkit-scrollbar,
+.page-content::-webkit-scrollbar,
+.admin-sidebar::-webkit-scrollbar,
+.sidebar-nav::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .nav-item {
@@ -133,6 +175,7 @@ button {
   margin-top: auto;
   padding: 16px;
   border-top: 1px solid var(--miraya-border);
+  flex-shrink: 0 !important;
 }
 
 .storefront-link {
@@ -1536,6 +1579,15 @@ button {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .admin-sidebar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   .admin-sidebar.sidebar-open {
@@ -1554,6 +1606,16 @@ button {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .admin-sidebar .sidebar-nav::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   .admin-sidebar .nav-item {

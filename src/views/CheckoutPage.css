@@ -16,6 +16,14 @@
   --checkout-text-muted: #6b635b;
 }
 
+.checkout-page-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #FAF7F2;
+  overflow-x: hidden;
+}
+
 .checkout-page {
   position: relative;
   min-height: 100vh;
@@ -24,7 +32,7 @@
   margin: 0 auto;
   font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
   color: var(--checkout-text-dark);
-  background-color: transparent;
+  background-color: #FAF7F2;
   overflow: hidden;
 }
 

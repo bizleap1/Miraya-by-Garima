@@ -52,7 +52,14 @@ const StatCard = ({ value, label, suffix = '+', delay = 0 }) => {
   );
 };
 
-const OurStory = () => {
+const OurStory = ({
+  title = "The Miraya Legacy",
+  tagline = "OUR ESSENCE",
+  description = "Where Indian heritage meets contemporary elegance. Miraya brings together timeless craftsmanship, luxurious fabrics, and modern silhouettes to create occasion wear that feels both rooted and effortlessly refined.",
+  buttonText = "DISCOVER OUR STORY →",
+  buttonLink = "/about",
+  imageUrl = "/products/Lehenga-Pink Blush/1.JPG"
+} = {}) => {
   return (
     <section className="our-story-section">
       <div className="our-story-bg-sketch"></div>
@@ -68,7 +75,7 @@ const OurStory = () => {
             transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
           >
 
-            <img src="/products/Lehenga-Pink Blush/1.JPG" alt="The Miraya Legacy" className="our-story-image" loading="lazy" />
+            <img src={imageUrl} alt={title} className="our-story-image" loading="lazy" />
             <div className="img-shimmer-overlay" />
           </motion.div>
         </div>
@@ -81,13 +88,18 @@ const OurStory = () => {
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h4 className="story-subtitle">OUR ESSENCE</h4>
+            <h4 className="story-subtitle">{tagline}</h4>
             <Ornament />
-            <h2 className="story-title">The Miraya <span className="story-title-script">Legacy</span></h2>
+            <h2 className="story-title">
+              {title.includes("Legacy") ? (
+                <>The Miraya <span className="story-title-script">Legacy</span></>
+              ) : (
+                <>{title}</>
+              )}
+            </h2>
 
             <p className="story-description">
-              Where Indian heritage meets contemporary elegance.
-              Miraya brings together timeless craftsmanship, luxurious fabrics, and modern silhouettes to create occasion wear that feels both rooted and effortlessly refined.
+              {description}
             </p>
 
             <div className="story-stats-grid">
@@ -105,8 +117,8 @@ const OurStory = () => {
               transition={{ type: 'spring', stiffness: 300 }}
               style={{ display: 'inline-block' }}
             >
-              <Link to="/about" className="subtle-discover-btn" onClick={() => window.scrollTo(0, 0)}>
-                DISCOVER OUR STORY &rarr;
+              <Link to={buttonLink} className="subtle-discover-btn" onClick={() => window.scrollTo(0, 0)}>
+                {buttonText}
               </Link>
             </motion.div>
           </motion.div>

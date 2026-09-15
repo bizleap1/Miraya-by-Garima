@@ -51,10 +51,9 @@ import AdminReturnsSection from "../components/admin/AdminReturnsSection";
 import AdminCustomersSection from "../components/admin/AdminCustomersSection";
 import AdminCategoriesSection from "../components/admin/AdminCategoriesSection";
 import AdminCouponsSection from "../components/admin/AdminCouponsSection";
-import AdminCancellationsSection from "../components/admin/AdminCancellationsSection";
 import AdminStoreSettingsSection from "../components/admin/AdminStoreSettingsSection";
 import AdminPromotionsSection from "../components/admin/AdminPromotionsSection";
-import AdminNewArrivalsSection from "../components/admin/AdminNewArrivalsSection";
+import ThemeVisualCustomizer from "../components/admin/ThemeVisualCustomizer";
 import { Sparkles } from "lucide-react";
 import { exportStoreAuditPDF } from "../utils/pdfExportHelper";
 import { useSocket } from "../context/SocketContext";
@@ -71,7 +70,7 @@ const menuItems = [
   { id: "exchanges", label: "Exchanges", icon: RefreshCw },
   { id: "customers", label: "Customers", icon: Users },
   { id: "categories", label: "Categories", icon: Layers3 },
-  { id: "homepage-sections", label: "Homepage Sections", icon: Sparkles },
+  { id: "homepage-sections", label: "Theme Customizer", icon: Sparkles },
   { id: "coupons", label: "Coupons", icon: Tag },
   { id: "promotions", label: "Promotions & Pricing", icon: Percent },
   { id: "reviews", label: "Reviews", icon: Star },
@@ -479,7 +478,12 @@ function SalesChart({ data = [], orders = [] }) {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined" && window.location.pathname.includes("/admin/customizer")) {
+      return "homepage-sections";
+    }
+    return "dashboard";
+  });
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -987,8 +991,26 @@ export default function AdminDashboard() {
     );
   }
 
+  // DEDICATED FULL-PAGE THEME CUSTOMIZER (NO SIDEBAR!)
+  if (activeTab === "homepage-sections") {
+    return (
+      <div className="theme-customizer-standalone-page" data-lenis-prevent="true">
+        <ThemeVisualCustomizer
+          token={token}
+          API_BASE_URL={API}
+          onBack={() => {
+            setActiveTab("dashboard");
+            if (typeof window !== "undefined" && window.history?.pushState) {
+              window.history.pushState(null, '', '/admin');
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="admin-shell">
+    <div className="admin-shell" data-lenis-prevent="true">
       {/* Mobile Backdrop */}
       {mobileSidebarOpen && (
         <div
@@ -1004,7 +1026,7 @@ export default function AdminDashboard() {
       )}
 
       {/* SIDEBAR */}
-      <aside className={`admin-sidebar ${mobileSidebarOpen ? "sidebar-open" : ""}`}>
+      <aside className={`admin-sidebar ${mobileSidebarOpen ? "sidebar-open" : ""}`} data-lenis-prevent="true">
         <div className="brand-area" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <img src="/logoR.png" alt="Miraya by Garima" className="brand-logo" />
           <button
@@ -1017,7 +1039,7 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" data-lenis-prevent="true">
           {menuItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -1026,6 +1048,9 @@ export default function AdminDashboard() {
               onClick={() => {
                 setActiveTab(id);
                 setMobileSidebarOpen(false);
+                if (id === "homepage-sections" && typeof window !== "undefined" && window.history?.pushState) {
+                  window.history.pushState(null, '', '/admin/customizer');
+                }
               }}
             >
               <Icon size={19} strokeWidth={1.8} />
@@ -1608,15 +1633,6 @@ export default function AdminDashboard() {
             />
           )}
 
-          {activeTab === "cancellations" && (
-            <AdminCancellationsSection
-              orders={orders}
-              token={token}
-              API_BASE_URL={API}
-              onRefresh={loadDashboard}
-            />
-          )}
-
           {activeTab === "exchanges" && (
             <AdminReturnsSection
               token={token}
@@ -1656,15 +1672,6 @@ export default function AdminDashboard() {
               categories={categories}
               token={token}
               onRefresh={loadDashboard}
-            />
-          )}
-
-          {activeTab === "homepage-sections" && (
-            <AdminNewArrivalsSection
-              products={products}
-              categories={categories}
-              token={token}
-              API_BASE_URL={API}
             />
           )}
 

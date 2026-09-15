@@ -197,27 +197,124 @@
   color: rgba(94, 10, 11, 0.4);
 }
 
-.submit-btn-solid {
-  background-color: #4a0d0d;
+.submit-btn-solid,
+.submit-btn-whatsapp {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 1.2rem;
+  padding: 1.1rem 1.5rem;
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-weight: 500;
+  letter-spacing: 0.12em;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 1rem;
+  gap: 10px;
+  margin-top: 0.8rem;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.28);
+  width: 100%;
 }
 
-.submit-btn-solid:hover {
-  background-color: #310808;
+.submit-btn-solid:hover,
+.submit-btn-whatsapp:hover {
+  background: linear-gradient(135deg, #20bd5a 0%, #0e7064 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.38);
+}
+
+.submit-btn-solid:active,
+.submit-btn-whatsapp:active {
+  transform: translateY(0);
+}
+
+.submit-btn-whatsapp .wa-btn-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.submit-btn-whatsapp .wa-arrow {
+  transition: transform 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.submit-btn-whatsapp:hover .wa-arrow {
+  transform: translateX(4px);
+}
+
+.form-feedback-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #128C7E;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.6rem;
+  background: rgba(37, 211, 102, 0.12);
+  border: 1px solid rgba(37, 211, 102, 0.25);
+  border-radius: 6px;
+  margin-top: 0.2rem;
+}
+
+.contact-wa-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0.4rem 0;
+  color: rgba(94, 10, 11, 0.45);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.contact-wa-divider::before,
+.contact-wa-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dashed rgba(198, 164, 106, 0.45);
+}
+
+.contact-wa-divider span {
+  padding: 0 12px;
+}
+
+.direct-wa-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+  color: #128C7E;
+  border: 1px solid rgba(18, 140, 126, 0.35);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.direct-wa-btn:hover {
+  background-color: rgba(37, 211, 102, 0.08);
+  border-color: #25D366;
+  color: #0d6e63;
+  transform: translateY(-1px);
+}
+
+.wa-info-icon-wrapper {
+  opacity: 1 !important;
 }
 
 /* Info Panel Styles */

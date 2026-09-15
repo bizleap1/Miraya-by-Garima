@@ -4,7 +4,10 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './Lookbook.css';
 
-const Lookbook = () => {
+const Lookbook = ({
+  title = "Stories in Style",
+  tagline = "THE MIRAYA EDIT"
+} = {}) => {
   return (
     <section className="lookbook-section">
       <div className="lookbook-container">
@@ -17,7 +20,7 @@ const Lookbook = () => {
             className="lookbook-subtitle"
           >
             <span className="line" />
-            THE MIRAYA EDIT
+            {tagline}
             <span className="line" />
           </motion.div>
           <motion.h2
@@ -27,7 +30,7 @@ const Lookbook = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="lookbook-title"
           >
-            Stories in Style
+            {title}
           </motion.h2>
         </div>
 

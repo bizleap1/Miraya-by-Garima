@@ -179,6 +179,20 @@ const CheckoutPage = () => {
     }
   }, [online_payments, cod_enabled, paymentMethod]);
 
+  // Ensure checkout page background is always luxury cream
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.style.backgroundColor = '#FAF7F2';
+      document.documentElement.style.backgroundColor = '#FAF7F2';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.backgroundColor = '';
+        document.documentElement.style.backgroundColor = '';
+      }
+    };
+  }, []);
+
   // Initial Data Load & Mandatory Authentication Gate
   useEffect(() => {
     const token = localStorage.getItem('token');

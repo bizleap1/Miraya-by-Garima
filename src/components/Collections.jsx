@@ -52,7 +52,11 @@ const collectionsData = [
   }
 ];
 
-const Collections = () => {
+const Collections = ({
+  title = "Our Collections",
+  subtitle = "Discover a world where heritage meets modernity. Each collection is a testament to meticulous craftsmanship and timeless elegance.",
+  tagline = "CURATED MASTERPIECES"
+} = {}) => {
   const [hoveredIndex, setHoveredIndex] = useState(0); // Default first item expanded
 
   return (
@@ -70,14 +74,18 @@ const Collections = () => {
           >
             <div className="style-guide-label">
               <span className="line" />
-              CURATED MASTERPIECES
+              {tagline}
               <span className="line" />
             </div>
             <h2 className="collection-main-title">
-              Our <i>Collections</i>
+              {title === "Our Collections" ? (
+                <>Our <i>Collections</i></>
+              ) : (
+                <>{title}</>
+              )}
             </h2>
             <p className="collection-main-desc">
-              Discover a world where heritage meets modernity. Each collection is a testament to meticulous craftsmanship and timeless elegance.
+              {subtitle}
             </p>
           </motion.div>
         </div>

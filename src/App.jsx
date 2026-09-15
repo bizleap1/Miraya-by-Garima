@@ -46,6 +46,14 @@ function ScrollManager() {
   }, [lenis]);
 
   useEffect(() => {
+    const isAdmin = location.pathname.startsWith('/admin');
+    if (lenis) {
+      if (isAdmin) {
+        if (typeof lenis.stop === 'function') lenis.stop();
+      } else {
+        if (typeof lenis.start === 'function') lenis.start();
+      }
+    }
     if (lenis && typeof lenis.scrollTo === 'function') {
       lenis.scrollTo(0, { immediate: true });
     } else if (typeof window !== 'undefined' && window.lenis && typeof window.lenis.scrollTo === 'function') {
@@ -54,7 +62,7 @@ function ScrollManager() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [location.pathname]);
+  }, [location.pathname, lenis]);
 
   return null;
 }
