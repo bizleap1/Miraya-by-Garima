@@ -19,6 +19,7 @@ const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const NewArrivalsPage = lazy(() => import('./views/NewArrivalsPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const AccountPage = lazy(() => import('./pages/AccountPage'));
@@ -128,6 +129,7 @@ function AppInner() {
                   <Route path="/product/:category/:id" element={<ProductDetailPage />} />
                   <Route path="/wishlist" element={<WishlistPage />} />
                   <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/new-arrivals" element={<NewArrivalsPage />} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/account" element={<AccountPage />} />

@@ -59,7 +59,7 @@ const SearchPage = () => {
   return (
     <div className="search-page">
       <div className="search-header">
-        <h1>Search Results</h1>
+        <h1>Search <i>Results</i></h1>
         {query ? (
           <p>Showing {results.length} result{results.length !== 1 ? 's' : ''} for "{query}"</p>
         ) : (

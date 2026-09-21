@@ -35,7 +35,7 @@ const BrandVoice = () => {
             </div>
             
             <h2 className="brand-voice-title">
-              <span className="script-text">The Essence</span>
+              <i>The Essence</i>
               Of Miraya
             </h2>
             

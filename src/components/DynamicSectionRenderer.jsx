@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
-import Hero from './Hero';
-import NewArrivals from './NewArrivals';
+import HeroSlider from './HeroSlider';
+import ShopByCategory from './ShopByCategory';
 import PremiumSlider from './PremiumSlider';
 import OurStory from './OurStory';
 import Collections from './Collections';
@@ -13,8 +13,9 @@ import { DEFAULT_SECTION_ORDER } from '../constants/defaultHomepageLayout';
 
 // Section component registry map
 const COMPONENT_REGISTRY = {
-  Hero,
-  NewArrivals,
+  Hero: HeroSlider,
+  NewArrivals: ShopByCategory, // Keep the key as NewArrivals for DB backward compatibility, but map to new component
+  ShopByCategory,
   PremiumSlider,
   OurStory,
   Collections,

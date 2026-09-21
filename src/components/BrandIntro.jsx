@@ -12,8 +12,7 @@ const BrandIntro = () => {
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 1 }}
         >
-          <h2 className="script-title">Discover</h2>
-          <h1 className="main-title">Miraya</h1>
+          <h2 className="main-title" style={{ marginTop: '0', marginBottom: '0.5rem', lineHeight: '1.2' }}>Discover <i>Miraya</i></h2>
           <p className="brand-subtitle">A LEGACY OF CRAFTSMANSHIP & MODERN ELEGANCE</p>
           <div className="gold-line"></div>
         </motion.div>

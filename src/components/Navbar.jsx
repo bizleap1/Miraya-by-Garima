@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, User, ShoppingCart, ShoppingBag, Heart, Settings, LogOut, Bell } from 'lucide-react';
+import { Menu, X, ChevronDown, User, ShoppingCart, ShoppingBag, Heart, Settings, LogOut, Bell, Search } from 'lucide-react';
 import { useLenis } from 'lenis/react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
@@ -16,6 +16,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [womenswearDropdownOpen, setWomenswearDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
@@ -174,10 +175,9 @@ const Navbar = () => {
 
 
   
-  // Pages with dark hero sections at the top where white text is visible
-  const hasDarkHero = isHomePage;
+  // Navbar is always solid if we don't have a dark hero
+  const hasDarkHero = false; 
   
-  // Navbar is scrolled if we have scrolled down OR if there is no dark hero section
   const isNavbarScrolled = scrolled || !hasDarkHero;
 
   const getInitials = (name) => {
@@ -219,26 +219,55 @@ const Navbar = () => {
       >
         <div className="navbar-container">
 
-          <div className="navbar-logo">
+          {/* Left Logo */}
+          <div className="navbar-logo-left">
             <Link to="/">
               <img src="/logoR.png" alt="Miraya" className="logo-img" />
             </Link>
           </div>
 
           {/* Center Links */}
-          <div className="navbar-links center-links desktop-only">
-            <NavLink to="/" className="nav-link" end>Home</NavLink>
-            <NavLink to="/about" className="nav-link">About Us</NavLink>
-
-            <NavLink to="/collection/all" className="nav-link" activeclassname="active">Collection</NavLink>
-
-            <NavLink to="/lookbook" className="nav-link">Lookbook</NavLink>
-            <NavLink to="/contact" className="nav-link">Contact Us</NavLink>
+          <div className="navbar-center-links desktop-only">
+            <NavLink to="/" className="nav-link" end>HOME</NavLink>
+            <div 
+              className="nav-dropdown-container"
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setWomenswearDropdownOpen(true)}
+              onMouseLeave={() => setWomenswearDropdownOpen(false)}
+            >
+              <NavLink to="/collection/all" className="nav-link">WOMENSWEAR ▾</NavLink>
+              <AnimatePresence>
+                {womenswearDropdownOpen && (
+                  <motion.div
+                    className="dropdown-menu"
+                    initial={{ opacity: 0, y: 10, x: "-50%" }}
+                    animate={{ opacity: 1, y: 0, x: "-50%" }}
+                    exit={{ opacity: 0, y: 10, x: "-50%" }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="dropdown-inner">
+                      <Link to="/new-arrivals" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>✨ New Arrivals</Link>
+                      <Link to="/collection/all" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>All Outfits</Link>
+                      <Link to="/collection/indo-western" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Indo-Western</Link>
+                      <Link to="/collection/drape-sarees" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Drape Sarees</Link>
+                      <Link to="/collection/designer-suits" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Designer Suits</Link>
+                      <Link to="/collection/premium-suit-materials" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Suit Materials</Link>
+                      <Link to="/collection/co-ord-sets" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Co-ord Sets</Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <NavLink to="/about" className="nav-link">ABOUT</NavLink>
+            <NavLink to="/contact" className="nav-link">CONTACT</NavLink>
           </div>
 
           {/* Right Actions */}
           <div className="navbar-right">
             <div className="navbar-actions">
+              <motion.button className="icon-btn position-relative" aria-label="Search" title="Search" whileHover={{ scale: 1.15, y: -2 }} whileTap={{ scale: 0.95 }}>
+                <Search size={20} strokeWidth={1.5} />
+              </motion.button>
               <MotionLink to="/wishlist" className="icon-btn position-relative" aria-label="Wishlist" title="Wishlist" whileHover={{ scale: 1.15, y: -2 }} whileTap={{ scale: 0.95 }}>
                 <Heart size={20} strokeWidth={1.5} />
                 {wishlistCount > 0 && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="nav-badge">{wishlistCount}</motion.span>}
@@ -425,6 +454,10 @@ const Navbar = () => {
                   <span>Home</span>
                 </Link>
 
+                <Link to="/new-arrivals" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
+                  <span>New Arrivals</span>
+                </Link>
+
                 <div>
                   <div
                     className="mobile-nav-item-link"
@@ -450,6 +483,9 @@ const Navbar = () => {
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.25 }}
                       >
+                        <Link to="/new-arrivals" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
+                          ✨ New Arrivals
+                        </Link>
                         <Link to="/collection/all" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
                           All Outfits
                         </Link>
@@ -472,10 +508,6 @@ const Navbar = () => {
                     )}
                   </AnimatePresence>
                 </div>
-
-                <Link to="/lookbook" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
-                  <span>Lookbook</span>
-                </Link>
 
                 <Link to="/about" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
                   <span>About Us</span>

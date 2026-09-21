@@ -6,7 +6,7 @@ const TermsPage = () => {
   return (
     <div className="about-page" style={{paddingTop: '100px', minHeight: '80vh'}}>
       <div className="about-hero" style={{height: '20vh'}}>
-        <h1 style={{color: 'var(--primary-burgundy)', textAlign: 'center'}}>Terms of Service</h1>
+        <h1 style={{color: 'var(--primary-burgundy)', textAlign: 'center'}}>Terms of <i>Service</i></h1>
       </div>
       <div className="about-content" style={{maxWidth: '800px', margin: '0 auto', padding: '2rem'}}>
         <h3 style={{color: 'var(--gold-accent)', marginTop: '2rem'}}>1. Acceptance of Terms</h3>

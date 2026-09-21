@@ -6,7 +6,7 @@ const PrivacyPolicyPage = () => {
   return (
     <div className="about-page" style={{paddingTop: '100px', minHeight: '80vh'}}>
       <div className="about-hero" style={{height: '20vh'}}>
-        <h1 style={{color: 'var(--primary-burgundy)', textAlign: 'center'}}>Privacy Policy</h1>
+        <h1 style={{color: 'var(--primary-burgundy)', textAlign: 'center'}}>Privacy <i>Policy</i></h1>
       </div>
       <div className="about-content" style={{maxWidth: '800px', margin: '0 auto', padding: '2rem'}}>
         <h3 style={{color: 'var(--gold-accent)', marginTop: '2rem'}}>Your Privacy is Important</h3>

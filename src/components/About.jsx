@@ -23,7 +23,7 @@ const About = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 1, delay: 0.3 }}
         >
-          <h2 className="section-title">The Miraya Experience</h2>
+          <h2 className="section-title">The Miraya <i>Experience</i></h2>
           <div className="title-separator"></div>
           
           <p className="about-text">

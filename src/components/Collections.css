@@ -270,7 +270,7 @@
 @media (max-width: 768px) {
   .accordion-gallery-container {
     flex-direction: column;
-    height: 750px;
+    height: 850px;
   }
   
   .accordion-content {
@@ -329,7 +329,11 @@
   }
 
   .accordion-gallery-container {
-    height: 580px;
+    height: 800px;
+  }
+
+  .accordion-panel {
+    min-height: 90px;
   }
 
   .accordion-title {

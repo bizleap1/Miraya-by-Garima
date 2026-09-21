@@ -63,7 +63,7 @@ const WishlistPage = () => {
     <div className="wishlist-page">
       <div className="wishlist-header">
         <span className="wishlist-sub-badge">👑 PRIVATE ATELIER SELECTION</span>
-        <h1>Your Wishlist</h1>
+        <h1>Your <i>Wishlist</i></h1>
         <p>Curated selections for your unique style.</p>
         <div className="wishlist-filigree-divider">
           <span className="filigree-line"></span>

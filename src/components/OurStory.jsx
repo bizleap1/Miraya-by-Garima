@@ -92,7 +92,7 @@ const OurStory = ({
             <Ornament />
             <h2 className="story-title">
               {title.includes("Legacy") ? (
-                <>The Miraya <span className="story-title-script">Legacy</span></>
+                <>The Miraya <i>Legacy</i></>
               ) : (
                 <>{title}</>
               )}

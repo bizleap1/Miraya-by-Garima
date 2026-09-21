@@ -4,6 +4,15 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './Lookbook.css';
 
+const formatHeading = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  const titleCased = text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const words = titleCased.split(' ');
+  if (words.length <= 1) return <i>{titleCased}</i>;
+  const lastWord = words.pop();
+  return <>{words.join(' ')} <i>{lastWord}</i></>;
+};
+
 const Lookbook = ({
   title = "Stories in Style",
   tagline = "THE MIRAYA EDIT"
@@ -30,7 +39,7 @@ const Lookbook = ({
             transition={{ duration: 0.8, delay: 0.2 }}
             className="lookbook-title"
           >
-            {title}
+            {formatHeading(title)}
           </motion.h2>
         </div>
 
@@ -49,7 +58,7 @@ const Lookbook = ({
                 <div className="lookbook-overlay"></div>
               </div>
               <div className="lookbook-content">
-                <h3>FESTIVE EDIT</h3>
+                <h3>{formatHeading("FESTIVE EDIT")}</h3>
                 <p>Discover the collection &rarr;</p>
               </div>
             </Link>
@@ -70,7 +79,7 @@ const Lookbook = ({
                   <div className="lookbook-overlay"></div>
                 </div>
                 <div className="lookbook-content">
-                  <h3>THE ART OF DRAPING</h3>
+                  <h3>{formatHeading("THE ART OF DRAPING")}</h3>
                   <p>Explore &rarr;</p>
                 </div>
               </Link>
@@ -89,7 +98,7 @@ const Lookbook = ({
                   <div className="lookbook-overlay"></div>
                 </div>
                 <div className="lookbook-content">
-                  <h3>MODERN INDIAN SILHOUETTES</h3>
+                  <h3>{formatHeading("MODERN INDIAN SILHOUETTES")}</h3>
                   <p>Explore &rarr;</p>
                 </div>
               </Link>

@@ -207,7 +207,7 @@ const PremiumSlider = () => {
           </div>
           
           <h2 className="premium-slider-title">
-            Curated Royal <span className="script-font">Couture</span>
+            Curated Royal <i>Couture</i>
           </h2>
 
           <div className="royal-filigree-divider">

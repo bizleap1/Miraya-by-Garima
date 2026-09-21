@@ -759,7 +759,7 @@ const CheckoutPage = () => {
             <span className="royal-tagline">👑 MIRAYA HAUTE COUTURE CONFIRMATION</span>
           </div>
 
-          <h1 className="success-main-title">Thank You For Your Patronage</h1>
+          <h1 className="success-main-title">Thank You For Your <i>Patronage</i></h1>
           <p className="success-subtitle">
             Your bespoke ensemble order has been placed with our flagship atelier. Garima &amp; our master artisans are preparing your outfit with meticulous craftsmanship.
           </p>
@@ -926,7 +926,7 @@ const CheckoutPage = () => {
 
         <div className="checkout-header-center">
           <span className="couture-eyebrow">👑 HAUTE COUTURE ATELIER</span>
-          <h1 className="checkout-page-title">Secure Bespoke Checkout</h1>
+          <h1 className="checkout-page-title">Secure Bespoke <i>Checkout</i></h1>
         </div>
 
         <div className="checkout-trust-badge-top">

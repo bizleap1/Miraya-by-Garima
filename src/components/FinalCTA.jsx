@@ -4,6 +4,15 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './FinalCTA.css';
 
+const formatHeading = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  const titleCased = text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const words = titleCased.split(' ');
+  if (words.length <= 1) return <i>{titleCased}</i>;
+  const lastWord = words.pop();
+  return <>{words.join(' ')} <i>{lastWord}</i></>;
+};
+
 const FinalCTA = ({
   heading = "YOUR NEXT SIGNATURE LOOK AWAITS",
   subtitle = "Discover timeless pieces crafted to become part of your story.",
@@ -22,7 +31,7 @@ const FinalCTA = ({
           transition={{ duration: 0.8 }}
           className="final-cta-inner"
         >
-          <h2 className="cta-title">{heading}</h2>
+          <h2 className="cta-title">{formatHeading(heading)}</h2>
           <p className="cta-desc">
             {subtitle}
           </p>

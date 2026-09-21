@@ -204,7 +204,7 @@
   }
   
   .lookbook-featured {
-    height: 380px;
+    height: 450px;
   }
   
   .lookbook-secondary-grid {
@@ -215,7 +215,7 @@
   
   .lookbook-card-container,
   .lookbook-card.small {
-    height: 380px;
+    height: 450px;
   }
   
   .lookbook-card.large .lookbook-content h3 {

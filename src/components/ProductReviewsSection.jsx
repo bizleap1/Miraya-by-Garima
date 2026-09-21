@@ -309,7 +309,7 @@ export default function ProductReviewsSection({ product }) {
             <Sparkles size={14} className="sparkle-icon" />
             <span>REAL BRIDES & CUSTOMER VOICES</span>
           </div>
-          <h2 className="reviews-main-title">Customer Reviews & Experiences</h2>
+          <h2 className="reviews-main-title">Customer Reviews & <i>Experiences</i></h2>
           <p className="reviews-subtitle">
             Authentic feedback and handcrafted impressions from patrons of Miraya by Garima.
           </p>

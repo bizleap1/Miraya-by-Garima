@@ -1,6 +1,16 @@
 'use client';
+import React from 'react';
 import { motion } from 'framer-motion';
 import './CorePillars.css';
+
+const formatHeading = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  const titleCased = text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const words = titleCased.split(' ');
+  if (words.length <= 1) return <i>{titleCased}</i>;
+  const lastWord = words.pop();
+  return <>{words.join(' ')} <i>{lastWord}</i></>;
+};
 
 const pillars = [
   {
@@ -75,7 +85,7 @@ const CorePillars = ({
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.1 }}
           >
-            {title}
+            {formatHeading(title)}
           </motion.h2>
           <motion.p
             className="pillars-desc"

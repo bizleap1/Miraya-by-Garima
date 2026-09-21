@@ -4,6 +4,15 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './ShopByOccasion.css';
 
+const formatHeading = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  const titleCased = text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const words = titleCased.split(' ');
+  if (words.length <= 1) return <i>{titleCased}</i>;
+  const lastWord = words.pop();
+  return <>{words.join(' ')} <i>{lastWord}</i></>;
+};
+
 const LotusIcon = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="occasion-icon">
     <path d="M12 22C12 22 10 16 4 15C10 14 11 8 12 2C13 8 14 14 20 15C14 16 12 22 12 22Z" stroke="#D4AF37" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
@@ -106,7 +115,7 @@ const ShopByOccasion = () => {
                   <div className="icon-wrapper">
                     {occasion.icon}
                   </div>
-                  <h3 className="occasion-card-title">{occasion.title}</h3>
+                  <h3 className="occasion-card-title">{formatHeading(occasion.title)}</h3>
                   <p className="occasion-card-subtitle">{occasion.subtitle}</p>
                   <span className="occasion-explore-btn">
                     EXPLORE <span className="arrow">→</span>

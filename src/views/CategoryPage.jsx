@@ -512,7 +512,11 @@ const CategoryPage = () => {
 
             <button className="clear-filters-btn" onClick={() => {
               setSelectedCategories([]);
-              scrollToProductsTop();
+              if (category !== 'all') {
+                navigate('/collection/all');
+              } else {
+                scrollToProductsTop();
+              }
             }}>
               RESET FILTERS <RefreshCw size={14} className="ml-2" />
             </button>
@@ -524,7 +528,7 @@ const CategoryPage = () => {
           
           <div className="sort-bar-top">
             <div className="results-count">
-              Showing <span className="highlight-count">{filteredAndSortedProducts.length}</span> of <span className="highlight-count">{samples.length}</span> results
+              Explore <span className="highlight-count">{filteredAndSortedProducts.length}</span> curated pieces
             </div>
             <div className="sort-controls">
               <div className="custom-sort-dropdown">
@@ -691,6 +695,7 @@ const CategoryPage = () => {
                         </div>
                       </div>
                     )}
+
                     
                     <div className="card-action-bar">
                       {isItemOutOfStock ? (
@@ -705,11 +710,6 @@ const CategoryPage = () => {
                             background: 'linear-gradient(135deg, #25D366, #1aab55)',
                             borderColor: '#25D366',
                             color: 'white',
-                            width: '100%',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
                             fontWeight: 700
                           }}
                           onClick={(e) => {
@@ -719,21 +719,10 @@ const CategoryPage = () => {
                           }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.133 1.528 5.874L0 24l6.324-1.508A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.502-5.176-1.378l-.37-.22-3.754.895.952-3.645-.243-.381A9.959 9.959 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                          DM ON WHATSAPP FOR PRICE
+                          DM FOR PRICE
                         </button>
                       ) : (
                         <>
-                          <Link
-                            to={`/product/${item.category || category}/${item.id}`}
-                            state={{ product: item, from: `/collection/${category}`, filters: selectedCategories }}
-                            className="buy-now-card-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleProductCardClick();
-                            }}
-                          >
-                            BUY NOW <ArrowRight size={13} className="ml-1" />
-                          </Link>
                           {(() => {
                             const inCart = cartItems.some(ci => String(ci.id) === String(item.id) || ci.productId === item.id);
                             const isHovered = hoveredCartCardId === item.id;
@@ -750,10 +739,9 @@ const CategoryPage = () => {
                                   handleToggleCartItem(item);
                                 }}
                                 style={{
-                                  background: inCart ? (isHovered ? '#c0392b' : '#F5EFE6') : undefined,
-                                  borderColor: inCart ? (isHovered ? '#c0392b' : '#c6a46a') : undefined,
-                                  color: inCart ? (isHovered ? '#ffffff' : 'var(--primary-burgundy, #5e0a0b)') : undefined,
-                                  transition: 'all 0.25s ease'
+                                  background: inCart ? (isHovered ? '#c0392b' : '#F8F4EE') : undefined,
+                                  borderColor: inCart ? (isHovered ? '#c0392b' : '#DED5CB') : undefined,
+                                  color: inCart ? (isHovered ? '#ffffff' : '#2A211E') : undefined,
                                 }}
                               >
                                 {inCart ? (

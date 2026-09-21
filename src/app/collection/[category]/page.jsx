@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import CategoryPage from '../../../views/CategoryPage';
 
 const CATEGORY_SEO = {
@@ -71,6 +72,9 @@ export async function generateMetadata({ params }) {
 export default async function CollectionPage({ params }) {
   const { category } = await params;
   const key = (category || '').toLowerCase();
+  if (key === 'new-arrivals') {
+    redirect('/new-arrivals');
+  }
   const info = CATEGORY_SEO[key] || {
     name: (category || 'Collection').replace(/-/g, ' ').toUpperCase(),
   };

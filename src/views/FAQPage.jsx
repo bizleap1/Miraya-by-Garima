@@ -44,7 +44,7 @@ const FAQPage = () => {
         schemaJson={faqSchema}
       />
       <div className="about-hero" style={{height: '20vh'}}>
-        <h1 style={{color: 'var(--primary-burgundy)', textAlign: 'center'}}>Frequently Asked Questions</h1>
+        <h1 style={{color: 'var(--primary-burgundy)', textAlign: 'center'}}>Frequently Asked <i>Questions</i></h1>
       </div>
       <div className="about-content" style={{maxWidth: '800px', margin: '0 auto', padding: '2rem'}}>
         <h3 style={{color: 'var(--gold-accent)', marginTop: '2rem'}}>How long does delivery take?</h3>

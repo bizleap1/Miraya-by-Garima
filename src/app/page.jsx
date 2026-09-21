@@ -1,6 +1,5 @@
-import Hero from '../components/Hero';
-import NewArrivals from '../components/NewArrivals';
-import PremiumSlider from '../components/PremiumSlider';
+import HeroSlider from '../components/HeroSlider';
+import ShopByCategory from '../components/ShopByCategory';
 import OurStory from '../components/OurStory';
 import Collections from '../components/Collections';
 import RealBrides from '../components/RealBrides';
@@ -20,9 +19,8 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main>
-      <Hero />
-      <NewArrivals />
-      <PremiumSlider />
+      <HeroSlider />
+      <ShopByCategory />
       <OurStory />
       <Collections />
       <RealBrides />

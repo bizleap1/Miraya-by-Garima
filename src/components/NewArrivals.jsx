@@ -20,12 +20,12 @@ const DEFAULT_PRODUCTS = [
   },
   {
     id: 2,
-    name: 'Pink Blush Lehenga',
-    label: 'PINK BLUSH',
-    tagline: 'Dream draped in blush.',
-    image: '/products/Lehenga-Pink Blush/1.JPG',
-    category: 'indo-western',
-    href: '/product/indo-western/1',
+    name: 'Grey Co-ord Set',
+    label: 'GREY CO-ORD',
+    tagline: 'Structured silhouette & modern fit.',
+    image: '/products/grey co-order set/1.JPG',
+    category: 'coord-sets',
+    href: '/product/coord-sets/coord-1',
     objectPosition: 'center 12%',
   },
   {
@@ -209,6 +209,15 @@ const NewArrivals = ({
   const activeButtonText = propButtonText || cmsData.button_text;
   const activeButtonLink = propButtonLink || cmsData.button_link;
 
+  const formatHeading = (text) => {
+    if (!text) return null;
+    const titleCased = text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    const words = titleCased.split(' ');
+    if (words.length <= 1) return <i>{titleCased}</i>;
+    const lastWord = words.pop();
+    return <>{words.join(' ')} <i>{lastWord}</i></>;
+  };
+
   return (
     <section className="ed-na-section" ref={sectionRef}>
       {/* Subtle floral watermark background */}
@@ -230,7 +239,7 @@ const NewArrivals = ({
           </motion.div>
 
           <motion.h2 className="ed-na-heading" variants={itemVariants} style={{ whiteSpace: 'pre-line' }}>
-            {activeHeading}
+            {formatHeading(activeHeading)}
           </motion.h2>
 
           <motion.p className="ed-na-desc" variants={itemVariants} style={{ whiteSpace: 'pre-line' }}>

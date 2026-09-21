@@ -161,6 +161,19 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.1;
 }
 
+/* Global Dual-Font Heading Style */
+h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
+.heading-primary i, .heading-secondary i,
+.section-title i, .main-title i, .title i, .ed-na-heading i, .na-hero-heading i,
+.collection-main-title i, .brand-voice-title i {
+  font-family: var(--font-script);
+  font-style: normal;
+  color: var(--gold-accent);
+  font-size: 1.25em;
+  font-weight: 400;
+  text-transform: none;
+}
+
 a {
   text-decoration: none;
   color: inherit;
