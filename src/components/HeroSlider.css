@@ -1,9 +1,9 @@
 .hero-slider-section {
   position: relative;
   width: 100%;
-  height: calc(100vh - 75px);
+  height: 100vh;
   min-height: 525px;
-  margin-top: 75px;
+  margin-top: 0;
   overflow: hidden;
   background-color: var(--bg-cream, #f8f5f0);
 }

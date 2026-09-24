@@ -40,9 +40,10 @@
 .navbar-center-links {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   gap: 2rem;
+  padding-right: 2rem;
 }
 
 .navbar-right {
@@ -88,6 +89,22 @@
 .navbar.scrolled .nav-link {
   color: var(--primary-burgundy); /* Burgundy when scrolled */
 }
+
+/* Transparent navbar but with dark text (for light heroes) */
+.navbar.navbar-light-hero {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.navbar.navbar-light-hero .nav-link,
+.navbar.navbar-light-hero .icon-btn {
+  color: var(--primary-burgundy);
+}
+.navbar.navbar-light-hero .logo-img {
+  filter: none;
+  mix-blend-mode: multiply;
+}
+
 
 .nav-link::before {
   content: '';

@@ -26,7 +26,7 @@ import customerRoutes from './routes/customer.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import promotionRoutes from './routes/promotion.routes.js';
 import homepageSectionRoutes from './routes/homepageSection.routes.js';
-
+import pageCustomizerRoutes from './routes/pageCustomizer.routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.middleware.js';
 import { generalLimiter } from './middleware/rateLimiter.middleware.js';
 import {
@@ -108,6 +108,7 @@ app.use('/api/stock-notifications', stockNotificationRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/pos', posRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/page-customizer', pageCustomizerRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/returns', returnRoutes);

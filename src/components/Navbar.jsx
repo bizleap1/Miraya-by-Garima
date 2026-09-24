@@ -162,23 +162,37 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      const threshold = window.location.pathname === '/new-arrivals' ? 500 : 50;
+      setScrolled(window.scrollY > threshold);
     };
 
     window.addEventListener('scroll', handleScroll);
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
+
+  const [dynamicLightHero, setDynamicLightHero] = useState(false);
+
+  useEffect(() => {
+    const handleSlideChange = (e) => {
+      if (window.location.pathname === '/') {
+        setDynamicLightHero(e.detail?.isLight || false);
+      }
+    };
+    window.addEventListener('hero-slide-change', handleSlideChange);
+    return () => window.removeEventListener('hero-slide-change', handleSlideChange);
+  }, [location.pathname]);
 
   const isHomePage = location.pathname === '/';
   const isCollectionPage = location.pathname.startsWith('/collection');
   const isAboutPage = location.pathname === '/about';
+  const isNewArrivalsPage = location.pathname === '/new-arrivals';
 
-
+  // Navbar is always solid if we don't have a dark/transparent hero
+  const hasDarkHero = isHomePage && !dynamicLightHero; 
+  const hasLightHero = isHomePage && dynamicLightHero;
   
-  // Navbar is always solid if we don't have a dark hero
-  const hasDarkHero = false; 
-  
-  const isNavbarScrolled = scrolled || !hasDarkHero;
+  const isNavbarScrolled = scrolled || (!hasDarkHero && !hasLightHero);
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -209,10 +223,16 @@ const Navbar = () => {
 
   const MotionLink = motion.create ? motion.create(Link) : motion(Link);
 
+  const navbarClasses = [
+    'navbar',
+    isNavbarScrolled ? 'scrolled' : '',
+    (!scrolled && hasLightHero) ? 'navbar-light-hero' : ''
+  ].filter(Boolean).join(' ');
+
   return (
     <>
       <motion.nav
-        className={`navbar ${isNavbarScrolled ? 'scrolled' : ''}`}
+        className={navbarClasses}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -229,35 +249,8 @@ const Navbar = () => {
           {/* Center Links */}
           <div className="navbar-center-links desktop-only">
             <NavLink to="/" className="nav-link" end>HOME</NavLink>
-            <div 
-              className="nav-dropdown-container"
-              style={{ position: 'relative' }}
-              onMouseEnter={() => setWomenswearDropdownOpen(true)}
-              onMouseLeave={() => setWomenswearDropdownOpen(false)}
-            >
-              <NavLink to="/collection/all" className="nav-link">WOMENSWEAR ▾</NavLink>
-              <AnimatePresence>
-                {womenswearDropdownOpen && (
-                  <motion.div
-                    className="dropdown-menu"
-                    initial={{ opacity: 0, y: 10, x: "-50%" }}
-                    animate={{ opacity: 1, y: 0, x: "-50%" }}
-                    exit={{ opacity: 0, y: 10, x: "-50%" }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="dropdown-inner">
-                      <Link to="/new-arrivals" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>✨ New Arrivals</Link>
-                      <Link to="/collection/all" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>All Outfits</Link>
-                      <Link to="/collection/indo-western" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Indo-Western</Link>
-                      <Link to="/collection/drape-sarees" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Drape Sarees</Link>
-                      <Link to="/collection/designer-suits" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Designer Suits</Link>
-                      <Link to="/collection/premium-suit-materials" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Suit Materials</Link>
-                      <Link to="/collection/co-ord-sets" className="dropdown-item" onClick={() => setWomenswearDropdownOpen(false)}>Co-ord Sets</Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <NavLink to="/collection/prime" className="nav-link">PRIME</NavLink>
+            <NavLink to="/collection/classic" className="nav-link">CLASSIC</NavLink>
             <NavLink to="/about" className="nav-link">ABOUT</NavLink>
             <NavLink to="/contact" className="nav-link">CONTACT</NavLink>
           </div>
@@ -458,56 +451,12 @@ const Navbar = () => {
                   <span>New Arrivals</span>
                 </Link>
 
-                <div>
-                  <div
-                    className="mobile-nav-item-link"
-                    onClick={() => setMobileCollectionOpen(!mobileCollectionOpen)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <span>Collection</span>
-                    <ChevronDown
-                      size={18}
-                      style={{
-                        color: 'var(--gold-accent)',
-                        transform: mobileCollectionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.3s ease'
-                      }}
-                    />
-                  </div>
-                  <AnimatePresence>
-                    {mobileCollectionOpen && (
-                      <motion.div
-                        className="mobile-sub-accordion"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25 }}
-                      >
-                        <Link to="/new-arrivals" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          ✨ New Arrivals
-                        </Link>
-                        <Link to="/collection/all" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          All Outfits
-                        </Link>
-                        <Link to="/collection/indo-western" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          Indo-Western
-                        </Link>
-                        <Link to="/collection/drape-sarees" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          Drape Sarees
-                        </Link>
-                        <Link to="/collection/designer-suits" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          Designer Suits
-                        </Link>
-                        <Link to="/collection/premium-suit-materials" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          Suit Materials
-                        </Link>
-                        <Link to="/collection/co-ord-sets" className="mobile-sub-link" onClick={() => setMobileMenuOpen(false)}>
-                          Co-ord Sets
-                        </Link>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <Link to="/collection/prime" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
+                  <span>Prime</span>
+                </Link>
+                <Link to="/collection/classic" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
+                  <span>Classic</span>
+                </Link>
 
                 <Link to="/about" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
                   <span>About Us</span>

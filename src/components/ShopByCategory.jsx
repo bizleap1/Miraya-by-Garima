@@ -8,7 +8,7 @@ const CATEGORIES = [
   {
     id: 1,
     name: 'INDO WESTERN',
-    image: '/images/category/lehenga.jpg', // Solo girl (beige corset)
+    image: '/the miraya legacy.JPG',
     link: '/collection/indo-western',
     gridClass: 'sbc-item-large-left',
     type: 'large'
@@ -32,10 +32,11 @@ const CATEGORIES = [
   {
     id: 4,
     name: 'PREMIUM SUITS',
-    image: '/images/category/gowns.jpg',
-    link: '/collection/gowns',
+    image: '/The Miraya 2.JPG',
+    link: '/collection/designer-suits',
     gridClass: 'sbc-item-large-right',
-    type: 'large'
+    type: 'large',
+    scale: 1.25 // Zoomed in so the model's scale matches the left image
   },
 ];
 
@@ -60,7 +61,9 @@ const ShopByCategory = () => {
                   src={cat.image} 
                   alt={cat.name}
                   className="sbc-image"
-                  whileHover={{ scale: 1.05 }}
+                  initial={{ scale: cat.scale || 1 }}
+                  animate={{ scale: cat.scale || 1 }}
+                  whileHover={{ scale: (cat.scale || 1) + 0.05 }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
               </div>
@@ -78,7 +81,9 @@ const ShopByCategory = () => {
                   src={cat.image} 
                   alt={cat.name}
                   className="sbc-image"
-                  whileHover={{ scale: 1.05 }}
+                  initial={{ scale: cat.scale || 1 }}
+                  animate={{ scale: cat.scale || 1 }}
+                  whileHover={{ scale: (cat.scale || 1) + 0.05 }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
               </div>

@@ -30,16 +30,6 @@ export const GlobalLoadingOverlay = () => {
               className="luxury-loading-logo"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
-            
-            {/* Loading effect line */}
-            <div className="loading-line-wrapper">
-              <div className="loading-line-inner"></div>
-            </div>
-
-            {/* Dynamic Message */}
-            <p className="luxury-loading-message">
-              {loadingMessage || 'PLEASE WAIT...'}
-            </p>
           </motion.div>
         </motion.div>
       )}

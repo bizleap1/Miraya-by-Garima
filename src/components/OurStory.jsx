@@ -58,7 +58,7 @@ const OurStory = ({
   description = "Where Indian heritage meets contemporary elegance. Miraya brings together timeless craftsmanship, luxurious fabrics, and modern silhouettes to create occasion wear that feels both rooted and effortlessly refined.",
   buttonText = "DISCOVER OUR STORY →",
   buttonLink = "/about",
-  imageUrl = "/products/Lehenga-Pink Blush/1.JPG"
+  imageUrl = "/miraya legacy new.JPG"
 } = {}) => {
   return (
     <section className="our-story-section">

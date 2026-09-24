@@ -13,7 +13,8 @@ const SLIDES = [
     headingSerif: 'COLLECTION',
     subheading: 'Live Now',
     ctaText: 'Shop Now',
-    ctaLink: '/collection/all'
+    ctaLink: '/collection/all',
+    isLightBackground: true
   },
   {
     id: 2,
@@ -23,7 +24,8 @@ const SLIDES = [
     headingSerif: 'ELEGANCE',
     subheading: 'Timeless ethnic wear, thoughtfully crafted for the modern wardrobe.',
     ctaText: 'Explore Collection',
-    ctaLink: '/collection/all'
+    ctaLink: '/collection/all',
+    isLightBackground: true
   },
   {
     id: 3,
@@ -33,7 +35,8 @@ const SLIDES = [
     headingSerif: 'TRADITIONS',
     subheading: 'For Every You',
     ctaText: 'View Collection',
-    ctaLink: '/collection/all'
+    ctaLink: '/collection/all',
+    isLightBackground: false
   },
   {
     id: 4,
@@ -43,7 +46,8 @@ const SLIDES = [
     headingSerif: 'WEAR',
     subheading: 'Made for Special Moments',
     ctaText: 'Explore Collection',
-    ctaLink: '/collection/all'
+    ctaLink: '/collection/all',
+    isLightBackground: false
   }
 ];
 
@@ -56,6 +60,11 @@ const HeroSlider = () => {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const isLight = SLIDES[currentIndex].isLightBackground;
+    window.dispatchEvent(new CustomEvent('hero-slide-change', { detail: { isLight } }));
+  }, [currentIndex]);
 
   const slideVariants = {
     enter: { opacity: 0 },

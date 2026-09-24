@@ -26,6 +26,16 @@ const CATEGORY_SEO = {
     description:
       'Shop statement artisanal co-ord sets, embroidered trousers, and crop tops tailored for festive celebrations and destination weddings by Miraya by Garima.',
   },
+  'prime': {
+    name: 'Prime Collection',
+    title: 'Prime Collection | Miraya Couture',
+    description: 'Explore the Miraya Prime Collection. Opulent, rich, and heavily hand-embroidered masterpieces.',
+  },
+  'classic': {
+    name: 'Classic Collection',
+    title: 'Classic Collection | Miraya Couture',
+    description: 'Explore the Miraya Classic Collection. Effortlessly elegant everyday luxury.',
+  },
 };
 
 export async function generateMetadata({ params }) {

@@ -5,6 +5,7 @@ import {
   emitProductDeleted,
   emitInventoryUpdated,
 } from '../services/realtime.service.js';
+import { getWomenPriceCategory, WOMENSWEAR_PRICE_RULES, WOMENSWEAR_CATEGORY_NAMES } from '../utils/pricing.js';
 
 
 export const getProducts = async (req, res) => {
@@ -32,8 +33,23 @@ export const getProducts = async (req, res) => {
     if (category) {
       const catTrim = String(category).trim();
       const numId = parseInt(catTrim, 10);
+      const catTrimLower = catTrim.toLowerCase();
 
-      if (!isNaN(numId) && String(numId) === catTrim) {
+      if (catTrimLower === 'classic' || catTrimLower === 'prime') {
+        where.category = {
+          is: {
+            name: {
+              in: WOMENSWEAR_CATEGORY_NAMES,
+              mode: 'insensitive'
+            }
+          }
+        };
+        if (catTrimLower === 'classic') {
+          where.price = { gte: WOMENSWEAR_PRICE_RULES.CLASSIC_MIN, lt: WOMENSWEAR_PRICE_RULES.PRIME_MIN };
+        } else {
+          where.price = { gte: WOMENSWEAR_PRICE_RULES.PRIME_MIN };
+        }
+      } else if (!isNaN(numId) && String(numId) === catTrim) {
         where.category_id = numId;
       } else {
         const altName = catTrim.replace(/-/g, ' ');
@@ -61,7 +77,12 @@ export const getProducts = async (req, res) => {
       },
     });
 
-    res.json(products);
+    const mappedProducts = products.map(p => ({
+      ...p,
+      priceCategory: getWomenPriceCategory(p.price, p.category?.name)
+    }));
+
+    res.json(mappedProducts);
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching products', error: error.message });
   }
@@ -146,6 +167,8 @@ export const getProductById = async (req, res) => {
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
+
+    product.priceCategory = getWomenPriceCategory(product.price, product.category?.name);
 
     res.json(product);
   } catch (error) {

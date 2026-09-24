@@ -54,6 +54,7 @@ import AdminCouponsSection from "../components/admin/AdminCouponsSection";
 import AdminStoreSettingsSection from "../components/admin/AdminStoreSettingsSection";
 import AdminPromotionsSection from "../components/admin/AdminPromotionsSection";
 import ThemeVisualCustomizer from "../components/admin/ThemeVisualCustomizer";
+import AdminPageCustomizer from "../components/admin/AdminPageCustomizer";
 import { Sparkles } from "lucide-react";
 import { exportStoreAuditPDF } from "../utils/pdfExportHelper";
 import { useSocket } from "../context/SocketContext";
@@ -71,6 +72,7 @@ const menuItems = [
   { id: "customers", label: "Customers", icon: Users },
   { id: "categories", label: "Categories", icon: Layers3 },
   { id: "homepage-sections", label: "Theme Customizer", icon: Sparkles },
+  { id: "page-customizer", label: "Page Customizer", icon: FileText },
   { id: "coupons", label: "Coupons", icon: Tag },
   { id: "promotions", label: "Promotions & Pricing", icon: Percent },
   { id: "reviews", label: "Reviews", icon: Star },
@@ -1599,6 +1601,10 @@ export default function AdminDashboard() {
           )}
 
           {/* OTHER SECTIONS */}
+          {activeTab === "page-customizer" && (
+            <AdminPageCustomizer />
+          )}
+
           {activeTab === "products" && (
             <AdminProductsSection
               products={products}

@@ -633,7 +633,14 @@ export default function AdminProductsSection({ products = [], categories = [], t
                     <td style={{ color: 'var(--miraya-muted)', fontFamily: 'monospace' }}>#SKU-{p.id}</td>
 
                     {/* Category */}
-                    <td>{p.category?.name || p.sub_category || 'Unassigned'}</td>
+                    <td>
+                      {p.category?.name || p.sub_category || 'Unassigned'}
+                      {p.priceCategory && (
+                        <div style={{ fontSize: '10px', marginTop: '4px', color: 'var(--miraya-red)', fontWeight: '600' }}>
+                          PRICE CATEGORY: {p.priceCategory}
+                        </div>
+                      )}
+                    </td>
 
                     {/* MRP */}
                     <td style={{ color: 'var(--miraya-muted)', textDecoration: 'line-through' }}>
@@ -750,7 +757,13 @@ export default function AdminProductsSection({ products = [], categories = [], t
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px' }}>
                 <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Selling Price:</span><h4 style={{ margin: '4px 0', fontSize: '18px', color: 'var(--miraya-red)' }}>{formatINR(viewProduct.price)}</h4></div>
-                <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Category:</span><h4 style={{ margin: '4px 0', fontSize: '14px' }}>{viewProduct.category?.name || 'Unassigned'}</h4></div>
+                <div>
+                  <span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Category:</span>
+                  <h4 style={{ margin: '4px 0', fontSize: '14px' }}>
+                    {viewProduct.category?.name || 'Unassigned'}
+                    {viewProduct.priceCategory && <span style={{ fontSize: '10px', marginLeft: '6px', padding: '2px 6px', background: 'var(--miraya-red)', color: 'white', borderRadius: '4px', verticalAlign: 'middle' }}>{viewProduct.priceCategory}</span>}
+                  </h4>
+                </div>
                 <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>SKU:</span><p style={{ margin: '4px 0', fontFamily: 'monospace' }}>#SKU-{viewProduct.id}</p></div>
                 <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Color:</span><p style={{ margin: '4px 0' }}>{viewProduct.color || 'Standard'}</p></div>
               </div>

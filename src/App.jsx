@@ -20,6 +20,8 @@ const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NewArrivalsPage = lazy(() => import('./views/NewArrivalsPage'));
+const PrimeCollectionPage = lazy(() => import('./views/PrimeCollectionPage'));
+const ClassicCollectionPage = lazy(() => import('./views/ClassicCollectionPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const AccountPage = lazy(() => import('./pages/AccountPage'));
@@ -125,6 +127,8 @@ function AppInner() {
               <Suspense fallback={<LuxuryPageFallback />}>
                 <Routes location={location} key={location.pathname}>
                   <Route path="/" element={<Home />} />
+                  <Route path="/collection/prime" element={<PrimeCollectionPage />} />
+                  <Route path="/collection/classic" element={<ClassicCollectionPage />} />
                   <Route path="/collection/:category" element={<CategoryPage />} />
                   <Route path="/product/:category/:id" element={<ProductDetailPage />} />
                   <Route path="/wishlist" element={<WishlistPage />} />

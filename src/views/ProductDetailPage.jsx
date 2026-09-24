@@ -170,12 +170,33 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
       if (initialProduct.image_url && initImgs.includes(initialProduct.image_url) && initImgs[0] !== initialProduct.image_url) {
         initImgs = [initialProduct.image_url, ...initImgs.filter(img => img !== initialProduct.image_url)];
       }
+      const initTitleLower = String(initialProduct.name || initialProduct.title || '').toLowerCase();
+      let initCatSlug = initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category;
+      if (initCatSlug) initCatSlug = initCatSlug.toLowerCase().replace(/\s+/g, '-');
+      if (initCatSlug === 'co-ord-sets' || initCatSlug === 'coord' || initCatSlug === 'co-ord') initCatSlug = 'coord-sets';
+      
+      if (initTitleLower.includes('suit material') || initTitleLower.includes('unstitched')) {
+        initCatSlug = 'premium-suit-materials';
+      } else if (initTitleLower.includes('suit') || initTitleLower.includes('kurta') || initTitleLower.includes('kurti') || initTitleLower.includes('anarkali')) {
+        initCatSlug = 'designer-suits';
+      } else if (initTitleLower.includes('co-ord') || initTitleLower.includes('coord') || initTitleLower.includes('set')) {
+        initCatSlug = 'coord-sets';
+      } else if (initTitleLower.includes('saree') || initTitleLower.includes('drape') || initTitleLower.includes('sari')) {
+        initCatSlug = 'drape-sarees';
+      } else if (initTitleLower.includes('dress') || initTitleLower.includes('gown') || initTitleLower.includes('midi')) {
+        initCatSlug = 'dresses';
+      } else if (initTitleLower.includes('lehenga') || initTitleLower.includes('jacket') || initTitleLower.includes('vest') || initTitleLower.includes('western') || initTitleLower.includes('indo')) {
+        initCatSlug = 'indo-western';
+      } else if (!initCatSlug || initCatSlug === 'undefined' || initCatSlug === 'null') {
+        initCatSlug = 'indo-western';
+      }
+
       setProduct({
         ...initialProduct,
         id: initialProduct.id,
         title: initialProduct.name || initialProduct.title || 'Outfit',
         price: initialProduct.price,
-        category: initialProduct.category?.slug || initialProduct.category?.name || initialProduct.category || category,
+        category: initCatSlug,
         image: initialProduct.image_url || initImgs[0] || initialProduct.image,
         images: initImgs
       });
@@ -220,6 +241,27 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
           const resolvedMainImg = getProductImage(data.image_url || apiImgs[0] || data.image || localMatch.image);
           const resolvedImgs = (apiImgs.length ? apiImgs : (localMatch.images || [])).map(img => getProductImage(img));
 
+          const titleLower = String(data.name || data.title || localMatch.title || '').toLowerCase();
+          let catSlug = data.category?.slug || data.category?.name || data.category || category;
+          if (catSlug) catSlug = catSlug.toLowerCase().replace(/\s+/g, '-');
+          if (catSlug === 'co-ord-sets' || catSlug === 'coord' || catSlug === 'co-ord') catSlug = 'coord-sets';
+          
+          if (titleLower.includes('suit material') || titleLower.includes('unstitched')) {
+            catSlug = 'premium-suit-materials';
+          } else if (titleLower.includes('suit') || titleLower.includes('kurta') || titleLower.includes('kurti') || titleLower.includes('anarkali')) {
+            catSlug = 'designer-suits';
+          } else if (titleLower.includes('co-ord') || titleLower.includes('coord') || titleLower.includes('set')) {
+            catSlug = 'coord-sets';
+          } else if (titleLower.includes('saree') || titleLower.includes('drape') || titleLower.includes('sari')) {
+            catSlug = 'drape-sarees';
+          } else if (titleLower.includes('dress') || titleLower.includes('gown') || titleLower.includes('midi')) {
+            catSlug = 'dresses';
+          } else if (titleLower.includes('lehenga') || titleLower.includes('jacket') || titleLower.includes('vest') || titleLower.includes('western') || titleLower.includes('indo')) {
+            catSlug = 'indo-western';
+          } else if (!catSlug || catSlug === 'undefined' || catSlug === 'null') {
+            catSlug = 'indo-western';
+          }
+
           setProduct({
             ...localMatch,
             ...data,
@@ -228,7 +270,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
             title: data.name || data.title || localMatch.title || 'Outfit',
             name: data.name || data.title || localMatch.title || 'Outfit',
             price: data.price,
-            category: data.category?.slug || data.category?.name || data.category || category,
+            category: catSlug,
             image: resolvedMainImg,
             images: resolvedImgs
           });
@@ -414,6 +456,7 @@ const ProductDetailPage = ({ initialProduct: ssrProduct }) => {
     if (norm.includes('designer') || norm.includes('suit')) return 'Designer Suits';
     if (norm.includes('premium') || norm.includes('material')) return 'Premium Suit Materials';
     if (norm.includes('indo') || norm.includes('western')) return 'Indo Western';
+    if (norm.includes('dresses')) return 'Dresses';
     return catStr.charAt(0).toUpperCase() + catStr.slice(1);
   };
 

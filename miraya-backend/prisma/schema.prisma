@@ -536,7 +536,6 @@ model StoreSettings {
   updated_at          DateTime @updatedAt
 }
 
-
 // ─── PROMOTION CAMPAIGNS (Marketing & Dynamic Pricing) ───────────────────────
 
 model PromotionCampaign {
@@ -587,3 +586,12 @@ model NewArrivalItem {
   @@index([product_id])
 }
 
+// ─── PAGE CUSTOMIZER (For New Arrivals & Dynamic Pages) ─────────────────────────
+
+model PageCustomizer {
+  id          Int      @id @default(autoincrement())
+  page_name   String   @unique // e.g. "new-arrivals"
+  product_ids Int[]    // Array of product IDs to display in order
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
