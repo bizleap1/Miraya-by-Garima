@@ -68,22 +68,25 @@
     flex-direction: column;
     height: auto;
     min-height: auto;
+    background-color: var(--bg-cream, #f8f5f0);
+    padding-top: 74px;
   }
   
   .hero-slider-container {
     height: auto;
-    aspect-ratio: 16 / 9;
-    min-height: 200px;
+    aspect-ratio: 2.3 / 1;
+    min-height: auto;
     width: 100%;
-    background-color: var(--bg-cream, #f8f5f0);
+    background-color: transparent;
   }
 
   .hero-bg-image {
     object-fit: contain;
+    object-position: center;
   }
 
   .hero-slider-controls {
-    bottom: 1rem;
+    bottom: -1rem; /* push dots slightly into the brown area */
   }
 
   /* Mobile Text Section */

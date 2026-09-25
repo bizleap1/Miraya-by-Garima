@@ -54,7 +54,7 @@ const Lookbook = ({
           >
             <Link to="/collection/all" className="lookbook-card large">
               <div className="lookbook-image-wrapper">
-                <img src="/products/DSC04862.JPG" alt="Festive Edit" loading="lazy" />
+                <img src="/Stories In Style/Festive Edit_fixed.JPG" alt="Festive Edit" loading="lazy" />
                 <div className="lookbook-overlay"></div>
               </div>
               <div className="lookbook-content">
@@ -75,7 +75,7 @@ const Lookbook = ({
             >
               <Link to="/collection/all" className="lookbook-card small">
                 <div className="lookbook-image-wrapper">
-                  <img src="/products/DSC05002.JPG" alt="The Art of Draping" loading="lazy" />
+                  <img src="/Stories In Style/the art of draping_fixed.JPG" alt="The Art of Draping" loading="lazy" />
                   <div className="lookbook-overlay"></div>
                 </div>
                 <div className="lookbook-content">
@@ -94,7 +94,7 @@ const Lookbook = ({
             >
               <Link to="/collection/all" className="lookbook-card small">
                 <div className="lookbook-image-wrapper">
-                  <img src="/products/DSC04689.JPG" alt="Modern Indian Silhouettes" loading="lazy" style={{ objectPosition: 'center 35%' }} />
+                  <img src="/Stories In Style/Modern Indian Silhouettes_fixed.JPG" alt="Modern Indian Silhouettes" loading="lazy" style={{ objectPosition: 'center 35%' }} />
                   <div className="lookbook-overlay"></div>
                 </div>
                 <div className="lookbook-content">

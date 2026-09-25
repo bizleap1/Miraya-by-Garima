@@ -1,10 +1,6 @@
 .lookbook-section {
-  padding: 6rem 0;
-  background-color: #f8f6f0;
-  background-image: linear-gradient(rgba(248, 246, 240, 0.85), rgba(248, 246, 240, 0.85)), url('/newbg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  padding: 2rem 0 6rem 0;
+  background-color: #FAF7F2;
   position: relative;
 }
 
@@ -44,6 +40,20 @@
   color: var(--primary-burgundy);
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lookbook-title i {
+  font-family: var(--font-script, 'Pinyon Script', cursive);
+  color: #b8915b; /* gold */
+  text-transform: none;
+  font-size: 1.25em;
+  font-style: normal;
+  transform: translateY(-0.1rem);
 }
 
 /* Grid Layout */
@@ -220,5 +230,17 @@
   
   .lookbook-card.large .lookbook-content h3 {
     font-size: 1.8rem;
+  }
+  
+  .lookbook-title {
+    flex-direction: column;
+    gap: 0;
+    line-height: 1.1;
+    font-size: 2.8rem;
+  }
+  
+  .lookbook-title i {
+    font-size: 3.8rem;
+    transform: translateY(-0.5rem);
   }
 }

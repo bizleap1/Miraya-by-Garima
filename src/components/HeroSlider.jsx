@@ -18,7 +18,7 @@ const SLIDES = [
   },
   {
     id: 2,
-    bgImage: '/slidess/2.png',
+    bgImage: '/slidess/2.png?v=updated',
     brandText: 'MIRAYA BY GARIMA',
     headingScript: 'The Art of',
     headingSerif: 'ELEGANCE',
@@ -40,7 +40,7 @@ const SLIDES = [
   },
   {
     id: 4,
-    bgImage: '/slidess/4.png',
+    bgImage: '/slidess/4.png?v=updated',
     brandText: 'MIRAYA BY GARIMA',
     headingScript: 'Festive',
     headingSerif: 'WEAR',
@@ -48,6 +48,17 @@ const SLIDES = [
     ctaText: 'Explore Collection',
     ctaLink: '/collection/all',
     isLightBackground: false
+  },
+  {
+    id: 5,
+    bgImage: '/slidess/5.png',
+    brandText: 'MIRAYA BY GARIMA',
+    headingScript: 'Exclusive',
+    headingSerif: 'EDITION',
+    subheading: 'Discover the latest additions to our premium collection.',
+    ctaText: 'Shop Now',
+    ctaLink: '/collection/all',
+    isLightBackground: true
   }
 ];
 
@@ -57,7 +68,7 @@ const HeroSlider = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % SLIDES.length);
-    }, 5000);
+    }, 2500);
     return () => clearInterval(timer);
   }, []);
 

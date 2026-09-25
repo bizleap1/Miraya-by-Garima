@@ -1,212 +1,440 @@
+/* ==========================================================================
+   THE CORE PILLARS OF MIRAYA - LUXURY ARCHED COUTURE SHOWCASE
+   ========================================================================== */
+
 .core-pillars {
-  padding: 2rem 0 8rem 0;
   position: relative;
   background-color: var(--bg-cream, #FAF7F2);
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212, 175, 55, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 110%, rgba(94, 10, 11, 0.03), transparent);
+  padding: clamp(4rem, 7vw, 7rem) 0 clamp(4.5rem, 8vw, 8rem) 0;
+  overflow: hidden;
 }
 
+/* Botanical Flourishes Pinned to Sides */
+.pillars-botanical {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(70px, 9vw, 130px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  opacity: 0.75;
+  transition: opacity 0.5s ease;
+}
+
+.pillars-botanical-left {
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.pillars-botanical-right {
+  right: 0;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+/* Container */
 .pillars-container {
-  max-width: 1400px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 0 5%;
+  position: relative;
+  z-index: 2;
 }
 
+/* Section Header */
 .pillars-header {
   text-align: center;
-  margin-bottom: 3.5rem;
+  margin-bottom: clamp(3rem, 5vw, 4.5rem);
 }
 
-.pillars-subtitle {
-  font-family: var(--font-heading);
-  font-size: 1rem;
-  letter-spacing: 0.25em;
-  color: var(--gold-accent);
-  text-transform: uppercase;
-  margin-bottom: 1.5rem;
-  display: flex;
+/* Top Diamond Ornament */
+.pillars-top-ornament {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 14px;
+  color: var(--gold-accent, #C6A46A);
+  margin-bottom: 0.85rem;
 }
 
-.pillars-subtitle::before,
-.pillars-subtitle::after {
-  content: '';
+.pillars-top-ornament .ornament-line {
   display: inline-block;
-  width: 40px;
+  width: 36px;
   height: 1px;
-  background-color: var(--gold-accent);
-  margin: 0 15px;
-  opacity: 0.6;
+  background-color: var(--gold-accent, #C6A46A);
+  opacity: 0.55;
 }
 
-.pillars-title {
-  font-family: var(--font-heading);
-  font-size: 2.8rem;
-  color: var(--primary-burgundy);
-  margin-bottom: 1rem;
-  letter-spacing: 0.05em;
+.pillars-top-ornament .ornament-diamond {
+  font-size: 0.65rem;
+  color: var(--gold-accent, #C6A46A);
+  line-height: 1;
+  opacity: 0.85;
+}
+
+/* Subtitle / Tagline */
+.pillars-subtitle {
+  font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+  font-size: clamp(0.78rem, 1vw, 0.88rem);
+  letter-spacing: 0.28em;
+  color: #926E40;
   text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
 }
 
-.pillars-desc {
-  font-family: var(--font-body);
-  font-size: 1.05rem;
-  color: #4a4a4a;
+/* Main Heading */
+.pillars-title {
+  font-family: var(--font-heading, 'Playfair Display', serif);
+  font-size: clamp(1.85rem, 3.4vw, 2.9rem);
+  font-weight: 500;
+  color: var(--primary-burgundy, #500f16);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
 }
+
+.pillars-brand-script {
+  font-family: var(--font-script, 'Pinyon Script', cursive);
+  font-size: clamp(2.7rem, 5vw, 4.2rem);
+  font-weight: 400;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: #a47843;
+  line-height: 0.9;
+  display: inline-block;
+  padding: 0 0.15rem;
+  text-shadow: 0 2px 10px rgba(164, 120, 67, 0.15);
+}
+
+/* Subtitle Description */
+.pillars-desc {
+  font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+  font-size: clamp(0.92rem, 1.2vw, 1.05rem);
+  color: #5C554F;
+  letter-spacing: 0.02em;
+  max-width: 660px;
+  margin: 0 auto;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   3 Arched Cards Grid
+   ========================================================================== */
 
 .pillars-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 3rem;
+  gap: clamp(1.5rem, 2.8vw, 2.75rem);
   position: relative;
+  z-index: 2;
 }
 
+/* Outer Arched Card */
 .pillar-card {
-  background: rgba(250, 247, 242, 0.6);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 20px;
-  padding: 4rem 2rem 3rem;
-  text-align: center;
+  background: rgba(253, 250, 246, 0.96);
+  border: 1px solid rgba(198, 164, 106, 0.42);
+  border-radius: 190px 190px 24px 24px;
+  padding: 12px 12px 2.8rem 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.035);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  margin-top: 42px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease,
+              box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.4s ease;
   overflow: visible;
-  transition: border-color 0.4s ease;
 }
 
 .pillar-card:hover {
-  border-color: rgba(212, 175, 55, 0.6);
-  background: rgba(250, 247, 242, 0.85);
+  transform: translateY(-8px);
+  border-color: rgba(198, 164, 106, 0.85);
+  background: #FFFFFF;
+  box-shadow: 0 24px 50px -12px rgba(80, 15, 22, 0.12),
+              0 0 28px rgba(198, 164, 106, 0.14);
 }
 
-.pillar-icon-ring {
+/* Top Arched Image Window */
+.pillar-image-arch {
+  width: 100%;
+  height: 260px;
+  border-radius: 178px 178px 8px 8px;
+  overflow: hidden;
+  position: relative;
+  background-color: #EDE5DA;
+}
+
+.pillar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  display: block;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+}
+
+.pillar-card:hover .pillar-image {
+  transform: scale(1.06);
+}
+
+.pillar-image-overlay {
   position: absolute;
-  top: -42px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 85px;
-  height: 85px;
-  border-radius: 50%;
-  background: rgba(198, 164, 106, 0.08);
-  animation: goldPulse 3s ease-in-out infinite;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(80, 15, 22, 0.02) 0%, rgba(250, 247, 242, 0.15) 100%);
   pointer-events: none;
 }
 
-.pillar-bottom-line {
-  position: absolute;
-  bottom: 0;
-  left: 10%;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold-accent), transparent);
-  transition: width 0.5s ease;
-}
-
-.pillar-card:hover .pillar-bottom-line {
-  width: 80%;
-}
-
-.pillar-icon {
-  width: 65px;
-  height: 65px;
-  background-color: var(--primary-burgundy);
-  border-radius: 50%;
+/* Overlapping Badge & Seam */
+.pillar-badge-wrapper {
+  position: relative;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gold-accent);
-  position: absolute;
-  top: -32.5px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid var(--bg-cream); /* creates the cutout effect */
+  margin-top: -29px; /* half of 58px badge */
+  z-index: 3;
 }
 
-.pillar-icon svg {
-  width: 32px;
-  height: 32px;
+.pillar-seam-line {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(198, 164, 106, 0.45) 20%, rgba(198, 164, 106, 0.45) 80%, transparent 100%);
+  z-index: 1;
+}
+
+.pillar-icon-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: var(--primary-burgundy, #500f16);
+  border: 1.5px solid var(--gold-accent, #C6A46A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-accent, #C6A46A);
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 4px 16px rgba(80, 15, 22, 0.25), 0 0 0 5px #FAF7F2;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease,
+              box-shadow 0.4s ease;
+}
+
+.pillar-card:hover .pillar-icon-badge {
+  transform: scale(1.08);
+  border-color: #E8CF9B;
+  box-shadow: 0 6px 20px rgba(80, 15, 22, 0.35),
+              0 0 16px rgba(198, 164, 106, 0.5),
+              0 0 0 5px #FFFFFF;
+}
+
+.pillar-icon-badge svg {
+  width: 26px;
+  height: 26px;
+  transition: transform 0.4s ease;
+}
+
+.pillar-card:hover .pillar-icon-badge svg {
+  transform: scale(1.05);
+}
+
+/* Card Content Area */
+.pillar-card-content {
+  padding: 1.5rem 1.25rem 0.5rem 1.25rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .pillar-card-subtitle {
-  font-family: var(--font-heading);
-  font-size: 0.75rem;
-  letter-spacing: 0.15em;
-  color: var(--gold-accent);
+  font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.76rem;
+  letter-spacing: 0.22em;
+  color: #9A7242;
   text-transform: uppercase;
-  margin-bottom: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
 }
 
 .pillar-card-title {
-  font-family: var(--font-heading);
-  font-size: 1.6rem;
-  color: var(--primary-burgundy);
-  margin-bottom: 1rem;
-  letter-spacing: 0.05em;
+  font-family: var(--font-heading, 'Playfair Display', serif);
+  font-size: clamp(1.4rem, 1.8vw, 1.65rem);
+  color: var(--primary-burgundy, #500f16);
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
 }
 
+/* Divider with centered diamond */
 .pillar-divider {
-  color: var(--gold-accent);
-  font-size: 0.6rem;
-  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  color: var(--gold-accent, #C6A46A);
+  font-size: 0.55rem;
+  margin-bottom: 1.35rem;
+  width: 100%;
 }
 
 .pillar-divider::before,
 .pillar-divider::after {
   content: '';
-  display: inline-block;
-  width: 30px;
+  display: block;
+  width: 26px;
   height: 1px;
-  background-color: var(--gold-accent);
-  margin: 0 10px;
-  opacity: 0.4;
+  background-color: var(--gold-accent, #C6A46A);
+  opacity: 0.45;
 }
 
 .pillar-card-text {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  line-height: 1.8;
-  color: #4a4a4a;
+  font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.92rem;
+  line-height: 1.78;
+  color: #554E48;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* Bottom Gilded Line Reveal */
+.pillar-bottom-line {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-accent, #C6A46A), transparent);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 2px;
+}
+
+.pillar-card:hover .pillar-bottom-line {
+  width: 70%;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+  .pillars-botanical {
+    opacity: 0.45;
+    width: 80px;
+  }
 }
 
 @media (max-width: 1024px) {
   .pillars-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
+    gap: 1.5rem;
+  }
+
+  .pillar-card {
+    border-radius: 160px 160px 20px 20px;
+    padding: 10px 10px 2.2rem 10px;
+  }
+
+  .pillar-image-arch {
+    height: 220px;
+    border-radius: 150px 150px 6px 6px;
+  }
+
+  .pillar-botanical {
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
   .pillars-grid {
     grid-template-columns: 1fr;
-    gap: 4rem;
+    gap: 2.75rem;
+    max-width: 420px;
+    margin: 0 auto;
   }
+
+  .pillar-card {
+    border-radius: 175px 175px 22px 22px;
+    padding: 12px 12px 2.5rem 12px;
+  }
+
+  .pillar-image-arch {
+    height: 250px;
+    border-radius: 163px 163px 6px 6px;
+  }
+
+  .pillar-card-title {
+    font-size: 1.5rem;
+  }
+
+  .pillars-header {
+    margin-bottom: 2.5rem;
+  }
+
   .pillars-title {
-    font-size: 2.2rem;
-  }
-  .core-pillars {
-    padding: 5rem 0;
+    font-size: 1.75rem;
   }
 }
 
 @media (max-width: 480px) {
   .core-pillars {
-    padding: 2.5rem 0 4rem 0;
+    padding: 3.5rem 0 4.5rem 0;
   }
 
   .pillars-container {
-    padding: 0 1rem;
-  }
-
-  .pillars-title {
-    font-size: 1.8rem;
+    padding: 0 1.25rem;
   }
 
   .pillar-card {
-    padding: 3rem 1.25rem 2rem;
+    border-radius: 155px 155px 20px 20px;
+    padding: 10px 10px 2rem 10px;
+  }
+
+  .pillar-image-arch {
+    height: 220px;
+    border-radius: 145px 145px 6px 6px;
+  }
+
+  .pillar-icon-badge {
+    width: 52px;
+    height: 52px;
+  }
+
+  .pillar-badge-wrapper {
+    margin-top: -26px;
+  }
+
+  .pillar-icon-badge svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .pillar-card-content {
+    padding: 1.2rem 0.75rem 0 0.75rem;
+  }
+
+  .pillar-card-text {
+    font-size: 0.88rem;
+    line-height: 1.7;
   }
 }
-

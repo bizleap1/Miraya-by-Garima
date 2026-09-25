@@ -3,7 +3,6 @@ import ShopByCategory from '../components/ShopByCategory';
 import OurStory from '../components/OurStory';
 import Collections from '../components/Collections';
 import RealBrides from '../components/RealBrides';
-import CorePillars from '../components/CorePillars';
 import Lookbook from '../components/Lookbook';
 import FinalCTA from '../components/FinalCTA';
 
@@ -24,7 +23,6 @@ export default function HomePage() {
       <OurStory />
       <Collections />
       <RealBrides />
-      <CorePillars />
       <Lookbook />
       <FinalCTA />
     </main>

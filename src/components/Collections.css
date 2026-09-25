@@ -218,10 +218,11 @@
 
 @media (max-width: 768px) {
   .collections-compact-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     grid-template-rows: auto;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    gap: 1rem;
+    padding: 0 0.5rem;
   }
   .col-card {
     height: 300px;
@@ -229,5 +230,23 @@
   .col-card-explore {
     opacity: 1;
     transform: none;
+  }
+  
+  /* Adjust typography and icons for smaller cards on mobile */
+  .collections-compact-grid .card-product-title {
+    font-size: 0.85rem;
+  }
+  .collections-compact-grid .product-price {
+    font-size: 0.95rem;
+  }
+  .collections-compact-grid .card-category-kicker {
+    font-size: 0.55rem;
+  }
+  .collections-compact-grid .card-info {
+    padding: 0.75rem 0 0.25rem;
+  }
+  .collections-compact-grid .premium-action-icons svg {
+    width: 18px;
+    height: 18px;
   }
 }

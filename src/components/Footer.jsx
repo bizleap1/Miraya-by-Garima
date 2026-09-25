@@ -96,6 +96,7 @@ const Footer = () => {
         
         <div className="footer-bottom-new">
           <p>&copy; {new Date().getFullYear()} Miraya by Garima. Crafted with Pride in India. All Rights Reserved.</p>
+          <p style={{ marginTop: '5px', fontSize: '0.75rem', opacity: 0.8 }}>Powered by Bizleap</p>
           <div className="footer-bottom-ornament">
              <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
                  <path d="M20 10L10 5H30L20 10Z" fill="#dfc28d" opacity="0.8"/>

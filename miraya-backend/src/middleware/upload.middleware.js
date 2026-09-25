@@ -5,6 +5,8 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 
+import sharp from 'sharp';
+
 let storage;
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
@@ -16,6 +18,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
     params: {
       folder: 'miraya-products',
       allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+      transformation: [{ quality: 'auto:good' }]
     },
   });
 } else {
@@ -56,3 +59,40 @@ export const upload = multer({
     files: 10, // Max 10 images per request
   },
 });
+
+export const compressImages = async (req, res, next) => {
+  if (!req.files && !req.file) return next();
+  
+  // Skip compression if using Cloudinary, as it's handled by transformation
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+    return next();
+  }
+
+  const files = req.files ? (Array.isArray(req.files) ? req.files : req.files.images || []) : [req.file];
+  
+  try {
+    for (const file of files) {
+      if (!file || !file.path) continue;
+      
+      const tmpPath = file.path + '.tmp';
+      const ext = path.extname(file.path).toLowerCase();
+      
+      let pipeline = sharp(file.path);
+      
+      if (ext === '.jpg' || ext === '.jpeg') {
+        pipeline = pipeline.jpeg({ quality: 80, mozjpeg: true });
+      } else if (ext === '.png') {
+        pipeline = pipeline.png({ quality: 80, compressionLevel: 8 });
+      } else if (ext === '.webp') {
+        pipeline = pipeline.webp({ quality: 80 });
+      }
+      
+      await pipeline.toFile(tmpPath);
+      fs.renameSync(tmpPath, file.path);
+    }
+    next();
+  } catch (error) {
+    console.error('Image compression error:', error);
+    next(error);
+  }
+};

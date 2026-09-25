@@ -32,7 +32,7 @@ const CATEGORIES = [
   {
     id: 4,
     name: 'PREMIUM SUITS',
-    image: '/The Miraya 2.JPG',
+    image: '/The Miraya 2_fixed.JPG',
     link: '/collection/designer-suits',
     gridClass: 'sbc-item-large-right',
     type: 'large',
@@ -46,8 +46,8 @@ const ShopByCategory = () => {
       <div className="sbc-header-container">
         <div className="sbc-title-wrapper">
           <h2 className="sbc-main-heading legacy-heading">
-            <span className="sbc-serif-text">The Miraya </span>
-            <span className="sbc-script-text">Legacy</span>
+            <span className="sbc-serif-text">Discover </span>
+            <span className="sbc-script-text">Miraya</span>
           </h2>
         </div>
       </div>

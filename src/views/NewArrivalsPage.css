@@ -478,9 +478,28 @@
 
 @media (max-width: 480px) {
   .na-product-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 0.75rem;
   }
   .na-editorial-insert {
-    grid-column: span 1;
+    grid-column: span 2;
+  }
+  
+  .na-card-title {
+    font-size: 0.75rem;
+  }
+  
+  .na-card-price {
+    font-size: 0.75rem;
+  }
+  
+  .na-wishlist-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .na-wishlist-btn svg {
+    width: 14px;
+    height: 14px;
   }
 }
