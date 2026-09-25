@@ -76,7 +76,7 @@ const CategoryPage = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
-  const [sizeModalProduct, setSizeModalProduct] = useState(null);
+  const [expandedCartCardId, setExpandedCartCardId] = useState(null);
   const [selectedBuySize, setSelectedBuySize] = useState('Free Size (M to XL)');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutDirectItem, setCheckoutDirectItem] = useState(null);
@@ -101,8 +101,12 @@ const CategoryPage = () => {
       return;
     }
 
-    // Ask for size
-    setSizeModalProduct(item);
+    // Expand card for size selection
+    if (expandedCartCardId === item.id) {
+      setExpandedCartCardId(null);
+    } else {
+      setExpandedCartCardId(item.id);
+    }
   };
 
   const handleBuyNowClick = (product) => {
@@ -735,6 +739,49 @@ const CategoryPage = () => {
                         })()}
                       </div>
                     </div>
+                    
+                    <AnimatePresence>
+                      {expandedCartCardId === item.id && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                          animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
+                          exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                          style={{ overflow: 'hidden', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px' }}
+                        >
+                          <div style={{ fontSize: '11px', color: 'rgba(0,0,0,0.6)', marginBottom: '8px', letterSpacing: '0.5px' }}>SELECT SIZE:</div>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {(item.sizes && item.sizes.length > 0 ? item.sizes : ['S', 'M', 'L', 'XL', 'XXL']).map(size => (
+                              <button 
+                                key={size}
+                                type="button"
+                                style={{
+                                  background: 'transparent',
+                                  border: '1px solid rgba(0,0,0,0.15)',
+                                  borderRadius: '4px',
+                                  padding: '5px 8px',
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                  color: '#000',
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => { e.target.style.borderColor = '#c6a46a'; e.target.style.color = '#c6a46a'; }}
+                                onMouseLeave={(e) => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.color = '#000'; }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  addToCart(item, size, 1);
+                                  showToast(Added to cart!);
+                                  setExpandedCartCardId(null);
+                                }}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    
                   </div>
                   </motion.div>
                 );
@@ -754,89 +801,7 @@ const CategoryPage = () => {
         </main>
       </div>
 
-      {/* QUICK SIZE SELECTOR MODAL */}
-      <AnimatePresence>
-        {sizeModalProduct && (
-          <div
-            className="quick-size-modal-backdrop"
-            onClick={() => setSizeModalProduct(null)}
-          >
-            <motion.div
-              className="quick-size-modal"
-              onClick={(e) => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 20 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <button
-                className="quick-size-close-btn"
-                onClick={() => setSizeModalProduct(null)}
-                aria-label="Close"
-              >
-                <X size={18} />
-              </button>
-
-              <div className="quick-size-header">
-                <img
-                  src={getProductImage(sizeModalProduct.image || sizeModalProduct.image_url)}
-                  alt={sizeModalProduct.title || sizeModalProduct.name}
-                  className="quick-size-thumb"
-                />
-                <div className="quick-size-title-wrap">
-                  <span className="quick-size-cat">{formatCategoryName(sizeModalProduct.category).toUpperCase()}</span>
-                  <h4>{sizeModalProduct.title || sizeModalProduct.name}</h4>
-                  <p className="quick-size-price">{formatPrice(sizeModalProduct.price)}</p>
-                </div>
-              </div>
-
-              <div className="quick-size-body">
-                <div className="quick-size-label-row">
-                  <span className="quick-size-label">Select Your Size:</span>
-                  <span className="quick-size-active-val">Size: {selectedBuySize}</span>
-                </div>
-
-                <div className="quick-size-grid">
-                  {(sizeModalProduct.sizes && sizeModalProduct.sizes.length > 0 ? sizeModalProduct.sizes : ['Free Size (M to XL)']).map((size) => {
-                    let sizeStock = 1;
-                    if (sizeModalProduct.size_stock) {
-                      try {
-                        const stockObj = typeof sizeModalProduct.size_stock === 'string'
-                          ? JSON.parse(sizeModalProduct.size_stock)
-                          : sizeModalProduct.size_stock;
-                        if (stockObj[size] !== undefined) sizeStock = Number(stockObj[size]);
-                      } catch (e) {}
-                    }
-                    const isSoldOut = sizeStock <= 0;
-
-                    return (
-                      <button
-                        key={size}
-                        type="button"
-                        disabled={isSoldOut}
-                        className={`quick-size-btn ${selectedBuySize === size ? 'active' : ''} ${isSoldOut ? 'disabled' : ''}`}
-                        onClick={() => !isSoldOut && setSelectedBuySize(size)}
-                      >
-                        <span>{size}</span>
-                        {selectedBuySize === size && <Check size={12} className="check-icon" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  className="quick-size-proceed-btn"
-                  onClick={handleModalAddToCart}
-                >
-                  <span>ADD TO CART</span>
-                  <ShoppingBag size={16} />
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      
 
       {/* CHECKOUT MODAL */}
       <CheckoutModal

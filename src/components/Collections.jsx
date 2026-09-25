@@ -71,6 +71,7 @@ const Collections = ({
   }, [title]);
 
   const [hoveredCartCardId, setHoveredCartCardId] = useState(null);
+  const [expandedCartCardId, setExpandedCartCardId] = useState(null);
 
   const formatPrice = (priceStr) => {
     if (!priceStr) return '';
@@ -78,11 +79,26 @@ const Collections = ({
   };
 
   const handleToggleCartItem = (item) => {
-    const existingItem = cartItems.find(ci => String(ci.id) === String(item.id));
+    const existingItem = cartItems.find(ci => String(ci.id) === String(item.id) || ci.productId === item.id);
     if (existingItem) {
-      removeFromCart(existingItem.id, existingItem.selectedSize);
+      const chosenSize = item.sizes && item.sizes.length > 0 ? item.sizes[0] : 'Free Size (M to XL)';
+      removeFromCart(item.id, chosenSize);
+      showToast(Removed from cart);
+      return;
+    }
+
+    // For items with Free Size, don't ask for size, add directly
+    if (item.category === 'drape-sarees' || item.category === 'premium-suit-materials' || (item.sizes && item.sizes.length === 1 && item.sizes[0] === 'Free Size')) {
+      addToCart({ ...item, size: 'Free Size', quantity: 1 });
+      showToast(Added to cart!);
+      return;
+    }
+
+    // Expand card for size selection
+    if (expandedCartCardId === item.id) {
+      setExpandedCartCardId(null);
     } else {
-      addToCart({ ...item, size: item.sizes?.[0] || 'Free Size', quantity: 1 });
+      setExpandedCartCardId(item.id);
     }
   };
 
@@ -198,6 +214,49 @@ const Collections = ({
                       </button>
                     </div>
                   </div>
+                  
+                  <AnimatePresence>
+                    {expandedCartCardId === item.id && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                        animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
+                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                        style={{ overflow: 'hidden', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px' }}
+                      >
+                        <div style={{ fontSize: '11px', color: 'rgba(0,0,0,0.6)', marginBottom: '8px', letterSpacing: '0.5px' }}>SELECT SIZE:</div>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {(item.sizes && item.sizes.length > 0 ? item.sizes : ['S', 'M', 'L', 'XL', 'XXL']).map(size => (
+                            <button 
+                              key={size}
+                              type="button"
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid rgba(0,0,0,0.15)',
+                                borderRadius: '4px',
+                                padding: '5px 8px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                                color: '#000',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => { e.target.style.borderColor = '#c6a46a'; e.target.style.color = '#c6a46a'; }}
+                              onMouseLeave={(e) => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.color = '#000'; }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                addToCart({ ...item, size, quantity: 1 });
+                                showToast(Added to cart!);
+                                setExpandedCartCardId(null);
+                              }}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  
                 </div>
               </motion.div>
             );
