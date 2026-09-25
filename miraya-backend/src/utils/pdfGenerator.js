@@ -155,9 +155,9 @@ export const generateInvoicePDF = (order, stream) => {
   }
   shipObj = shipObj || {};
 
-  const customerName = billObj.fullName || order.user?.name || order.shipping_name || 'Valued Client';
-  const customerEmail = billObj.email || order.user?.email || shipObj.email || 'N/A';
-  const customerPhone = billObj.phone || order.shipping_phone || order.user?.phone || 'N/A';
+  const customerName = billObj.fullName || order.shipping_name || 'Valued Client';
+  const customerEmail = billObj.email || order.shipping_email || shipObj.email || 'N/A';
+  const customerPhone = billObj.phone || order.shipping_phone || 'N/A';
   const billAddress = billObj.addressString || (billObj.line1 ? `${billObj.line1}, ${billObj.city || ''} ${billObj.pincode || ''}` : '') || order.shipping_address || 'Nagpur Flagship Boutique Atelier';
   const billGstin = billObj.gstin ? `  |  GSTIN: ${billObj.gstin}` : '';
 

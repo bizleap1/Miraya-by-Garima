@@ -8,17 +8,20 @@ import {
   getInvoice,
   resetAllOrdersController,
 } from '../controllers/order.controller.js';
-import { authMiddleware, adminMiddleware } from '../middleware/auth.middleware.js';
+import { authMiddleware, optionalAuthMiddleware, adminMiddleware } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-router.use(authMiddleware);
+// Optional auth for creation to allow Guest Checkout
+router.post('/', optionalAuthMiddleware, createOrder);
 
-router.post('/', createOrder);
-router.get('/', getMyOrders);
-router.get('/my-orders', getMyOrders);
-router.post('/:id/cancel', cancelOrder);
-router.get('/:id/invoice', getInvoice);
+// Mandatory auth for fetching user's own orders
+router.get('/', authMiddleware, getMyOrders);
+router.get('/my-orders', authMiddleware, getMyOrders);
+router.post('/:id/cancel', authMiddleware, cancelOrder);
+
+// Invoice can be accessed via optional auth (verified by email or if user is owner)
+router.get('/:id/invoice', optionalAuthMiddleware, getInvoice);
 
 // Admin endpoints
 router.get('/all', adminMiddleware, getAllOrders);

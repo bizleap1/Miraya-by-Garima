@@ -169,7 +169,7 @@ model CartItem {
 
 model Order {
   id                Int             @id @default(autoincrement())
-  user_id           Int
+  user_id           Int?
   total             Decimal
   status            String          @default("processing") // "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "cancellation_requested" | "refunded"
   cancel_reason     String?
@@ -177,13 +177,15 @@ model Order {
   razorpay_order_id String?
   shipping_name     String?
   shipping_phone    String?
+    shipping_email    String?
+    shipping_country  String?
   shipping_address  String?
   shipping_city     String?
   shipping_state    String?
   shipping_pincode  String?
   created_at        DateTime        @default(now())
   updated_at        DateTime        @default(now()) @updatedAt
-  user              User            @relation(fields: [user_id], references: [id])
+  user              User?           @relation(fields: [user_id], references: [id])
   items             OrderItem[]
   payments          Payment[]
   returnRequests    ReturnRequest[]

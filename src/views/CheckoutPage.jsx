@@ -193,16 +193,15 @@ const CheckoutPage = () => {
     };
   }, []);
 
-  // Initial Data Load & Mandatory Authentication Gate
+  // Initial Data Load & Optional Authentication
   useEffect(() => {
     const token = localStorage.getItem('token');
     const isLogged = localStorage.getItem('isLoggedIn') === 'true';
     const userStr = localStorage.getItem('user');
 
     if (!token || !isLogged) {
-      toast.warning('Please sign in or create an account to proceed with your bespoke checkout.', 'SIGN IN REQUIRED');
-      navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
-      return;
+      setIsLoggedIn(false);
+      return; // Guest checkout allowed
     }
 
     setIsLoggedIn(true);
@@ -387,11 +386,7 @@ const CheckoutPage = () => {
   // Trigger Order
   const handlePlaceOrderClick = () => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      toast.warning('Please sign in or create an account to complete your luxury purchase.', 'AUTHENTICATION REQUIRED');
-      navigate('/auth', { state: { from: '/checkout', directProduct: directItem } });
-      return;
-    }
+    // Auth is optional now. No redirect.
 
     if (!shippingForm.fullName?.trim() || !shippingForm.phone?.trim() || !shippingForm.line1?.trim() || !shippingForm.city?.trim() || !shippingForm.pincode?.trim()) {
       toast.warning('Please complete all mandatory delivery destination details marked with *', 'SHIPPING ADDRESS');
@@ -1027,6 +1022,25 @@ const CheckoutPage = () => {
             </div>
 
             {/* Logged in User Bar */}
+            {!isLoggedIn && (
+              <div className="checkout-guest-auth-prompt" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(198, 164, 106, 0.05)', border: '1px solid rgba(198, 164, 106, 0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <User size={18} color="var(--gold-accent)" />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-dark)', marginBottom: '0.2rem' }}>Checking out as a Guest</strong>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Already have an account? Sign in for faster checkout.</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-switch-user"
+                  onClick={() => navigate('/auth', { state: { from: '/checkout', directProduct: directItem } })}
+                  style={{ border: '1px solid var(--gold-accent)', padding: '0.5rem 1rem', background: 'transparent', color: 'var(--primary-burgundy)', fontSize: '0.8rem', letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s ease' }}
+                >
+                  Log In
+                </button>
+              </div>
+            )}
             {isLoggedIn && user && (
               <div className="checkout-user-auth-status">
                 <div className="auth-status-left">

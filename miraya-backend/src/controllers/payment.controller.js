@@ -366,7 +366,8 @@ export const verifyRazorpayPayment = async (req, res) => {
           const newOrder = await tx.order.create({
             data: {
               user_id: req.user?.id || null,
-              total: calculatedTotal,
+                shipping_email: shippingDetails?.email?.trim() || req.user?.email || req.body?.email || '',
+                total: calculatedTotal,
               status: 'processing',
               payment_id: rzpPaymentId,
               razorpay_order_id: rzpOrderId,

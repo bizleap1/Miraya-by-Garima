@@ -106,7 +106,8 @@ export const createOrder = async (req, res) => {
       // 3. Create Order with snapshot details
       const createdOrder = await tx.order.create({
         data: {
-          user_id: req.user.id,
+          user_id: req.user?.id || null,
+          shipping_email: shippingDetails?.email?.trim() || req.user?.email?.trim() || req.body?.email?.trim() || '',
           total: calculatedFinalTotal,
           status: 'processing',
           payment_id: actualPaymentId || (method === 'cod' ? 'COD' : null),
@@ -158,7 +159,7 @@ export const createOrder = async (req, res) => {
       }
 
       // 6. Clear user cart
-      await tx.cartItem.deleteMany({ where: { user_id: req.user.id } });
+      if (req.user?.id) { await tx.cartItem.deleteMany({ where: { user_id: req.user.id } }); }
 
       return createdOrder;
     }, {
