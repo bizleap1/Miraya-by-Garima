@@ -166,6 +166,7 @@ const Collections = ({
                       src={item.image} 
                       alt={item.title} 
                       loading="lazy" 
+                      decoding="async"
                       className="card-product-img"
                     />
                   </Link>
