@@ -7,56 +7,25 @@ import './HeroSlider.css';
 const SLIDES = [
   {
     id: 1,
-    bgImage: '/slidess/1.png',
+    bgImage: '/slidess/main1.jpg',
+    mobileBgImage: '/slidess/mobile-slides/main1mr.jpg',
     brandText: 'MIRAYA BY GARIMA',
     headingScript: 'New',
     headingSerif: 'COLLECTION',
     subheading: 'Live Now',
     ctaText: 'Shop Now',
     ctaLink: '/collection/all',
-    isLightBackground: true
+    isLightBackground: false
   },
   {
     id: 2,
-    bgImage: '/slidess/2.png?v=updated',
+    bgImage: '/slidess/main2.jpg',
+    mobileBgImage: '/slidess/mobile-slides/main2mr.jpg',
     brandText: 'MIRAYA BY GARIMA',
     headingScript: 'The Art of',
     headingSerif: 'ELEGANCE',
     subheading: 'Timeless ethnic wear, thoughtfully crafted for the modern wardrobe.',
     ctaText: 'Explore Collection',
-    ctaLink: '/collection/all',
-    isLightBackground: true
-  },
-  {
-    id: 3,
-    bgImage: '/slidess/3.png',
-    brandText: 'MIRAYA BY GARIMA',
-    headingScript: 'Modern',
-    headingSerif: 'TRADITIONS',
-    subheading: 'For Every You',
-    ctaText: 'View Collection',
-    ctaLink: '/collection/all',
-    isLightBackground: false
-  },
-  {
-    id: 4,
-    bgImage: '/slidess/4.png?v=updated',
-    brandText: 'MIRAYA BY GARIMA',
-    headingScript: 'Festive',
-    headingSerif: 'WEAR',
-    subheading: 'Made for Special Moments',
-    ctaText: 'Explore Collection',
-    ctaLink: '/collection/all',
-    isLightBackground: false
-  },
-  {
-    id: 5,
-    bgImage: '/slidess/5.png',
-    brandText: 'MIRAYA BY GARIMA',
-    headingScript: 'Exclusive',
-    headingSerif: 'EDITION',
-    subheading: 'Discover the latest additions to our premium collection.',
-    ctaText: 'Shop Now',
     ctaLink: '/collection/all',
     isLightBackground: true
   }
@@ -68,7 +37,7 @@ const HeroSlider = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % SLIDES.length);
-    }, 2500);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -98,11 +67,16 @@ const HeroSlider = () => {
             exit="exit"
           >
             {/* Background Image */}
-            <img 
-              className="hero-bg-image"
-              src={currentSlide.bgImage} 
-              alt="Campaign" 
-            />
+              <picture>
+                {currentSlide.mobileBgImage && (
+                  <source media="(max-width: 768px)" srcSet={currentSlide.mobileBgImage} />
+                )}
+                <img 
+                  className="hero-bg-image"
+                  src={currentSlide.bgImage} 
+                  alt="Campaign" 
+                />
+              </picture>
           </motion.div>
         </AnimatePresence>
 
@@ -152,3 +126,5 @@ const HeroSlider = () => {
 };
 
 export default HeroSlider;
+
+

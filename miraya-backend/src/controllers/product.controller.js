@@ -10,9 +10,20 @@ import { getWomenPriceCategory, WOMENSWEAR_PRICE_RULES, WOMENSWEAR_CATEGORY_NAME
 
 export const getProducts = async (req, res) => {
   try {
-    const { search, category, sort, include_inactive } = req.query;
+    const { search, category, sort, include_inactive, status } = req.query;
 
     const where = {};
+
+    // Filter by status (Admin panel filters)
+    if (status === 'archived') {
+      where.is_archived = true;
+      where.deleted_at = null;
+    } else if (status === 'deleted') {
+      where.deleted_at = { not: null };
+    } else {
+      where.is_archived = false;
+      where.deleted_at = null;
+    }
 
     // Public storefront should ONLY see active products (not soft-archived/deleted)
     if (include_inactive !== 'true') {
@@ -419,6 +430,17 @@ export const updateProduct = async (req, res) => {
     if (req.body.highlights !== undefined) data.highlights = req.body.highlights;
     if (req.body.promo_label !== undefined) data.promo_label = req.body.promo_label;
 
+    if (req.body.is_archived !== undefined) {
+      data.is_archived = req.body.is_archived === 'true' || req.body.is_archived === true;
+    }
+    if (req.body.is_deleted !== undefined) {
+      if (req.body.is_deleted === 'false' || req.body.is_deleted === false) {
+        data.deleted_at = null; // Recover product
+      } else {
+        data.deleted_at = new Date();
+      }
+    }
+
 
     if (req.files && req.files.length > 0) {
       const uploaded = req.files.map((file) => {
@@ -566,62 +588,45 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    const { hard } = req.query;
     const productId = parseInt(id, 10);
 
-    // Check if product is referenced in historical orders or exchanges
-    const [orderItemCount, exchangeCount] = await Promise.all([
-      prisma.orderItem.count({ where: { product_id: productId } }),
-      prisma.returnRequest.count({ where: { product_id: productId } }),
-    ]);
-
-    // If product has historical orders/exchanges, soft-archive (is_active = false) to protect order history
-    if (orderItemCount > 0 || exchangeCount > 0) {
+    if (hard === 'true') {
+      const [orderItemCount, exchangeCount] = await Promise.all([
+        prisma.orderItem.count({ where: { product_id: productId } }),
+        prisma.returnRequest.count({ where: { product_id: productId } }),
+      ]);
+      if (orderItemCount > 0 || exchangeCount > 0) {
+        return res.status(400).json({ success: false, message: 'Cannot permanently delete this product as it is part of historical orders.' });
+      }
       await prisma.$transaction(async (tx) => {
-        await tx.productVariant.updateMany({
-          where: { product_id: productId },
-          data: { is_active: false },
-        });
-
-
+        await tx.wishlist?.deleteMany({ where: { product_id: productId } }).catch(() => {});
+        await tx.cartItem?.deleteMany({ where: { product_id: productId } }).catch(() => {});
+        await tx.stockNotification?.deleteMany({ where: { product_id: productId } }).catch(() => {});
+        await tx.review?.deleteMany({ where: { product_id: productId } }).catch(() => {});
+        const variants = await tx.productVariant.findMany({ where: { product_id: productId }, select: { id: true } });
+        const variantIds = variants.map((v) => v.id);
+        if (variantIds.length > 0) {
+          await tx.inventoryMovement?.deleteMany({ where: { variant_id: { in: variantIds } } }).catch(() => {});
+          await tx.productVariant.deleteMany({ where: { product_id: productId } });
+        }
+        await tx.inventoryMovement?.deleteMany({ where: { product_id: productId } }).catch(() => {});
+        await tx.product.delete({ where: { id: productId } });
       });
-
-      emitProductDeleted({ id: productId });
-      emitProductUpdated({ id: productId, is_active: false });
-
-
-      return res.json({
-        success: true,
-        archived: true,
-        message: 'Product is referenced in historical sales records and was safely archived (deactivated) to protect order history.',
-      });
+      emitProductDeleted(productId);
+      return res.json({ success: true, message: 'Product permanently deleted successfully' });
     }
 
-    // Unreferenced product — safe hard delete
-    await prisma.$transaction(async (tx) => {
-      await tx.wishlist?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-      await tx.cartItem?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-      await tx.stockNotification?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-      await tx.review?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-
-      const variants = await tx.productVariant.findMany({
-        where: { product_id: productId },
-        select: { id: true },
-      });
-      const variantIds = variants.map((v) => v.id);
-
-      if (variantIds.length > 0) {
-        await tx.inventoryMovement?.deleteMany({ where: { variant_id: { in: variantIds } } }).catch(() => {});
-        await tx.productVariant.deleteMany({ where: { product_id: productId } });
-      }
-
-      await tx.inventoryMovement?.deleteMany({ where: { product_id: productId } }).catch(() => {});
-      await tx.product.delete({ where: { id: productId } });
+    // Soft delete (moves to Recently Deleted for 30 days)
+    await prisma.product.update({
+      where: { id: productId },
+      data: { deleted_at: new Date() }
     });
 
-    // Realtime broadcast after DB commit
     emitProductDeleted(productId);
+    emitProductUpdated({ id: productId, deleted_at: new Date() });
 
-    res.json({ success: true, message: 'Product deleted successfully' });
+    res.json({ success: true, message: 'Product moved to Recently Deleted (retained for 30 days).' });
   } catch (error) {
     console.error('Delete product error:', error);
     res.status(500).json({ success: false, message: 'Error processing product deletion: ' + error.message, error: error.message });

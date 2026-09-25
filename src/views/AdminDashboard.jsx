@@ -65,16 +65,11 @@ const API = API_URL || "http://localhost:5000";
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "products", label: "Products", icon: Package },
-  { id: "inventory", label: "Inventory", icon: Boxes },
+  { id: "catalog", label: "Catalog", icon: Package },
   { id: "orders", label: "Orders", icon: ShoppingBag },
-  { id: "exchanges", label: "Exchanges", icon: RefreshCw },
   { id: "customers", label: "Customers", icon: Users },
-  { id: "categories", label: "Categories", icon: Layers3 },
-  { id: "homepage-sections", label: "Theme Customizer", icon: Sparkles },
   { id: "page-customizer", label: "Page Customizer", icon: FileText },
-  { id: "coupons", label: "Coupons", icon: Tag },
-  { id: "promotions", label: "Promotions & Pricing", icon: Percent },
+  { id: "offers", label: "Offers", icon: Tag },
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "settings", label: "Store Settings", icon: SlidersHorizontal },
 ];
@@ -92,9 +87,9 @@ function StatusBadge({ children, type = "neutral" }) {
   return <span className={`status-badge status-${type}`}>{children}</span>;
 }
 
-function StatCard({ icon: Icon, title, value, helper, danger = false }) {
+function StatCard({ icon: Icon, title, value, helper, danger = false, theme = "gold" }) {
   return (
-    <div className="stat-card">
+    <div className={`stat-card theme-${theme}`}>
       <div className="stat-icon">
         <Icon size={23} />
       </div>
@@ -480,12 +475,8 @@ function SalesChart({ data = [], orders = [] }) {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window !== "undefined" && window.location.pathname.includes("/admin/customizer")) {
-      return "homepage-sections";
-    }
-    return "dashboard";
-  });
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [catalogTab, setCatalogTab] = useState("inventory");
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -703,12 +694,19 @@ export default function AdminDashboard() {
       const activeToken = overrideToken || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
       const headers = activeToken ? { Authorization: `Bearer ${activeToken}` } : {};
 
+      const handleResponse = async (r) => {
+        if (r.status === 401 || r.status === 403) {
+          throw new Error('UNAUTHORIZED');
+        }
+        return r.ok ? r.json() : null;
+      };
+
       const [resStats, resProds, resOrders, resCats, resCoupons] = await Promise.all([
-        fetch(`${API}/api/stats`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API}/api/stats`, { headers }).then(handleResponse).catch(e => { if(e.message === 'UNAUTHORIZED') throw e; return null; }),
         fetch(`${API}/api/products`).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`${API}/api/orders/all`, { headers }).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`${API}/api/orders/all`, { headers }).then(handleResponse).catch(e => { if(e.message === 'UNAUTHORIZED') throw e; return []; }),
         fetch(`${API}/api/categories`).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`${API}/api/coupons`, { headers }).then(r => r.ok ? r.json() : []).catch(() => [])
+        fetch(`${API}/api/coupons`, { headers }).then(handleResponse).catch(e => { if(e.message === 'UNAUTHORIZED') throw e; return []; })
       ]);
 
       const prodsList = Array.isArray(resProds) ? resProds : [];
@@ -801,6 +799,11 @@ export default function AdminDashboard() {
         lowStockProducts: lowStockProds
       });
     } catch (err) {
+      if (err.message === 'UNAUTHORIZED') {
+        toast.error("Session expired. Please log in again.", "UNAUTHORIZED");
+        handleAdminLogout();
+        return;
+      }
       console.error(err);
       if (!isSilent) setError("Unable to load dashboard data.");
     } finally {
@@ -993,23 +996,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // DEDICATED FULL-PAGE THEME CUSTOMIZER (NO SIDEBAR!)
-  if (activeTab === "homepage-sections") {
-    return (
-      <div className="theme-customizer-standalone-page" data-lenis-prevent="true">
-        <ThemeVisualCustomizer
-          token={token}
-          API_BASE_URL={API}
-          onBack={() => {
-            setActiveTab("dashboard");
-            if (typeof window !== "undefined" && window.history?.pushState) {
-              window.history.pushState(null, '', '/admin');
-            }
-          }}
-        />
-      </div>
-    );
-  }
+
 
   return (
     <div className="admin-shell" data-lenis-prevent="true">
@@ -1029,13 +1016,13 @@ export default function AdminDashboard() {
 
       {/* SIDEBAR */}
       <aside className={`admin-sidebar ${mobileSidebarOpen ? "sidebar-open" : ""}`} data-lenis-prevent="true">
-        <div className="brand-area" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <img src="/logoR.png" alt="Miraya by Garima" className="brand-logo" />
+        <div className="brand-area" style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
+          <img src="/logo-white.png" alt="Miraya by Garima" className="brand-logo" />
           <button
             type="button"
             className="mobile-close-btn mobile-only"
             onClick={() => setMobileSidebarOpen(false)}
-            style={{ background: "none", border: "none", color: "var(--miraya-muted)", cursor: "pointer", padding: 4 }}
+            style={{ position: "absolute", right: "16px", background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 4 }}
           >
             <X size={22} />
           </button>
@@ -1206,42 +1193,42 @@ export default function AdminDashboard() {
         </header>
 
         <section className="page-content">
-          <div className="page-actions">
-            <div>
-              <h2>
-                Welcome back, <span>Miraya Admin</span>
-              </h2>
-              <p>Here’s what’s happening with your store today.</p>
-            </div>
-
-            <div className="action-buttons">
-              <button className="btn btn-secondary" onClick={loadDashboard}>
-                <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
-                Refresh
-              </button>
-
-              <button className="btn btn-outline" onClick={exportPDF} title="Download Full Store PDF Report">
-                <FileText size={17} />
-                Export PDF
-              </button>
-
-              <Link
-                to="/"
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-primary"
-              >
-                View Storefront
-                <ExternalLink size={16} />
-              </Link>
-            </div>
-          </div>
-
           {error && <div className="dashboard-error">{error}</div>}
 
           {/* DYNAMIC TAB RENDERING */}
           {activeTab === "dashboard" && (
             <>
+              <div className="page-actions">
+                <div>
+                  <h2>
+                    Welcome back, <span>Miraya Admin</span>
+                  </h2>
+                  <p>Here’s what’s happening with your store today.</p>
+                </div>
+
+                <div className="action-buttons">
+                  <button className="btn btn-secondary" onClick={loadDashboard}>
+                    <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
+                    Refresh
+                  </button>
+
+                  <button className="btn btn-outline" onClick={exportPDF} title="Download Full Store PDF Report">
+                    <FileText size={17} />
+                    Export PDF
+                  </button>
+
+                  <Link
+                    to="/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-primary"
+                  >
+                    View Storefront
+                    <ExternalLink size={16} />
+                  </Link>
+                </div>
+              </div>
+
               {/* STAT CARDS */}
               <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
                 <StatCard
@@ -1249,6 +1236,7 @@ export default function AdminDashboard() {
                   title="Total Revenue"
                   value={display(dashboard.revenue, money)}
                   helper={!error ? "Store revenue" : ""}
+                  theme="rose"
                 />
 
                 <StatCard
@@ -1256,6 +1244,7 @@ export default function AdminDashboard() {
                   title="Total Orders"
                   value={display(dashboard.orders)}
                   helper={!error ? "All customer orders" : ""}
+                  theme="blue"
                 />
 
                 <StatCard
@@ -1263,6 +1252,7 @@ export default function AdminDashboard() {
                   title="Active Shoppers"
                   value={display(dashboard.onlineUsersCount ?? 0)}
                   helper="🟢 Live Online Now"
+                  theme="emerald"
                 />
 
                 <StatCard
@@ -1271,6 +1261,7 @@ export default function AdminDashboard() {
                   value={display(dashboard.pendingOrders)}
                   helper={!error ? "Needs attention" : ""}
                   danger
+                  theme="amber"
                 />
 
                 <StatCard
@@ -1279,6 +1270,7 @@ export default function AdminDashboard() {
                   value={display(dashboard.lowStock)}
                   helper={!error ? "Restock required" : ""}
                   danger
+                  theme="crimson"
                 />
               </div>
 
@@ -1605,21 +1597,38 @@ export default function AdminDashboard() {
             <AdminPageCustomizer />
           )}
 
-          {activeTab === "products" && (
-            <AdminProductsSection
-              products={products}
-              categories={categories}
-              token={token}
-              API_BASE_URL={API}
-              onRefresh={loadDashboard}
-            />
-          )}
-
-          {activeTab === "inventory" && (
-            <AdminInventorySection
-              token={token}
-              API_BASE_URL={API}
-            />
+          {activeTab === "catalog" && (
+            <div>
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--miraya-border)' }}>
+                <button onClick={() => setCatalogTab('inventory')} className={catalogTab === 'inventory' ? 'btn btn-primary' : 'btn btn-outline'}>Inventory</button>
+                <button onClick={() => setCatalogTab('products')} className={catalogTab === 'products' ? 'btn btn-primary' : 'btn btn-outline'}>Products</button>
+                <button onClick={() => setCatalogTab('categories')} className={catalogTab === 'categories' ? 'btn btn-primary' : 'btn btn-outline'}>Categories</button>
+              </div>
+              
+              {catalogTab === 'inventory' && (
+                <AdminInventorySection
+                  token={token}
+                  API_BASE_URL={API}
+                />
+              )}
+              {catalogTab === 'products' && (
+                <AdminProductsSection
+                  products={products}
+                  categories={categories}
+                  token={token}
+                  API_BASE_URL={API}
+                  onRefresh={loadDashboard}
+                />
+              )}
+              {catalogTab === 'categories' && (
+                <AdminCategoriesSection
+                  categories={categories}
+                  token={token}
+                  API_BASE_URL={API}
+                  onRefresh={loadDashboard}
+                />
+              )}
+            </div>
           )}
 
           {activeTab === "orders" && (
@@ -1639,13 +1648,6 @@ export default function AdminDashboard() {
             />
           )}
 
-          {activeTab === "exchanges" && (
-            <AdminReturnsSection
-              token={token}
-              API_BASE_URL={API}
-            />
-          )}
-
 
           {activeTab === "customers" && (
             <AdminCustomersSection
@@ -1654,31 +1656,28 @@ export default function AdminDashboard() {
             />
           )}
 
-          {activeTab === "categories" && (
-            <AdminCategoriesSection
-              categories={categories}
-              token={token}
-              API_BASE_URL={API}
-              onRefresh={loadDashboard}
-            />
-          )}
-
-          {activeTab === "coupons" && (
-            <AdminCouponsSection
-              coupons={coupons}
-              token={token}
-              API_BASE_URL={API}
-              onRefresh={loadDashboard}
-            />
-          )}
-
-          {activeTab === "promotions" && (
-            <AdminPromotionsSection
-              products={products}
-              categories={categories}
-              token={token}
-              onRefresh={loadDashboard}
-            />
+          {activeTab === "offers" && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+              <AdminCouponsSection
+                coupons={coupons}
+                token={token}
+                API_BASE_URL={API}
+                onRefresh={loadDashboard}
+              />
+              
+              <div style={{ textAlign: 'center', margin: '10px 0' }}>
+                <span style={{ background: 'var(--miraya-gold-light)', color: 'var(--miraya-gold)', padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>
+                  PROMOTIONS & PRICING SYSTEM
+                </span>
+              </div>
+              
+              <AdminPromotionsSection
+                products={products}
+                categories={categories}
+                token={token}
+                onRefresh={loadDashboard}
+              />
+            </div>
           )}
 
           {activeTab === "settings" && (

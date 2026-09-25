@@ -75,6 +75,8 @@ model Product {
 
   created_at         DateTime            @default(now())
   updated_at         DateTime            @default(now()) @updatedAt
+    is_archived        Boolean             @default(false)
+    deleted_at         DateTime?
   variants           ProductVariant[]
   cartItems          CartItem[]
   orderItems         OrderItem[]

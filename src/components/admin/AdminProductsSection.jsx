@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Plus, Search, Edit, Trash2, X, Image as ImageIcon,
+  Plus, Search, Edit, Trash2, X, Image as ImageIcon, Archive, RefreshCcw,
   Check, AlertCircle, Eye, RefreshCw, UploadCloud,
   Link as LinkIcon, Crop as CropIcon, ImagePlus, Star, Trash,
   ChevronLeft, ChevronRight
@@ -36,6 +36,22 @@ export default function AdminProductsSection({ products = [], categories = [], t
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [localProducts, setLocalProducts] = useState(products);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (statusFilter === 'archived' || statusFilter === 'deleted') {
+      setIsLoading(true);
+      fetch(API_BASE_URL + '/api/products?status=' + statusFilter, {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => { setLocalProducts(data); setIsLoading(false); })
+      .catch(() => setIsLoading(false));
+    } else {
+      setLocalProducts(products);
+    }
+  }, [statusFilter, products, API_BASE_URL, token]);
 
   // Luxury Confirm Modal State
   const [confirmModalConfig, setConfirmModalConfig] = useState(null);
@@ -77,7 +93,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
     promo_label: '',
     image_url: '',
     is_active: true,
-    whatsapp_inquiry: false
+    whatsapp_inquiry: false,
+    priceCategory: ''
   });
 
   const [selectedSizes, setSelectedSizes] = useState(['S', 'M', 'L', 'XL', 'XXL']);
@@ -89,13 +106,12 @@ export default function AdminProductsSection({ products = [], categories = [], t
   const productList = Array.isArray(products) ? products : [];
   const categoryList = Array.isArray(categories) ? categories : [];
 
-  const filteredProducts = productList.filter((p) => {
+  const filteredProducts = localProducts.filter((p) => {
     const titleMatch = (p.name || '').toLowerCase().includes(search.toLowerCase()) ||
       ((p.description || '').toLowerCase().includes(search.toLowerCase())) ||
       (`#SKU-${p.id}`).toLowerCase().includes(search.toLowerCase());
     const catMatch = selectedCat === 'all' || String(p.category_id) === String(selectedCat);
-    const isActive = p.is_active !== false && p.status !== 'inactive';
-    const statusMatch = statusFilter === 'all' || (statusFilter === 'all' ? true : (statusFilter === 'active' ? isActive : !isActive));
+    const statusMatch = true; // Handled by backend filter API
     return titleMatch && catMatch && statusMatch;
   });
 
@@ -219,7 +235,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
       promo_label: p.promo_label || '',
       image_url: p.image_url || '',
       is_active: p.is_active !== false && p.status !== 'inactive',
-      whatsapp_inquiry: p.whatsapp_inquiry === true || (p.price && String(p.price).toLowerCase().includes('whatsapp'))
+      whatsapp_inquiry: p.whatsapp_inquiry === true || (p.price && String(p.price).toLowerCase().includes('whatsapp')),
+      priceCategory: p.priceCategory || ''
     });
 
 
@@ -359,7 +376,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
       return;
     }
 
-    const activeToken = token || localStorage.getItem('token');
+    let activeToken = token || localStorage.getItem('token');
+    if (activeToken) activeToken = activeToken.replace(/^["']|["']$/g, '').trim();
     if (!activeToken) {
       setFormError('Admin session expired. Please log in again.');
       return;
@@ -415,6 +433,7 @@ export default function AdminProductsSection({ products = [], categories = [], t
         fd.append('sizes', JSON.stringify(selectedSizes));
         fd.append('size_stock', JSON.stringify(finalSizeStock));
         fd.append('whatsapp_inquiry', String(Boolean(formData.whatsapp_inquiry)));
+        fd.append('priceCategory', formData.priceCategory || '');
 
         const existingUrls = [];
         const galleryOrder = [];
@@ -464,7 +483,8 @@ export default function AdminProductsSection({ products = [], categories = [], t
           image_url: mainImage,
           images: imageUrlList.length > 0 ? imageUrlList : (mainImage ? [mainImage] : []),
           category_id: formData.category_id ? parseInt(formData.category_id, 10) : null,
-          whatsapp_inquiry: Boolean(formData.whatsapp_inquiry)
+          whatsapp_inquiry: Boolean(formData.whatsapp_inquiry),
+          priceCategory: formData.priceCategory || undefined
         };
 
 
@@ -495,7 +515,88 @@ export default function AdminProductsSection({ products = [], categories = [], t
     }
   };
 
-  // Luxury Confirm & Delete Product
+  const handleArchive = async (id, archiveFlag) => {
+    let activeToken = token || localStorage.getItem('token');
+    if (activeToken) activeToken = activeToken.replace(/^["']|["']$/g, '').trim();
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken && { Authorization: `Bearer ${activeToken}` })
+        },
+        body: JSON.stringify({ is_archived: archiveFlag })
+      });
+      if (res.ok) {
+        if (onRefresh) onRefresh();
+        // Trigger a re-fetch of localProducts if needed
+        setStatusFilter(prev => prev);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRestore = async (id) => {
+    let activeToken = token || localStorage.getItem('token');
+    if (activeToken) activeToken = activeToken.replace(/^["']|["']$/g, '').trim();
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken && { Authorization: `Bearer ${activeToken}` })
+        },
+        body: JSON.stringify({ is_deleted: false })
+      });
+      if (res.ok) {
+        if (onRefresh) onRefresh();
+        setStatusFilter(prev => prev);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleHardDelete = (id, name) => {
+    setConfirmModalConfig({
+      title: 'Permanently Delete Garment',
+      message: `Are you absolutely sure you want to permanently delete "${name}"?`,
+      subMessage: 'This action cannot be undone. All data will be wiped.',
+      confirmText: 'Yes, Delete Permanently',
+      cancelText: 'Cancel',
+      danger: true,
+      onConfirm: async () => {
+        let activeToken = token || localStorage.getItem('token');
+        if (activeToken) activeToken = activeToken.replace(/^["']|["']$/g, '').trim();
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/products/${id}?hard=true`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(activeToken && { Authorization: `Bearer ${activeToken}` })
+            }
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success !== false) {
+            if (onRefresh) onRefresh();
+            setStatusFilter(prev => prev);
+          } else {
+            setConfirmModalConfig({
+              title: 'Deletion Failed',
+              message: data.message || 'Could not permanently delete product.',
+              isAlert: true,
+              danger: true,
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    });
+  };
+
+  // Luxury Confirm & Delete Product (Soft Delete)
   const handleDelete = (id, name) => {
     setConfirmModalConfig({
       title: 'Delete Garment Product',
@@ -505,11 +606,15 @@ export default function AdminProductsSection({ products = [], categories = [], t
       cancelText: 'Cancel',
       danger: true,
       onConfirm: async () => {
-        const activeToken = token || localStorage.getItem('token');
+        let activeToken = token || localStorage.getItem('token');
+        if (activeToken) activeToken = activeToken.replace(/^["']|["']$/g, '').trim();
         try {
           const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
             method: 'DELETE',
-            headers: { ...(activeToken && { Authorization: `Bearer ${activeToken}` }) }
+            headers: {
+              'Content-Type': 'application/json',
+              ...(activeToken && { Authorization: `Bearer ${activeToken}` })
+            }
           });
 
           const data = await res.json().catch(() => ({}));
@@ -546,7 +651,7 @@ export default function AdminProductsSection({ products = [], categories = [], t
 
         <div className="action-buttons">
           <button className="btn btn-primary" onClick={handleOpenAddModal}>
-            <Plus size={16} /> + Add Product
+            <Plus size={16} /> Add Product
           </button>
         </div>
       </div>
@@ -588,157 +693,97 @@ export default function AdminProductsSection({ products = [], categories = [], t
         </div>
       </div>
 
-      {/* PRODUCTS TABLE */}
-      <div className="panel">
-        <div className="table-scroll">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Category</th>
-                <th>MRP</th>
-                <th>Selling Price</th>
-                <th>Size-wise Stock</th>
-                <th>Total Stock</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((p) => {
-                const img = p.image_url || (p.images && p.images[0]) || '/products/Lehenga-Pink Blush/1.JPG';
-                const sizeStockMap = p.size_stock || {};
-                const mrpVal = p.mrp || Math.round(Number(p.price || 0) * 1.2);
-                const isActive = p.is_active !== false && p.status !== 'inactive';
+      {/* PRODUCTS GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+        {filteredProducts.map((p) => {
+          const img = p.image_url || (p.images && p.images[0]) || '/products/Lehenga-Pink Blush/1.JPG';
+          const mrpVal = p.mrp || Math.round(Number(p.price || 0) * 1.2);
+          const isActive = p.is_active !== false && p.status !== 'inactive';
 
-                return (
-                  <tr key={p.id}>
-                    {/* Product Cell */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img
-                          src={getImgUrl(img, API_BASE_URL)}
-                          alt={p.name}
-                          style={{ width: '38px', height: '48px', objectFit: 'cover', borderRadius: '6px', background: '#f4f4f4' }}
-                        />
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '13px', fontWeight: '600' }}>{p.name}</strong>
-                          {p.color && <span style={{ fontSize: '11px', color: 'var(--miraya-muted)' }}>Color: {p.color}</span>}
-                        </div>
-                      </div>
-                    </td>
+          return (
+            <div key={p.id} className="panel" style={{ display: 'flex', flexDirection: 'column', padding: '16px', gap: '16px', border: '1px solid var(--miraya-border)', borderRadius: '12px', background: 'var(--miraya-white)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <img
+                  src={getImgUrl(img, API_BASE_URL)}
+                  alt={p.name}
+                  style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '8px', background: '#f4f4f4', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <span style={{ color: 'var(--miraya-muted)', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.5px' }}>#SKU-{p.id}</span>
+                    <span className={`status-badge ${isActive ? 'status-success' : 'status-neutral'}`} style={{ fontSize: '10px', padding: '3px 8px' }}>
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <h3 style={{ margin: '8px 0 4px', fontSize: '14px', fontWeight: '600', lineHeight: '1.4', color: 'var(--miraya-text)' }}>{p.name}</h3>
+                  <div style={{ fontSize: '12px', color: 'var(--miraya-muted)' }}>
+                    {p.category?.name || p.sub_category || 'Unassigned'} {p.color && `• ${p.color}`}
+                  </div>
+                  {p.priceCategory && (
+                    <div style={{ fontSize: '10px', marginTop: '6px', color: 'var(--miraya-gold)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                      {String(p.priceCategory).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                    {/* SKU */}
-                    <td style={{ color: 'var(--miraya-muted)', fontFamily: 'monospace' }}>#SKU-{p.id}</td>
-
-                    {/* Category */}
-                    <td>
-                      {p.category?.name || p.sub_category || 'Unassigned'}
-                      {p.priceCategory && (
-                        <div style={{ fontSize: '10px', marginTop: '4px', color: 'var(--miraya-red)', fontWeight: '600' }}>
-                          PRICE CATEGORY: {p.priceCategory}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* MRP */}
-                    <td style={{ color: 'var(--miraya-muted)', textDecoration: 'line-through' }}>
-                      {formatINR(mrpVal)}
-                    </td>
-
-                    {/* Selling Price */}
-                    <td style={{ fontWeight: '700', color: 'var(--miraya-text)' }}>
-                      {p.whatsapp_inquiry || (p.price && String(p.price).toLowerCase().includes('whatsapp')) ? (
-                        <span style={{ fontSize: '11px', color: '#1a7a42', background: '#e8f5e9', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          💬 WhatsApp
-                        </span>
-                      ) : (
-                        formatINR(p.price)
-                      )}
-                    </td>
-
-                    {/* Size-wise stock matrix */}
-                    <td>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                        {COMMON_SIZES.map((sz) => {
-                          const qty = sizeStockMap[sz] !== undefined ? sizeStockMap[sz] : 0;
-                          return (
-                            <span
-                              key={sz}
-                              style={{
-                                fontSize: '11px',
-                                background: qty > 0 ? 'var(--miraya-bg)' : 'var(--miraya-red-soft)',
-                                border: '1px solid var(--miraya-border)',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                color: qty > 0 ? 'var(--miraya-text)' : 'var(--miraya-red)'
-                              }}
-                            >
-                              <strong>{sz}:</strong> {qty}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </td>
-
-                    {/* Total Stock */}
-                    <td>
-                      <span className={`status-badge ${p.stock > 5 ? 'status-success' : p.stock > 0 ? 'status-warning' : 'status-danger'}`}>
-                        {p.stock ?? 0} in stock
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto' }}>
+                <div>
+                  <div style={{ color: 'var(--miraya-muted)', textDecoration: 'line-through', fontSize: '12px', marginBottom: '2px' }}>
+                    {formatINR(mrpVal)}
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '17px', color: 'var(--miraya-red)' }}>
+                    {p.whatsapp_inquiry || (p.price && String(p.price).toLowerCase().includes('whatsapp')) ? (
+                      <span style={{ fontSize: '12px', color: '#15803d', background: '#dcfce7', padding: '4px 10px', borderRadius: '6px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        💬 WhatsApp Only
                       </span>
-                    </td>
+                    ) : (
+                      formatINR(p.price)
+                    )}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                   <span className={`status-badge ${p.stock > 5 ? 'status-success' : p.stock > 0 ? 'status-warning' : 'status-danger'}`} style={{ fontSize: '12px', padding: '4px 10px' }}>
+                     {p.stock ?? 0} in stock
+                   </span>
+                </div>
+              </div>
 
-                    {/* Status */}
-                    <td>
-                      <span className={`status-badge ${isActive ? 'status-success' : 'status-neutral'}`}>
-                        {isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
+              {/* Actions */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', paddingTop: '16px', borderTop: '1px solid var(--miraya-border)', marginTop: '4px' }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ minHeight: '36px', padding: '0', fontSize: '12px' }}
+                  onClick={() => setViewProduct(p)}
+                >
+                  <Eye size={14} /> View
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  style={{ minHeight: '36px', padding: '0', fontSize: '12px' }}
+                  onClick={() => handleOpenEditModal(p)}
+                >
+                  <Edit size={14} /> Edit
+                </button>
+                <button
+                  className="btn btn-outline"
+                  style={{ minHeight: '36px', padding: '0', fontSize: '12px' }}
+                  onClick={() => handleDelete(p.id, p.name)}
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
 
-                    {/* Actions */}
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '6px' }}>
-                        <button
-                          className="btn btn-secondary"
-                          style={{ minHeight: '30px', padding: '0 8px' }}
-                          onClick={() => setViewProduct(p)}
-                          title="View Details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          className="btn btn-secondary"
-                          style={{ minHeight: '30px', padding: '0 8px' }}
-                          onClick={() => handleOpenEditModal(p)}
-                          title="Edit Product"
-                        >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          className="btn btn-outline"
-                          style={{ minHeight: '30px', padding: '0 8px' }}
-                          onClick={() => handleDelete(p.id, p.name)}
-                          title="Delete Product"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {filteredProducts.length === 0 && (
-                <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '30px', color: 'var(--miraya-muted)' }}>
-                    No products found. Click <strong>+ Add Product</strong> to create one.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {filteredProducts.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', background: 'var(--miraya-white)', borderRadius: '12px', border: '1px dashed var(--miraya-border)' }}>
+            <div style={{ color: 'var(--miraya-muted)', fontSize: '15px' }}>
+              No products found. Click <strong style={{ color: 'var(--miraya-red)' }}>+ Add Product</strong> to create one.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* VIEW PRODUCT DRAWER */}
@@ -753,7 +798,7 @@ export default function AdminProductsSection({ products = [], categories = [], t
               <img
                 src={getImgUrl(viewProduct.image_url || (viewProduct.images && viewProduct.images[0]), API_BASE_URL)}
                 alt={viewProduct.name}
-                style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '8px', marginBottom: '20px' }}
+                style={{ width: '100%', height: '360px', objectFit: 'contain', borderRadius: '8px', marginBottom: '20px', backgroundColor: '#f9f9f9', border: '1px solid var(--miraya-border)' }}
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px' }}>
                 <div><span style={{ color: 'var(--miraya-muted)', fontSize: '12px' }}>Selling Price:</span><h4 style={{ margin: '4px 0', fontSize: '18px', color: 'var(--miraya-red)' }}>{formatINR(viewProduct.price)}</h4></div>
@@ -817,7 +862,7 @@ export default function AdminProductsSection({ products = [], categories = [], t
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>Product Name *</label>
                     <input
@@ -842,6 +887,20 @@ export default function AdminProductsSection({ products = [], categories = [], t
                       {categoryList.map(c => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>Product Tier</label>
+                    <select
+                      className="admin-select"
+                      style={{ width: '100%' }}
+                      value={formData.priceCategory}
+                      onChange={(e) => setFormData({ ...formData, priceCategory: e.target.value })}
+                    >
+                      <option value="">Standard (None)</option>
+                      <option value="Prime">Prime</option>
+                      <option value="Classic">Classic</option>
                     </select>
                   </div>
                 </div>
@@ -1508,3 +1567,6 @@ export default function AdminProductsSection({ products = [], categories = [], t
     </div>
   );
 }
+
+
+

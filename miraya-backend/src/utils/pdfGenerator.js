@@ -32,11 +32,11 @@ const findLogoPath = () => {
 export const generateInvoicePDF = (order, stream) => {
   const doc = new PDFDocument({
     size: 'A4',
-    margin: 28,
+    margin: 0,
     info: {
       Title: `Tax Invoice #INV-MRY-${String(order.id).padStart(5, '0')}`,
       Author: 'Miraya By Garima',
-      Subject: 'Luxury Haute Couture Tax Invoice / Retail Receipt',
+      Subject: 'Luxury Haute Couture Tax Invoice',
       Keywords: 'miraya, haute couture, tax invoice, garima, nagpur boutique'
     }
   });
@@ -44,121 +44,104 @@ export const generateInvoicePDF = (order, stream) => {
   doc.pipe(stream);
 
   // Haute Couture Palette
-  const COLOR_BURGUNDY = '#5e0a0b';
-  const COLOR_BURGUNDY_DARK = '#430607';
-  const COLOR_GOLD = '#c6a46a';
-  const COLOR_GOLD_LIGHT = '#e8d8be';
-  const COLOR_DARK = '#1a1a1a';
-  const COLOR_MUTED = '#555555';
-  const COLOR_LIGHT_BG = '#FAF8F5';
-  const COLOR_CARD_BG = '#FCFAF7';
-  const COLOR_LINE = '#e6d8c3';
-
-  const pageWidth = 595.28; // A4 width in points
-  const pageHeight = 841.89; // A4 height in points
-  const margin = 28;
+  const COLOR_BASE = '#FCFBF9'; // Warm ivory / light cream base
+  const COLOR_BURGUNDY = '#5E0A0B'; // Deep wine / burgundy
+  const COLOR_GOLD = '#D4AF37'; // Champagne gold
+  const COLOR_GOLD_LIGHT = '#F4EAD5'; // Very subtle gold
+  const COLOR_DARK = '#2C2C2C'; // Soft black for text
+  const COLOR_MUTED = '#666666'; // Gray for secondary text
+  const COLOR_CARD_BG = '#FFFFFF'; // White for cards to stand out against ivory
+  
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const margin = 36;
   const contentWidth = pageWidth - (margin * 2);
 
-  // ─── 0. ROYAL OUTER DOUBLE BORDER FRAME & CORNER ACCENTS ───────────────────
-  // Outer Gold Line
-  doc.rect(14, 14, pageWidth - 28, pageHeight - 28)
-     .lineWidth(1.2)
+  // ─── 0. PREMIUM IVORY BACKGROUND & SUBTLE BORDER ───────────────────────────
+  // Fill entire page with warm ivory base
+  doc.rect(0, 0, pageWidth, pageHeight).fill(COLOR_BASE);
+  
+  // Outer Elegant Border
+  doc.rect(margin - 10, margin - 10, contentWidth + 20, pageHeight - (margin * 2) + 20)
+     .lineWidth(0.5)
      .stroke(COLOR_GOLD);
 
-  // Inner Fine Hairline
-  doc.rect(17.5, 17.5, pageWidth - 35, pageHeight - 35)
-     .lineWidth(0.6)
-     .stroke(COLOR_LINE);
+  let currentY = margin;
 
-  // Corner Gold Squares / Embellishments
-  const drawCornerAccent = (x, y) => {
-    doc.rect(x - 3, y - 3, 6, 6).fill(COLOR_GOLD);
-    doc.rect(x - 1.5, y - 1.5, 3, 3).fill('#ffffff');
-  };
-  drawCornerAccent(14, 14);
-  drawCornerAccent(pageWidth - 14, 14);
-  drawCornerAccent(14, pageHeight - 14);
-  drawCornerAccent(pageWidth - 14, pageHeight - 14);
-
-  let currentY = 26;
-
-  // ─── 1. TOP HEADER & BRANDING (WITH OFFICIAL LOGO) ─────────────────────────
+  // ─── 1. TOP HEADER & BRANDING ──────────────────────────────────────────────
   const logoPath = findLogoPath();
-  const logoWidth = 62;
-  const logoHeight = 68;
+  const logoWidth = 65;
+  const logoHeight = 70;
 
   if (logoPath) {
     try {
-      doc.image(logoPath, margin + 4, currentY + 2, { fit: [logoWidth, logoHeight], align: 'center' });
-    } catch (_) {
-      // Fallback if image rendering encounters any issue
-    }
+      doc.image(logoPath, margin, currentY, { fit: [logoWidth, logoHeight], align: 'center' });
+    } catch (_) { }
   }
 
-  const headerTextX = logoPath ? margin + logoWidth + 14 : margin + 4;
-  const headerRightWidth = 175;
-  const headerTextMaxWidth = contentWidth - headerRightWidth - (logoPath ? logoWidth + 18 : 10);
-
+  const headerTextX = logoPath ? margin + logoWidth + 16 : margin;
+  const headerRightWidth = 160;
+  
   // Brand Name
-  doc.font('Helvetica-Bold')
-     .fontSize(20)
+  doc.font('Times-Bold')
+     .fontSize(22)
      .fillColor(COLOR_BURGUNDY)
-     .text('MIRAYA BY GARIMA', headerTextX, currentY + 3, { characterSpacing: 1.8, width: headerTextMaxWidth });
+     .text('MIRAYA BY GARIMA', headerTextX, currentY + 4, { characterSpacing: 1.5 });
 
   // Tagline
-  doc.font('Helvetica-Bold')
-     .fontSize(7.6)
+  doc.font('Helvetica')
+     .fontSize(8)
      .fillColor(COLOR_GOLD)
-     .text('HAUTE COUTURE & LUXURY TROUSSEAU ATELIER', headerTextX, currentY + 25, { characterSpacing: 0.8 });
+     .text('HAUTE COUTURE & LUXURY TROUSSEAU ATELIER', headerTextX, currentY + 28, { characterSpacing: 1 });
 
   // Boutique Address & Tax Details
   doc.font('Helvetica')
-     .fontSize(7.2)
+     .fontSize(7.5)
      .fillColor(COLOR_MUTED)
-     .text('Flagship Atelier: Shop no. UG/5, Jagat Plaza, Law College Square, Nagpur, MH 440033', headerTextX, currentY + 37, { width: headerTextMaxWidth })
-     .text('GSTIN: 27AABCM9876Q1Z5  |  State: 27 (Maharashtra)  |  Ph: +91 92712 18156', headerTextX, currentY + 47, { width: headerTextMaxWidth })
-     .text('Web: www.mirayabygarima.com  |  Email: mirayabygarima@gmail.com', headerTextX, currentY + 57, { width: headerTextMaxWidth });
+     .text('Flagship Atelier: Shop no. UG/5, Jagat Plaza, Law College Square, Nagpur, MH 440033', headerTextX, currentY + 44)
+     .text('GSTIN: 27AABCM9876Q1Z5  |  State: 27 (Maharashtra)  |  Ph: +91 92712 18156', headerTextX, currentY + 54)
+     .text('Web: www.mirayabygarima.com  |  Email: mirayabygarima@gmail.com', headerTextX, currentY + 64);
 
-  // Header Right Box: Official Tax Invoice Badge & Invoice Meta
+  // Official Tax Invoice Badge
   const rightBoxX = pageWidth - margin - headerRightWidth;
-  doc.roundedRect(rightBoxX, currentY, headerRightWidth, 23, 4).fill(COLOR_BURGUNDY);
-
-  doc.font('Helvetica-Bold')
-     .fontSize(9)
-     .fillColor('#ffffff')
-     .text('OFFICIAL TAX INVOICE', rightBoxX, currentY + 7, { width: headerRightWidth, align: 'center', characterSpacing: 0.5 });
-
-  const orderDateStr = new Date(order.created_at || Date.now()).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-
-  const invoiceNo = `INV-MRY-${String(order.id).padStart(5, '0')}`;
-  const paymentRefStr = order.payment_id || (order.payment_method === 'cod' ? 'CASH ON DELIVERY' : 'ONLINE PREPAID');
+  doc.roundedRect(rightBoxX, currentY, headerRightWidth, 18, 9).fill(COLOR_BURGUNDY);
 
   doc.font('Helvetica-Bold')
      .fontSize(8.5)
-     .fillColor(COLOR_BURGUNDY)
-     .text(`Invoice No: ${invoiceNo}`, rightBoxX, currentY + 29, { width: headerRightWidth, align: 'right' });
+     .fillColor('#ffffff')
+     .text('OFFICIAL TAX INVOICE', rightBoxX, currentY + 5, { width: headerRightWidth, align: 'center', characterSpacing: 0.5 });
 
-  doc.font('Helvetica')
-     .fontSize(7.5)
-     .fillColor(COLOR_MUTED)
-     .text(`Invoice Date: ${orderDateStr}`, rightBoxX, currentY + 41, { width: headerRightWidth, align: 'right' })
-     .text(`Order Reference: #ORD-${order.id}`, rightBoxX, currentY + 52, { width: headerRightWidth, align: 'right' })
-     .text(`Payment Ref: ${paymentRefStr.slice(0, 24)}`, rightBoxX, currentY + 63, { width: headerRightWidth, align: 'right' });
+  // Invoice Metadata
+  const orderDateStr = new Date(order.created_at || Date.now()).toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+  const invoiceNo = `INV-MRY-${String(order.id).padStart(5, '0')}`;
+  const paymentRefStr = order.payment_id || (order.payment_method === 'cod' ? 'CASH ON DELIVERY' : 'ONLINE PREPAID');
 
-  currentY += 76;
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_DARK)
+     .text(`Invoice No:`, rightBoxX, currentY + 28, { width: 60, align: 'left' })
+     .fillColor(COLOR_BURGUNDY).text(invoiceNo, rightBoxX + 60, currentY + 28, { width: headerRightWidth - 60, align: 'right' });
 
-  // Gold Filigree Divider
-  doc.rect(margin, currentY, contentWidth, 1.2).fill(COLOR_GOLD);
-  currentY += 10;
+  doc.font('Helvetica').fontSize(8).fillColor(COLOR_MUTED)
+     .text(`Invoice Date:`, rightBoxX, currentY + 40, { width: 70, align: 'left' })
+     .fillColor(COLOR_DARK).text(orderDateStr, rightBoxX + 70, currentY + 40, { width: headerRightWidth - 70, align: 'right' })
+     
+     .fillColor(COLOR_MUTED).text(`Order Reference:`, rightBoxX, currentY + 52, { width: 80, align: 'left' })
+     .fillColor(COLOR_DARK).text(`#ORD-${order.id}`, rightBoxX + 80, currentY + 52, { width: headerRightWidth - 80, align: 'right' })
+     
+     .fillColor(COLOR_MUTED).text(`Payment Ref:`, rightBoxX, currentY + 64, { width: 70, align: 'left' })
+     .fillColor(COLOR_DARK).text(paymentRefStr.slice(0, 20), rightBoxX + 70, currentY + 64, { width: headerRightWidth - 70, align: 'right' });
 
-  // ─── 2. BILLED TO & SHIPPED TO DUAL CARDS ──────────────────────────────────
-  const cardGap = 12;
+  currentY += 85;
+
+  // Gold Divider
+  doc.rect(margin, currentY, contentWidth, 0.5).fill(COLOR_GOLD);
+  currentY += 15;
+
+  // ─── 2. BILLED TO & SHIPPED TO CARDS ───────────────────────────────────────
+  const cardGap = 16;
   const cardWidth = (contentWidth - cardGap) / 2;
-  const cardHeight = 84;
+  const cardHeight = 88;
 
   let billObj = order.billingDetails;
   if (typeof billObj === 'string') {
@@ -183,90 +166,57 @@ export const generateInvoicePDF = (order, stream) => {
   const shipAddress = order.shipping_address || shipObj.addressString || (shipObj.line1 ? `${shipObj.line1}, ${shipObj.city || ''} ${shipObj.pincode || ''}` : '') || 'Nagpur Flagship Boutique Dispatch';
   const shipCityState = [shipObj.city || order.shipping_city, shipObj.state || order.shipping_state, shipObj.pincode || order.shipping_pincode].filter(Boolean).join(', ') || 'Nagpur, Maharashtra 440033';
 
-  // Left Card: Billed To
-  doc.roundedRect(margin, currentY, cardWidth, cardHeight, 4)
-     .fillAndStroke(COLOR_CARD_BG, COLOR_LINE);
+  // Card drawing helper
+  const drawAddressCard = (x, y, title, name, address, line3, line4) => {
+    doc.roundedRect(x, y, cardWidth, cardHeight, 6).fillAndStroke(COLOR_CARD_BG, COLOR_GOLD_LIGHT);
+    doc.font('Times-Bold').fontSize(8.5).fillColor(COLOR_BURGUNDY).text(title, x + 12, y + 12, { characterSpacing: 0.5 });
+    doc.rect(x + 12, y + 24, 25, 0.5).fill(COLOR_GOLD); // Tiny accent line
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(COLOR_DARK).text(name, x + 12, y + 32);
+    doc.font('Helvetica').fontSize(8).fillColor(COLOR_MUTED)
+       .text(address.slice(0, 60), x + 12, y + 46, { width: cardWidth - 24, height: 12 })
+       .text(line3, x + 12, y + 59, { width: cardWidth - 24 })
+       .text(line4, x + 12, y + 71, { width: cardWidth - 24 });
+  };
 
-  doc.roundedRect(margin, currentY, cardWidth, 18, 4).fill(COLOR_LIGHT_BG);
-  doc.rect(margin, currentY + 14, cardWidth, 4).fill(COLOR_LIGHT_BG); // square bottom corners of top pill
-
-  doc.font('Helvetica-Bold')
-     .fontSize(7.8)
-     .fillColor(COLOR_BURGUNDY)
-     .text('BILLED TO (TAX INVOICE DETAILS)', margin + 10, currentY + 5, { characterSpacing: 0.5 });
-
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_DARK).text(customerName, margin + 10, currentY + 22);
-  doc.font('Helvetica').fontSize(7.3).fillColor(COLOR_MUTED)
-     .text(`Address: ${billAddress.slice(0, 56)}`, margin + 10, currentY + 34, { width: cardWidth - 20, height: 18 })
-     .text(`Email: ${customerEmail}${billGstin}`, margin + 10, currentY + 51, { width: cardWidth - 20 })
-     .text(`Phone: +91 ${customerPhone.replace(/[^\d]/g, '')}  |  Place of Supply: ${billObj.state || order.shipping_state || 'Maharashtra'} (State Code: 27)`, margin + 10, currentY + 64, { width: cardWidth - 20 });
-
-  // Right Card: Shipped To
+  drawAddressCard(margin, currentY, 'BILLED TO', customerName, `Address: ${billAddress}`, `Email: ${customerEmail}${billGstin}`, `Phone: +91 ${customerPhone.replace(/[^\d]/g, '')}  |  Place of Supply: ${billObj.state || order.shipping_state || 'Maharashtra'} (27)`);
+  
   const rightCardX = margin + cardWidth + cardGap;
-  doc.roundedRect(rightCardX, currentY, cardWidth, cardHeight, 4)
-     .fillAndStroke(COLOR_CARD_BG, COLOR_LINE);
+  drawAddressCard(rightCardX, currentY, 'SHIPPED TO', shipName, `Address: ${shipAddress}`, `City/State: ${shipCityState}`, `Delivery Contact: +91 ${shipPhone.replace(/[^\d]/g, '')}`);
 
-  doc.roundedRect(rightCardX, currentY, cardWidth, 18, 4).fill(COLOR_LIGHT_BG);
-  doc.rect(rightCardX, currentY + 14, cardWidth, 4).fill(COLOR_LIGHT_BG);
+  currentY += cardHeight + 20;
 
-  doc.font('Helvetica-Bold')
-     .fontSize(7.8)
-     .fillColor(COLOR_BURGUNDY)
-     .text('SHIPPED TO (DELIVERY DESTINATION)', rightCardX + 10, currentY + 5, { characterSpacing: 0.5 });
-
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(COLOR_DARK).text(shipName, rightCardX + 10, currentY + 22);
-  doc.font('Helvetica').fontSize(7.3).fillColor(COLOR_MUTED)
-     .text(`Address: ${shipAddress.slice(0, 56)}`, rightCardX + 10, currentY + 34, { width: cardWidth - 20, height: 18 })
-     .text(`City/State: ${shipCityState}`, rightCardX + 10, currentY + 51, { width: cardWidth - 20 })
-     .text(`Delivery Contact: +91 ${shipPhone.replace(/[^\d]/g, '')}`, rightCardX + 10, currentY + 64, { width: cardWidth - 20 });
-
-  currentY += cardHeight + 12;
-
-  // ─── 3. ITEM SPECIFICATION TABLE HEADER ────────────────────────────────────
+  // ─── 3. ITEM SPECIFICATION TABLE ───────────────────────────────────────────
   const colX = {
-    sno: margin,
-    desc: margin + 28,
-    hsn: margin + 230,
-    size: margin + 275,
+    sno: margin + 8,
+    desc: margin + 36,
+    hsn: margin + 225,
+    size: margin + 270,
     qty: margin + 330,
     rate: margin + 375,
     amount: margin + 445
   };
 
-  doc.roundedRect(margin, currentY, contentWidth, 22, 3).fill(COLOR_BURGUNDY);
+  doc.rect(margin, currentY, contentWidth, 24).fill(COLOR_BURGUNDY);
 
-  doc.font('Helvetica-Bold')
-     .fontSize(7.8)
-     .fillColor('#ffffff')
-     .text('S.NO', colX.sno + 6, currentY + 7)
-     .text('ITEM & DESIGN SPECIFICATION', colX.desc, currentY + 7)
-     .text('HSN', colX.hsn, currentY + 7)
-     .text('SIZE / SKU', colX.size, currentY + 7)
-     .text('QTY', colX.qty, currentY + 7, { width: 35, align: 'center' })
-     .text('RATE (INR)', colX.rate, currentY + 7, { width: 65, align: 'right' })
-     .text('AMOUNT (INR)', colX.amount, currentY + 7, { width: 85, align: 'right' });
+  doc.font('Times-Bold').fontSize(8).fillColor('#ffffff')
+     .text('S.NO', colX.sno, currentY + 8)
+     .text('ITEM & DESIGN SPECIFICATION', colX.desc, currentY + 8)
+     .text('HSN', colX.hsn, currentY + 8)
+     .text('SIZE / SKU', colX.size, currentY + 8)
+     .text('QTY', colX.qty, currentY + 8, { width: 35, align: 'center' })
+     .text('RATE (INR)', colX.rate, currentY + 8, { width: 60, align: 'right' })
+     .text('AMOUNT (INR)', colX.amount, currentY + 8, { width: 70, align: 'right' });
 
-  currentY += 22;
+  currentY += 24;
 
-  // ─── 4. ITEM SPECIFICATION ROWS ────────────────────────────────────────────
   const items = order.items && order.items.length > 0 ? order.items : [
-    {
-      product: { name: 'Handcrafted Bespoke Garment' },
-      size: 'Free Size',
-      quantity: 1,
-      price_at_purchase: order.total
-    }
+    { product: { name: 'Handcrafted Bespoke Garment' }, size: 'Free Size', quantity: 1, price_at_purchase: order.total }
   ];
 
   items.forEach((item, index) => {
-    const isEven = index % 2 === 0;
-    const rowHeight = 24;
-
-    if (isEven) {
-      doc.rect(margin, currentY, contentWidth, rowHeight).fill(COLOR_LIGHT_BG);
-    } else {
-      doc.rect(margin, currentY, contentWidth, rowHeight).fill('#ffffff');
-    }
+    const rowHeight = 28;
+    // Row background
+    doc.rect(margin, currentY, contentWidth, rowHeight).fill(index % 2 === 0 ? COLOR_CARD_BG : COLOR_BASE);
 
     const unitPrice = Number(item.price_at_purchase || item.price || 0);
     const qty = Number(item.quantity || 1);
@@ -274,33 +224,32 @@ export const generateInvoicePDF = (order, stream) => {
     const productName = item.product?.name || item.name || item.title || 'Haute Couture Ensemble';
     const itemSizeSku = item.sku_snapshot || (item.variant && item.variant.sku) || `${item.size || 'M'}`;
 
-    doc.font('Helvetica').fontSize(7.6).fillColor(COLOR_DARK);
-    doc.text(String(index + 1), colX.sno + 8, currentY + 7);
-    doc.font('Helvetica-Bold').text(productName.slice(0, 38), colX.desc, currentY + 7);
-    doc.font('Helvetica').fillColor(COLOR_MUTED).text('6204', colX.hsn, currentY + 7);
-    doc.text(itemSizeSku.slice(0, 10), colX.size, currentY + 7);
-    doc.fillColor(COLOR_DARK).text(String(qty), colX.qty, currentY + 7, { width: 35, align: 'center' });
-    doc.text(`Rs. ${unitPrice.toLocaleString('en-IN')}`, colX.rate, currentY + 7, { width: 65, align: 'right' });
-    doc.font('Helvetica-Bold').text(`Rs. ${itemTotal.toLocaleString('en-IN')}`, colX.amount, currentY + 7, { width: 85, align: 'right' });
+    doc.font('Helvetica').fontSize(8).fillColor(COLOR_DARK);
+    doc.text(String(index + 1).padStart(2, '0'), colX.sno, currentY + 9);
+    doc.font('Helvetica-Bold').text(productName.slice(0, 38), colX.desc, currentY + 9);
+    doc.font('Helvetica').fillColor(COLOR_MUTED).text('6204', colX.hsn, currentY + 9);
+    doc.text(itemSizeSku.slice(0, 12), colX.size, currentY + 9);
+    doc.fillColor(COLOR_DARK).text(String(qty), colX.qty, currentY + 9, { width: 35, align: 'center' });
+    doc.text(unitPrice.toLocaleString('en-IN'), colX.rate, currentY + 9, { width: 60, align: 'right' });
+    doc.font('Helvetica-Bold').text(itemTotal.toLocaleString('en-IN'), colX.amount, currentY + 9, { width: 70, align: 'right' });
 
-    // Hairline Bottom Row Separator
-    doc.rect(margin, currentY + rowHeight - 0.5, contentWidth, 0.5).fill(COLOR_LINE);
+    doc.rect(margin, currentY + rowHeight - 0.5, contentWidth, 0.5).fill(COLOR_GOLD_LIGHT);
     currentY += rowHeight;
   });
 
-  currentY += 12;
+  currentY += 20;
 
-  // ─── 5. SUMMARY & TOTALS BREAKDOWN ─────────────────────────────────────────
+  // ─── 4. SUMMARY & TOTALS ───────────────────────────────────────────────────
   const subtotal = Number(order.total || 0);
   const discountAmount = Number(order.discount || 0);
-  const gstEstimated = Math.round((subtotal * 18) / 118); // 18% Inclusive GST
+  const gstEstimated = Math.round((subtotal * 18) / 118);
   const netTaxable = subtotal - gstEstimated;
   const isInterstate = (order.shipping_state || '').toLowerCase().trim() !== 'maharashtra' && (order.shipping_state || '').toLowerCase().trim() !== 'mh' && Boolean(order.shipping_state);
 
-  const summaryWidth = 240;
+  const summaryWidth = 220;
   const summaryX = pageWidth - margin - summaryWidth;
 
-  // Payment Status & Seal Box (Left Side)
+  // Payment Status Card (Left Side)
   const isPaid = (order.status || '').toLowerCase() !== 'cancelled' && (
     Boolean(order.payment_id && order.payment_id !== 'COD' && order.payment_id !== 'CASH_ON_DELIVERY') ||
     Boolean(order.razorpay_order_id) ||
@@ -310,92 +259,79 @@ export const generateInvoicePDF = (order, stream) => {
   );
   const isCancelled = (order.status || '').toLowerCase() === 'cancelled';
 
-  const stampColor = isCancelled ? '#c0392b' : (isPaid ? '#1e824c' : '#d35400');
-  const stampTitle = isCancelled ? '[ CANCELLED ]' : (isPaid ? '[✓] PAYMENT CONFIRMED & VERIFIED' : '[ COD - PAYMENT ON DELIVERY ]');
-
+  const stampColor = isCancelled ? '#A94442' : (isPaid ? '#2E7D32' : '#B7791F');
+  const stampBg = isCancelled ? '#F2DEDE' : (isPaid ? '#E8F5E9' : '#FEFCBF');
+  const stampTitle = isCancelled ? 'CANCELLED' : (isPaid ? 'PAYMENT CONFIRMED & VERIFIED' : 'COD - PAYMENT PENDING');
   const methodStr = isPaid ? 'Razorpay Online (Prepaid)' : (order.payment_method?.toUpperCase() || 'CASH ON DELIVERY');
   const refStr = (order.payment_id && order.payment_id !== 'COD') ? order.payment_id : (order.transaction_id || (order.payments && order.payments[0]?.gateway_payment_id) || 'COD-VERIFICATION-PENDING');
 
-  doc.roundedRect(margin, currentY, 215, 88, 4).fillAndStroke(COLOR_CARD_BG, stampColor);
-
-  doc.font('Helvetica-Bold')
-     .fontSize(8.5)
-     .fillColor(stampColor)
-     .text(stampTitle, margin + 10, currentY + 10);
-
-  doc.font('Helvetica')
-     .fontSize(7.3)
-     .fillColor(COLOR_MUTED)
-     .text(`Payment Mode: ${methodStr}`, margin + 10, currentY + 24)
-     .text(`Transaction Ref: ${refStr.slice(0, 26)}`, margin + 10, currentY + 36)
-     .text('GST Compliance: 18% Inclusive Tax Included', margin + 10, currentY + 48)
-     .text(`Order Status: ${(order.status || 'PROCESSING').toUpperCase()}`, margin + 10, currentY + 60)
-     .text('Authenticity: 100% Handcrafted Atelier Certified', margin + 10, currentY + 72);
+  doc.roundedRect(margin, currentY, 240, 85, 6).fillAndStroke(stampBg, stampColor);
+  
+  doc.font('Times-Bold').fontSize(8.5).fillColor(stampColor).text(stampTitle, margin + 12, currentY + 12);
+  doc.rect(margin + 12, currentY + 24, 30, 0.5).fill(stampColor);
+  
+  doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_DARK)
+     .text(`Payment Mode:`, margin + 12, currentY + 34, { continued: true }).fillColor(COLOR_MUTED).text(` ${methodStr}`)
+     .fillColor(COLOR_DARK).text(`Transaction Ref:`, margin + 12, currentY + 46, { continued: true }).fillColor(COLOR_MUTED).text(` ${refStr.slice(0, 24)}`)
+     .fillColor(COLOR_DARK).text(`GST Compliance:`, margin + 12, currentY + 58, { continued: true }).fillColor(COLOR_MUTED).text(` 18% Inclusive Tax`)
+     .fillColor(COLOR_DARK).text(`Order Status:`, margin + 12, currentY + 70, { continued: true }).fillColor(COLOR_MUTED).text(` ${(order.status || 'PROCESSING').toUpperCase()}`);
 
   // Calculation Breakdown (Right Side)
-  doc.font('Helvetica').fontSize(7.6).fillColor(COLOR_MUTED);
-  doc.text('Taxable Base Value (Net Excl. Tax):', summaryX, currentY);
-  doc.font('Helvetica-Bold').fillColor(COLOR_DARK).text(`Rs. ${netTaxable.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
-  currentY += 12;
+  const drawSummaryRow = (label, value, isBold = false, isHighlight = false) => {
+    doc.font(isBold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8.5).fillColor(isHighlight ? COLOR_BURGUNDY : (isBold ? COLOR_DARK : COLOR_MUTED));
+    doc.text(label, summaryX, currentY);
+    doc.text(value, summaryX, currentY, { width: summaryWidth, align: 'right' });
+    currentY += 14;
+  };
 
+  drawSummaryRow('Taxable Base Value:', `Rs. ${netTaxable.toLocaleString('en-IN')}`);
   if (isInterstate) {
-    doc.font('Helvetica').fillColor(COLOR_MUTED).text('IGST (18% Integrated GST):', summaryX, currentY);
-    doc.font('Helvetica-Bold').fillColor(COLOR_DARK).text(`Rs. ${gstEstimated.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
-    currentY += 12;
+    drawSummaryRow('IGST (18% Integrated):', `Rs. ${gstEstimated.toLocaleString('en-IN')}`);
   } else {
     const halfGst = Math.round(gstEstimated / 2);
-    doc.font('Helvetica').fillColor(COLOR_MUTED).text('CGST (9% Central GST - MH):', summaryX, currentY);
-    doc.font('Helvetica-Bold').fillColor(COLOR_DARK).text(`Rs. ${halfGst.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
-    currentY += 12;
-    doc.font('Helvetica').fillColor(COLOR_MUTED).text('SGST (9% State GST - MH):', summaryX, currentY);
-    doc.font('Helvetica-Bold').fillColor(COLOR_DARK).text(`Rs. ${halfGst.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
-    currentY += 12;
+    drawSummaryRow('CGST (9% Central):', `Rs. ${halfGst.toLocaleString('en-IN')}`);
+    drawSummaryRow('SGST (9% State):', `Rs. ${halfGst.toLocaleString('en-IN')}`);
   }
-
-  doc.font('Helvetica').fillColor(COLOR_MUTED).text('Total 18% GST (Included in Price):', summaryX, currentY);
-  doc.font('Helvetica-Bold').fillColor(COLOR_BURGUNDY).text(`Rs. ${gstEstimated.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
-  currentY += 12;
+  drawSummaryRow('Total GST (Included):', `Rs. ${gstEstimated.toLocaleString('en-IN')}`, false, true);
 
   if (discountAmount > 0) {
-    doc.font('Helvetica').fillColor('#1e824c').text('Privilege Promo Discount:', summaryX, currentY);
-    doc.font('Helvetica-Bold').fillColor('#1e824c').text(`- Rs. ${discountAmount.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
-    currentY += 12;
+    doc.font('Helvetica').fontSize(8.5).fillColor('#2E7D32').text('Privilege Promo Discount:', summaryX, currentY);
+    doc.font('Helvetica-Bold').text(`- Rs. ${discountAmount.toLocaleString('en-IN')}`, summaryX, currentY, { width: summaryWidth, align: 'right' });
+    currentY += 14;
   }
 
-  doc.font('Helvetica').fillColor(COLOR_MUTED).text('Couture Packaging & Shipping:', summaryX, currentY);
-  doc.font('Helvetica-Bold').fillColor('#1e824c').text('COMPLIMENTARY', summaryX, currentY, { width: summaryWidth, align: 'right' });
-  currentY += 15;
+  doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED).text('Packaging & Shipping:', summaryX, currentY);
+  doc.font('Helvetica-Bold').fillColor('#2E7D32').text('COMPLIMENTARY', summaryX, currentY, { width: summaryWidth, align: 'right' });
+  currentY += 18;
 
   // Grand Total Highlight Bar
-  doc.roundedRect(summaryX - 6, currentY, summaryWidth + 6, 24, 3).fill(COLOR_BURGUNDY);
-  doc.rect(summaryX - 6, currentY, 3, 24).fill(COLOR_GOLD); // Gold left bar accent
+  doc.roundedRect(summaryX, currentY, summaryWidth, 26, 4).fill(COLOR_BURGUNDY);
+  doc.font('Times-Bold').fontSize(10).fillColor('#ffffff');
+  doc.text('TOTAL INVOICE VALUE', summaryX + 12, currentY + 8);
+  doc.text(`Rs. ${subtotal.toLocaleString('en-IN')}`, summaryX, currentY + 8, { width: summaryWidth - 12, align: 'right' });
 
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#ffffff');
-  doc.text('TOTAL INVOICE VALUE (INR):', summaryX + 6, currentY + 7);
-  doc.text(`Rs. ${subtotal.toLocaleString('en-IN')}`, summaryX, currentY + 7, { width: summaryWidth - 8, align: 'right' });
+  // ─── 5. FOOTER & CERTIFICATION ─────────────────────────────────────────────
+  currentY = pageHeight - margin - 70;
 
-  currentY += 46;
+  // Terms & Conditions
+  doc.font('Times-Bold').fontSize(9).fillColor(COLOR_BURGUNDY).text('BOUTIQUE TERMS & CARE INSTRUCTIONS', margin, currentY);
+  doc.rect(margin, currentY + 12, 20, 0.5).fill(COLOR_GOLD);
+  
+  doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED);
+  doc.text('1. All handcrafted couture ensembles are tailored with bespoke artistry. Professional Dry Clean Only.', margin, currentY + 18);
+  doc.text('2. Alteration and fitment requests are honored within 7 days of delivery at our Nagpur atelier.', margin, currentY + 28);
+  doc.text('3. This document serves as an authentic Computer-Generated Tax Invoice under Indian GST regulations.', margin, currentY + 38);
 
-  // ─── 6. FOOTER & AUTHORIZED DIGITAL SEAL ───────────────────────────────────
-  // Terms & Conditions (Left side)
-  doc.font('Helvetica-Bold').fontSize(7.5).fillColor(COLOR_BURGUNDY).text('BOUTIQUE TERMS & CARE INSTRUCTIONS:', margin, currentY);
-  currentY += 10;
-  doc.font('Helvetica').fontSize(6.8).fillColor(COLOR_MUTED);
-  doc.text('1. All handcrafted couture ensembles are tailored with bespoke artistry. Professional Dry Clean Only.', margin, currentY);
-  doc.text('2. Alteration and fitment requests are honored within 7 days of delivery at our Nagpur atelier.', margin, currentY + 9);
-  doc.text('3. This document serves as an authentic Computer-Generated Tax Invoice under Indian GST regulations.', margin, currentY + 18);
-
-  // Digital Signatory Seal Box (Right side)
-  const sealWidth = 155;
+  // Digital Signatory Seal Box
+  const sealWidth = 180;
   const sealX = pageWidth - margin - sealWidth;
-  doc.roundedRect(sealX, currentY - 14, sealWidth, 46, 4).fillAndStroke(COLOR_CARD_BG, COLOR_LINE);
+  doc.roundedRect(sealX, currentY, sealWidth, 54, 6).fillAndStroke(COLOR_CARD_BG, COLOR_GOLD_LIGHT);
 
-  doc.font('Helvetica-Bold').fontSize(7.8).fillColor(COLOR_BURGUNDY).text('FOR MIRAYA BY GARIMA', sealX + 8, currentY - 8);
-  doc.font('Helvetica').fontSize(6.8).fillColor(COLOR_MUTED).text('Digitally Certified & Approved', sealX + 8, currentY + 3);
-  doc.font('Helvetica-Bold').fontSize(7).fillColor(COLOR_GOLD).text('[ OFFICIAL DIGITAL ATELIER SEAL ]', sealX + 8, currentY + 15);
-
-  // Bottom Decorative Gold Bar
-  doc.rect(margin, pageHeight - 24, contentWidth, 2.5).fill(COLOR_GOLD);
+  doc.font('Times-Bold').fontSize(8.5).fillColor(COLOR_BURGUNDY).text('FOR MIRAYA BY GARIMA', sealX, currentY + 12, { width: sealWidth, align: 'center' });
+  doc.font('Helvetica').fontSize(7.5).fillColor(COLOR_MUTED).text('Digitally Certified & Approved', sealX, currentY + 24, { width: sealWidth, align: 'center' });
+  
+  doc.rect(sealX + 30, currentY + 36, sealWidth - 60, 0.5).fill(COLOR_GOLD_LIGHT);
+  doc.font('Times-Roman').fontSize(7.5).fillColor(COLOR_GOLD).text('OFFICIAL DIGITAL ATELIER SEAL', sealX, currentY + 41, { width: sealWidth, align: 'center' });
 
   doc.end();
 };

@@ -33,6 +33,8 @@ export default function AdminInventorySection({ token, API_BASE_URL }) {
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState('');
 
+  const [rawData, setRawData] = useState(null);
+
   // Fetch live inventory
   const fetchInventory = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -41,6 +43,7 @@ export default function AdminInventorySection({ token, API_BASE_URL }) {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await fetch(`${API_BASE_URL}/api/inventory?limit=200`, { headers });
       const data = await res.json();
+      setRawData(data); // debug
 
       if (data.success) {
         setVariants(data.variants || []);
@@ -48,7 +51,7 @@ export default function AdminInventorySection({ token, API_BASE_URL }) {
         if (!isSilent) setError(data.message || 'Error loading inventory.');
       }
     } catch (err) {
-      if (!isSilent) setError('Network error while loading inventory.');
+      if (!isSilent) setError(err.message || 'Network error while loading inventory.');
     } finally {
       if (!isSilent) setLoading(false);
     }

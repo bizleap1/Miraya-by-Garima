@@ -66,39 +66,35 @@
   .hero-slider-section {
     display: flex;
     flex-direction: column;
-    height: auto;
-    min-height: auto;
+    height: 100vh;
+    min-height: 100vh;
     background-color: var(--bg-cream, #f8f5f0);
-    padding-top: 74px;
+    padding-top: 0;
   }
   
   .hero-slider-container {
-    height: auto;
-    aspect-ratio: 2.3 / 1;
-    min-height: auto;
-    width: 100%;
+    flex: 1;
+    height: 100% !important;
+    aspect-ratio: auto;
+    min-height: 100%;
+    width: 100% !important;
     background-color: transparent;
   }
 
   .hero-bg-image {
-    object-fit: contain;
+    object-fit: cover;
     object-position: center;
+    height: 100% !important;
+    width: 100% !important;
   }
 
   .hero-slider-controls {
-    bottom: -1rem; /* push dots slightly into the brown area */
+    bottom: 2rem; /* place dots nicely over the image */
   }
 
   /* Mobile Text Section */
   .hero-mobile-text-container.mobile-only {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(145deg, #745b4c 0%, #3a2a22 100%);
-    padding: 3rem 1.5rem;
-    text-align: center;
-    min-height: 380px;
+    display: none;
   }
 
   .hm-brand {
@@ -185,4 +181,12 @@
   .hm-cta:hover {
     background-color: rgba(229, 205, 150, 0.1);
   }
+}
+
+
+/* Picture tag fix */
+picture {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
