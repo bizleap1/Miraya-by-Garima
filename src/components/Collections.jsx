@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './Collections.css';
@@ -10,6 +10,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import { Heart, ShoppingBag, Check, Trash2 } from 'lucide-react';
 import { productsData } from '../data/products';
+import API_URL from '../config';
 
 // Extract the 4 specific products requested by the user
 const getProduct = (category, idNum) => {
@@ -31,7 +32,7 @@ const greyDrape = productsData['drape-sarees'].find(p => p.title === 'Grey Drape
 const purpleSuit = productsData['designer-suits'].find(p => p.title === 'Purple Suit') || productsData['designer-suits'][1];
 const greyCoord = productsData['coord-sets'].find(p => p.title === 'Grey Co-ord Set') || productsData['coord-sets'][0];
 
-const collectionsData = [pinkBlush, greyDrape, purpleSuit, greyCoord];
+const defaultCollectionsData = [pinkBlush, greyDrape, purpleSuit, greyCoord].filter(Boolean);
 
 const Collections = ({
   title = "New Arrivals",
@@ -41,6 +42,34 @@ const Collections = ({
   const { cartItems, addToCart, removeFromCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { showToast } = useToast();
+  
+  const [collectionsData, setCollectionsData] = useState(defaultCollectionsData);
+
+  useEffect(() => {
+    if (title === "New Arrivals") {
+      fetch(`${API_URL}/api/page-customizer/new-arrivals`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.products && data.products.length > 0) {
+            // Map the API products to match frontend structure if needed, or just use them
+            // The API returns full product rows from the database.
+            // We should ensure they have the same format as local products (id, title, price, category, images)
+            const apiProducts = data.products.map(p => ({
+              ...p,
+              id: p.id, // String ID
+              title: p.name || p.title,
+              price: p.base_price || p.price,
+              images: p.images ? (typeof p.images === 'string' ? JSON.parse(p.images) : p.images) : [p.image_url],
+              image: p.image_url || (p.images && p.images.length > 0 ? (typeof p.images === 'string' ? JSON.parse(p.images)[0] : p.images[0]) : ''),
+              category: (p.category && p.category.name) ? p.category.name.toLowerCase().replace(/\s+/g, '-') : (typeof p.category === 'string' ? p.category : 'all'),
+            }));
+            setCollectionsData(apiProducts);
+          }
+        })
+        .catch(err => console.error("Failed to fetch custom collections:", err));
+    }
+  }, [title]);
+
   const [hoveredCartCardId, setHoveredCartCardId] = useState(null);
 
   const formatPrice = (priceStr) => {
