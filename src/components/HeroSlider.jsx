@@ -75,9 +75,9 @@ const HeroSlider = () => {
                   className="hero-bg-image"
                   src={currentSlide.bgImage} 
                   alt="Campaign" 
-                  fetchpriority={index === 0 ? "high" : "auto"}
-                  loading={index === 0 ? "eager" : "lazy"}
-                  decoding={index === 0 ? "sync" : "async"}
+                  fetchpriority={currentIndex === 0 ? "high" : "auto"}
+                  loading={currentIndex === 0 ? "eager" : "lazy"}
+                  decoding={currentIndex === 0 ? "sync" : "async"}
                 />
               </picture>
           </motion.div>
