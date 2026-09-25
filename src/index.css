@@ -455,3 +455,56 @@ button:active, .btn:active, a.btn-hollow-gold:active, input[type="submit"]:activ
   filter: brightness(0.92);
 }
 
+
+/* --- Premium Inline Size Selector --- */
+.premium-inline-size-selector {
+  overflow: hidden;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding-top: 12px;
+}
+
+.premium-size-header {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--gold-accent);
+  margin-bottom: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.premium-size-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(198, 164, 106, 0.2);
+}
+
+.premium-size-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 5px;
+}
+
+.premium-size-btn {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 0;
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+}
+
+.premium-size-btn:hover {
+  background: var(--gold-accent);
+  border-color: var(--gold-accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(198, 164, 106, 0.25);
+}

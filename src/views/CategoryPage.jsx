@@ -746,26 +746,15 @@ const CategoryPage = () => {
                           initial={{ height: 0, opacity: 0, marginTop: 0 }}
                           animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
                           exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                          style={{ overflow: 'hidden', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px' }}
+                          className="premium-inline-size-selector"
                         >
-                          <div style={{ fontSize: '11px', color: 'rgba(0,0,0,0.6)', marginBottom: '8px', letterSpacing: '0.5px' }}>SELECT SIZE:</div>
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <div className="premium-size-header">SELECT SIZE</div>
+                          <div className="premium-size-options">
                             {(item.sizes && item.sizes.length > 0 ? item.sizes : ['S', 'M', 'L', 'XL', 'XXL']).map(size => (
                               <button 
                                 key={size}
                                 type="button"
-                                style={{
-                                  background: 'transparent',
-                                  border: '1px solid rgba(0,0,0,0.15)',
-                                  borderRadius: '4px',
-                                  padding: '5px 8px',
-                                  fontSize: '11px',
-                                  cursor: 'pointer',
-                                  color: '#000',
-                                  transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => { e.target.style.borderColor = '#c6a46a'; e.target.style.color = '#c6a46a'; }}
-                                onMouseLeave={(e) => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.color = '#000'; }}
+                                className="premium-size-btn"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -774,7 +763,7 @@ const CategoryPage = () => {
                                   setExpandedCartCardId(null);
                                 }}
                               >
-                                {size}
+                                {size.replace(' (M to XL)', '')}
                               </button>
                             ))}
                           </div>
