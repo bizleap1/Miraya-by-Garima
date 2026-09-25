@@ -2597,3 +2597,72 @@ body::-webkit-scrollbar,
 }
 
 
+
+
+/* ==========================================================================
+   ULTIMATE MOBILE & TABLET OPTIMIZATION (INJECTED)
+   ========================================================================== */
+
+/* Tablets & Small Desktops */
+@media (max-width: 1024px) {
+  .admin-sidebar { width: 220px !important; }
+  .admin-main { margin-left: 220px !important; width: calc(100% - 220px) !important; padding: 15px !important; }
+  .stats-grid, .kpi-grid, .metrics-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+  .form-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+  /* Main Shell & Sidebar */
+  .admin-mobile-toggle { display: flex !important; }
+  .admin-main { margin-left: 0 !important; width: 100vw !important; padding: 12px !important; overflow-x: hidden !important; }
+  .admin-sidebar { left: -100% !important; width: 280px !important; transition: left 0.3s ease !important; }
+  .admin-sidebar.sidebar-open { left: 0 !important; box-shadow: 5px 0 30px rgba(0,0,0,0.3) !important; }
+
+  /* Topbar */
+  .topbar { padding: 10px !important; flex-wrap: wrap !important; gap: 10px !important; height: auto !important; }
+  .search-wrap { width: 100% !important; order: 3 !important; margin: 5px 0 !important; }
+  .search-wrap input { width: 100% !important; }
+
+  /* Page Actions / Headers */
+  .page-actions, .section-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; height: auto !important; margin-bottom: 15px !important; }
+  .action-buttons { width: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 8px !important; }
+  .action-buttons .btn, .action-buttons button { flex: 1 1 calc(50% - 8px) !important; min-width: 100px !important; justify-content: center !important; text-align: center !important; padding: 8px 10px !important; font-size: 12px !important; }
+
+  /* Filters */
+  .admin-filters, .filters-bar, .inventory-filters { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+  .admin-filters select, .admin-filters input, .filters-bar select, .filters-bar input { width: 100% !important; }
+
+  /* Tables & Lists */
+  .table-card, .admin-card, .panel-card, .table-container, .table-scroll { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; border: none !important; border-radius: 6px !important; }
+  .admin-table, .orders-table, .inventory-table, .report-data-table { min-width: 800px !important; width: 100% !important; }
+  .table-card table { display: table !important; }
+  
+  /* Make table cells a bit tighter on mobile */
+  .admin-table th, .admin-table td { padding: 8px 10px !important; font-size: 12px !important; }
+
+  /* Modals & Drawers */
+  .admin-modal, .modal-content, .report-modal-content { width: 95% !important; max-height: 90vh !important; padding: 15px !important; border-radius: 8px !important; margin: 10px auto !important; }
+  .modal-body { padding: 10px 0 !important; }
+  .form-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .admin-drawer { width: 100% !important; right: -100% !important; }
+  .admin-drawer.open { right: 0 !important; }
+
+  /* POS specifics */
+  .pos-layout { flex-direction: column !important; gap: 15px !important; }
+  .pos-products, .pos-cart { width: 100% !important; height: auto !important; min-height: 400px !important; }
+
+  /* Print Reports */
+  .printable-store-report { padding: 15px !important; }
+  
+  /* Images in tables */
+  .admin-table img { width: 40px !important; height: 50px !important; }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .stats-grid, .kpi-grid, .metrics-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .stat-card { padding: 15px !important; min-height: auto !important; }
+  .action-buttons .btn, .action-buttons button { flex: 1 1 100% !important; }
+  .topbar { padding: 8px !important; }
+}
