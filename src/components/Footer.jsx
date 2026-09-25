@@ -30,21 +30,6 @@ const Footer = () => {
           </div>
           
           <div className="footer-links-section">
-            {/* Column 2: Collections */}
-            <div className="footer-column-new">
-              <h4 className="footer-heading-new">
-                COLLECTIONS
-                <div className="heading-ornament">◈</div>
-              </h4>
-              <ul>
-                <li><Link to="/collection/coord-sets">Co-ord Sets</Link></li>
-                <li><Link to="/collection/indo-western">Indo Western</Link></li>
-                <li><Link to="/collection/drape-sarees">Drape Sarees</Link></li>
-                <li><Link to="/collection/designer-suits">Designer Suits</Link></li>
-                <li><Link to="/collection/dresses">Haute Couture Dresses</Link></li>
-                <li><Link to="/collection/premium-suit-materials">Premium Suit Materials</Link></li>
-              </ul>
-            </div>
             
             {/* Column 3: About Miraya */}
             <div className="footer-column-new">
