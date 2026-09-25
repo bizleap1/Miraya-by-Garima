@@ -9,7 +9,7 @@ const CATEGORIES = [
     id: 1,
     name: 'INDO WESTERN',
     image: '/the miraya legacy.JPG',
-    link: '/collection/indo-western',
+    link: '/collection/prime',
     gridClass: 'sbc-item-large-left',
     type: 'large'
   },
@@ -17,7 +17,7 @@ const CATEGORIES = [
     id: 2,
     name: 'DRAPE SAREES',
     image: '/images/category/drape-sarees.jpg', // Group photo (3 girls in drape sarees)
-    link: '/collection/drape-sarees',
+    link: '/collection/prime',
     gridClass: 'sbc-item-small-top',
     type: 'small'
   },
@@ -25,7 +25,7 @@ const CATEGORIES = [
     id: 3,
     name: 'COCKTAIL DRESS',
     image: '/images/category/indo-western.jpg', // Group photo (3 girls in black/embellished)
-    link: '/collection/lehenga',
+    link: '/collection/prime',
     gridClass: 'sbc-item-small-bottom',
     type: 'small'
   },
@@ -33,7 +33,7 @@ const CATEGORIES = [
     id: 4,
     name: 'PREMIUM SUITS',
     image: '/The Miraya 2_fixed.JPG',
-    link: '/collection/designer-suits',
+    link: '/collection/prime',
     gridClass: 'sbc-item-large-right',
     type: 'large',
     scale: 1.25 // Zoomed in so the model's scale matches the left image
