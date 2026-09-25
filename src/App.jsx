@@ -19,7 +19,6 @@ const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
-const NewArrivalsPage = lazy(() => import('./views/NewArrivalsPage'));
 const PrimeCollectionPage = lazy(() => import('./views/PrimeCollectionPage'));
 const ClassicCollectionPage = lazy(() => import('./views/ClassicCollectionPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
@@ -133,7 +132,6 @@ function AppInner() {
                   <Route path="/product/:category/:id" element={<ProductDetailPage />} />
                   <Route path="/wishlist" element={<WishlistPage />} />
                   <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/new-arrivals" element={<NewArrivalsPage />} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/account" element={<AccountPage />} />

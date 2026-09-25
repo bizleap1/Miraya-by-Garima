@@ -447,10 +447,6 @@ const Navbar = () => {
                   <span>Home</span>
                 </Link>
 
-                <Link to="/new-arrivals" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
-                  <span>New Arrivals</span>
-                </Link>
-
                 <Link to="/collection/prime" className="mobile-nav-item-link" onClick={() => setMobileMenuOpen(false)}>
                   <span>Prime</span>
                 </Link>

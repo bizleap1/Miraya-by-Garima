@@ -37,7 +37,6 @@ const Footer = () => {
                 <div className="heading-ornament">◈</div>
               </h4>
               <ul>
-                <li><Link to="/new-arrivals" style={{ color: 'var(--primary-gold, #c6a46a)', fontWeight: 600 }}>✦ New Arrivals</Link></li>
                 <li><Link to="/collection/coord-sets">Co-ord Sets</Link></li>
                 <li><Link to="/collection/indo-western">Indo Western</Link></li>
                 <li><Link to="/collection/drape-sarees">Drape Sarees</Link></li>
