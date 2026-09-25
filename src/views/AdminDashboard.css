@@ -1623,13 +1623,13 @@ body::-webkit-scrollbar,
   }
 
   .admin-sidebar {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    width: 280px;
-    height: 100vh;
-    z-index: 999;
-    background: var(--miraya-white, #ffffff);
+      position: fixed;
+      top: 0;
+      left: -100%;
+      width: 280px;
+      height: 100vh;
+      z-index: 999;
+      background: linear-gradient(180deg, #2a0304 0%, #5e0a0b 100%);
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
     transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
