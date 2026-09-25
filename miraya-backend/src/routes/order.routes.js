@@ -24,9 +24,9 @@ router.post('/:id/cancel', authMiddleware, cancelOrder);
 router.get('/:id/invoice', optionalAuthMiddleware, getInvoice);
 
 // Admin endpoints
-router.get('/all', adminMiddleware, getAllOrders);
-router.put('/:id/status', adminMiddleware, updateOrderStatus);
-router.post('/reset-all', adminMiddleware, resetAllOrdersController);
+router.get('/all', authMiddleware, adminMiddleware, getAllOrders);
+router.put('/:id/status', authMiddleware, adminMiddleware, updateOrderStatus);
+router.post('/reset-all', authMiddleware, adminMiddleware, resetAllOrdersController);
 
 export default router;
 
