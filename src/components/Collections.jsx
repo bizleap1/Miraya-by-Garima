@@ -83,14 +83,14 @@ const Collections = ({
     if (existingItem) {
       const chosenSize = item.sizes && item.sizes.length > 0 ? item.sizes[0] : 'Free Size (M to XL)';
       removeFromCart(item.id, chosenSize);
-      showToast(Removed from cart);
+      showToast('Removed from cart');
       return;
     }
 
     // For items with Free Size, don't ask for size, add directly
     if (item.category === 'drape-sarees' || item.category === 'premium-suit-materials' || (item.sizes && item.sizes.length === 1 && item.sizes[0] === 'Free Size')) {
       addToCart({ ...item, size: 'Free Size', quantity: 1 });
-      showToast(Added to cart!);
+      showToast('Added to cart!');
       return;
     }
 
@@ -245,7 +245,7 @@ const Collections = ({
                                 e.preventDefault();
                                 e.stopPropagation();
                                 addToCart({ ...item, size, quantity: 1 });
-                                showToast(Added to cart!);
+                                showToast('Added to cart!');
                                 setExpandedCartCardId(null);
                               }}
                             >

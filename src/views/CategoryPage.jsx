@@ -770,7 +770,7 @@ const CategoryPage = () => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   addToCart(item, size, 1);
-                                  showToast(Added to cart!);
+                                  showToast('Added to cart!');
                                   setExpandedCartCardId(null);
                                 }}
                               >
