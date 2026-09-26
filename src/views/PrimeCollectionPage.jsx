@@ -63,15 +63,15 @@ export default function PrimeCollectionPage() {
             src="/prime_hero.jpg" 
             alt="Prime Collection" 
             className="prime-hero-img"
-            style={{ width: '100%', height: 'auto', display: 'block' }}
+            style={{ width: '100%', maxWidth: '100%', height: 'auto', display: 'block', objectFit: 'contain' }}
             onError={(e) => {
               e.target.style.display = 'none';
               document.getElementById('prime-fallback-header').style.display = 'flex';
             }}
           />
-          <div id="prime-fallback-header" style={{ display: 'none', width: '100%', height: '500px', backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center', color: '#fff', flexDirection: 'column' }}>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontWeight: 300, letterSpacing: '4px', margin: 0 }}>THE PRIME COLLECTION</h1>
-            <p style={{ marginTop: '1rem', letterSpacing: '2px', color: '#C6A46A' }}>Bespoke Elegance & Rich Craftsmanship</p>
+          <div id="prime-fallback-header" style={{ display: 'none', width: '100%', height: '400px', backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center', color: '#fff', flexDirection: 'column', textAlign: 'center', padding: '0 20px', boxSizing: 'border-box' }}>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 300, letterSpacing: '2px', margin: 0 }}>THE PRIME COLLECTION</h1>
+            <p style={{ marginTop: '1rem', letterSpacing: '1px', color: '#C6A46A', fontSize: '0.9rem' }}>Bespoke Elegance & Rich Craftsmanship</p>
           </div>
         </div>
       </section>

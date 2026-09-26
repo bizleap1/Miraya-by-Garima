@@ -2,10 +2,6 @@
   padding-top: 120px;
   padding-bottom: var(--spacing-xl);
   min-height: 100vh;
-  background-image: url('/open.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   background-color: var(--bg-cream);
 }
 
@@ -486,8 +482,6 @@
 @media (max-width: 992px) {
   .product-detail-page {
     padding-top: 115px;
-    background-size: cover;
-    background-position: center top;
   }
 
   .product-container {

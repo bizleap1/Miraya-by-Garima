@@ -59,10 +59,19 @@ export default function ClassicCollectionPage() {
       {/* ── CLASSIC HERO SECTION ── */}
       <section className="classic-hero">
         <div className="classic-hero-bg">
-          {/* Default Light Elegant placeholder until user uploads new image */}
-          <div style={{ width: '100%', height: '500px', backgroundColor: '#F8F5F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', flexDirection: 'column' }}>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontWeight: 300, letterSpacing: '4px', margin: 0, color: 'var(--primary-burgundy)' }}>THE CLASSIC COLLECTION</h1>
-            <p style={{ marginTop: '1rem', letterSpacing: '2px', color: '#666' }}>Everyday Elegance & Timeless Silhouettes</p>
+          <img 
+            src="/classic_hero.jpg" 
+            alt="Classic Collection" 
+            className="classic-hero-img"
+            style={{ width: '100%', maxWidth: '100%', height: 'auto', display: 'block', objectFit: 'contain' }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              document.getElementById('classic-fallback-header').style.display = 'flex';
+            }}
+          />
+          <div id="classic-fallback-header" style={{ display: 'none', width: '100%', height: '400px', backgroundColor: '#F8F5F0', alignItems: 'center', justifyContent: 'center', color: '#333', flexDirection: 'column', textAlign: 'center', padding: '0 20px', boxSizing: 'border-box' }}>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 300, letterSpacing: '2px', margin: 0, color: 'var(--primary-burgundy)' }}>THE CLASSIC COLLECTION</h1>
+            <p style={{ marginTop: '1rem', letterSpacing: '1px', color: '#666', fontSize: '0.9rem' }}>Everyday Elegance & Timeless Silhouettes</p>
           </div>
         </div>
       </section>

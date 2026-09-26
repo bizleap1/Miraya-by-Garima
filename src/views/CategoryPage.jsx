@@ -53,7 +53,9 @@ const CategoryPage = () => {
   
   const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState(location.state?.filters || []);
-  const [categoryFilterOpen, setCategoryFilterOpen] = useState(true);
+  const [categoryFilterOpen, setCategoryFilterOpen] = useState(() => {
+    return typeof window !== 'undefined' && window.innerWidth > 992;
+  });
   const [hoveredCartCardId, setHoveredCartCardId] = useState(null);
   
   const displayTitle = category === 'all'
@@ -485,11 +487,13 @@ const CategoryPage = () => {
         className="category-header-banner" 
         role="banner" 
         aria-label={displayTitle}
-        style={{
-          ...(category === 'prime' ? { backgroundImage: 'url("/prime_hero.jpg")' } : {}),
-          ...(category === 'classic' ? { backgroundImage: 'url("/classic_hero.jpg")' } : {})
-        }}
       >
+        <img 
+          src={category === 'prime' ? '/prime_hero.jpg' : category === 'classic' ? '/classic_hero.jpg' : '/collection-hero-image.png'} 
+          alt={displayTitle} 
+          className="category-hero-img"
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
         <h1 className="sr-only">{displayTitle}</h1>
       </div>
       <div className="floral-bg-category"></div>

@@ -1,5 +1,7 @@
 .classic-editorial {
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   min-height: 100vh;
   background-color: #F8F5F0;
   color: #333;
