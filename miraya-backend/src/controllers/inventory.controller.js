@@ -32,6 +32,10 @@ export const getVariantInventory = async (req, res) => {
 
     const where = {
       is_active: true,
+      product: {
+        deleted_at: null,
+        is_archived: false,
+      },
     };
 
     // Filters
@@ -44,7 +48,7 @@ export const getVariantInventory = async (req, res) => {
     }
 
     if (category_id) {
-      where.product = { category_id: parseInt(category_id, 10) };
+      where.product.category_id = parseInt(category_id, 10);
     }
 
     // Search by product name, SKU, or barcode
